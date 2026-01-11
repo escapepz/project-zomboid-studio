@@ -170,16 +170,17 @@ export function installDocs(directoryPath?: string) {
 /**
  * Generate the workshop text
  * @param config The project config
+ * @param overrideVisibility Optional visibility override
  * @returns {string} The workshop text
  */
-export function generateWorkshopText(config: IProjectConfig) {
+export function generateWorkshopText(config: IProjectConfig, overrideVisibility?: string) {
     const lines: string[] = [];
 
     lines.push(`version=1`);
     if (config.workshop.id) lines.push(`id=${config.workshop.id}`);
     if (config.title) lines.push(`title=${config.title}`);
     if (config.workshop.tags) lines.push(`tags=${config.workshop.tags.join(';')}`);
-    if (config.workshop.visibility) lines.push(`visibility=${config.workshop.visibility}`);
+    if (overrideVisibility || config.workshop.visibility) lines.push(`visibility=${overrideVisibility ?? config.workshop.visibility}`);
 
     const workshopDescriptionPath = join(projectDir(), 'workshop', 'description.txt');
     if (existsSync(workshopDescriptionPath)) {
@@ -195,14 +196,15 @@ export function generateWorkshopText(config: IProjectConfig) {
  * Generate the mod.info text
  * @param modId The mod id
  * @param config The project config
+ * @param prefixedId Optional prefixed id to use in mod.info instead of modId
  * @returns {string} The mod.info text
  */
-export function generateModInfoText(modId: string, config: IProjectConfig) {
+export function generateModInfoText(modId: string, config: IProjectConfig, prefixedId?: string) {
     const lines: string[] = [];
 
     if (config.mods[modId]) {
         // id
-        lines.push(`id=${modId}`);
+        lines.push(`id=${prefixedId ?? modId}`);
 
         // name
         if (config.mods[modId].name) lines.push(`name=${config.mods[modId].name}`);

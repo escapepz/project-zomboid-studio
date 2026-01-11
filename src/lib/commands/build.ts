@@ -9,17 +9,7 @@ addHelp('build', `Build your project and update your output directory with your 
     Usages:
         pzstudio build - Builds your project and updates the output directory.`);
 
-export async function buildCmd() {
-    const projectConfig = readProjectConfig();
-
-    // Check if we are in a project directory
-    if (!projectConfig) {
-        throw new Error('You must execute this command within a project directory!');
-    }
-
-    const startTime = performance.now();
-
-    const outPath = join(getOutDir(), projectConfig.title);
+async function buildWorkshop(projectConfig: any, outPath: string, modIdPrefix: string = '', overrideVisibility?: string) {
     const projectPath = projectDir();
     const templateWorkshopPath = templateDir('workshop');
 
@@ -33,9 +23,10 @@ export async function buildCmd() {
     copyFolderSync(templateWorkshopPath, outPath, true);
 
     // Copy the mods
-    for (const modId of Object.keys(projectConfig.mods).filter(modId => !projectConfig.workshop.excludes.includes(modId))) {
+    for (const modId of Object.keys(projectConfig.mods).filter((modId: string) => !projectConfig.workshop.excludes.includes(modId))) {
+        const prefixedModId = modIdPrefix ? `${modId}${modIdPrefix}` : modId;
         // Copy the mod
-        const outModsPath = join(outPath, 'Contents', 'mods', modId)
+        const outModsPath = join(outPath, 'Contents', 'mods', prefixedModId)
         log(`- Copying mod '${modId}'...`);
         copyFolderSync(join(projectPath,  modId), outModsPath, true);
 
@@ -43,7 +34,7 @@ export async function buildCmd() {
         log(`- Generating '${modId}' mod.info...`);
         const modVersionPath = join(outModsPath, '42.13.1');
         mkdirSync(modVersionPath, { recursive: true });
-        writeFileSync(join(modVersionPath, 'mod.info'), generateModInfoText(modId, projectConfig));
+        writeFileSync(join(modVersionPath, 'mod.info'), generateModInfoText(modId, projectConfig, prefixedModId));
     }
 
     // Copy the workshop preview.png
@@ -58,7 +49,31 @@ export async function buildCmd() {
 
     // Generate the workshop.txt
     log(`- Generating 'workshop.txt'...`);
-    writeFileSync(join(outPath, 'workshop.txt'), generateWorkshopText(projectConfig));
+    writeFileSync(join(outPath, 'workshop.txt'), generateWorkshopText(projectConfig, overrideVisibility));
+}
+
+export async function buildCmd() {
+    const projectConfig = readProjectConfig();
+
+    // Check if we are in a project directory
+    if (!projectConfig) {
+        throw new Error('You must execute this command within a project directory!');
+    }
+
+    const startTime = performance.now();
+
+    const projectPath = projectDir();
+    const outDir = getOutDir();
+
+    // Build main workshop
+    log(`\nBuilding main workshop...`);
+    const mainOutPath = join(outDir, projectConfig.title);
+    await buildWorkshop(projectConfig, mainOutPath);
+
+    // Build dev_branch workshop
+    log(`\nBuilding dev_branch workshop...`);
+    const devOutPath = join(outDir, `${projectConfig.title} - dev_branch`);
+    await buildWorkshop(projectConfig, devOutPath, '_dev', 'unlisted');
 
     const endTime = performance.now();
     info(`Build complete in ${((endTime - startTime) / 1000).toFixed(2)}s!`);
