@@ -9,7 +9,7 @@ addHelp('build', `Build your project and update your output directory with your 
     Usages:
         pzstudio build - Builds your project and updates the output directory.`);
 
-async function buildWorkshop(projectConfig: any, outPath: string, modIdPrefix: string = '', overrideVisibility?: string) {
+async function buildWorkshop(projectConfig: any, outPath: string, modIdPrefix: string = '', overrideVisibility?: string, excludeId: boolean = false) {
     const projectPath = projectDir();
     const templateWorkshopPath = templateDir('workshop');
 
@@ -49,7 +49,7 @@ async function buildWorkshop(projectConfig: any, outPath: string, modIdPrefix: s
 
     // Generate the workshop.txt
     log(`- Generating 'workshop.txt'...`);
-    writeFileSync(join(outPath, 'workshop.txt'), generateWorkshopText(projectConfig, overrideVisibility));
+    writeFileSync(join(outPath, 'workshop.txt'), generateWorkshopText(projectConfig, overrideVisibility, excludeId));
 }
 
 export async function buildCmd() {
@@ -73,7 +73,7 @@ export async function buildCmd() {
     // Build dev_branch workshop
     log(`\nBuilding dev_branch workshop...`);
     const devOutPath = join(outDir, `${projectConfig.title} - dev_branch`);
-    await buildWorkshop(projectConfig, devOutPath, '_dev', 'unlisted');
+    await buildWorkshop(projectConfig, devOutPath, '_dev', 'unlisted', true);
 
     const endTime = performance.now();
     info(`Build complete in ${((endTime - startTime) / 1000).toFixed(2)}s!`);

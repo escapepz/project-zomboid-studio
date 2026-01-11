@@ -191,13 +191,14 @@ export function installGuides(directoryPath?: string) {
  * Generate the workshop text
  * @param config The project config
  * @param overrideVisibility Optional visibility override
+ * @param excludeId Whether to exclude the id field
  * @returns {string} The workshop text
  */
-export function generateWorkshopText(config: IProjectConfig, overrideVisibility?: string) {
+export function generateWorkshopText(config: IProjectConfig, overrideVisibility?: string, excludeId: boolean = false) {
     const lines: string[] = [];
 
     lines.push(`version=1`);
-    if (config.workshop.id) lines.push(`id=${config.workshop.id}`);
+    if (!excludeId && config.workshop.id) lines.push(`id=${config.workshop.id}`);
     if (config.title) lines.push(`title=${config.title}`);
     if (config.workshop.tags) lines.push(`tags=${config.workshop.tags.join(';')}`);
     if (overrideVisibility || config.workshop.visibility) lines.push(`visibility=${overrideVisibility ?? config.workshop.visibility}`);
