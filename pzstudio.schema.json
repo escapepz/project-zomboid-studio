@@ -31,7 +31,39 @@
                     "type": "array",
                     "items": {
                         "type": "string",
-                        "enum": ["Build 40", "Build 41", "Balance", "Building", "Clothing/Armor", "Food", "Framework", "Hardmode", "Interface", "Items", "Language/Translation", "Literature", "Map", "Military", "Misc", "Models", "Multiplayer", "Pop Culture", "Realistic", "Silly/Fun", "Textures", "Traits", "Vehicles", "Weapons"]
+                        "enum": [
+                            "Build 40",
+                            "Build 41",
+                            "Build 42",
+                            "Animals",
+                            "Audio",
+                            "Balance",
+                            "Building",
+                            "Clothing/Armor",
+                            "Farming",
+                            "Food",
+                            "Framework",
+                            "Hardmode",
+                            "Interface",
+                            "Items",
+                            "Language/Translation",
+                            "Literature",
+                            "Map",
+                            "Military",
+                            "Misc",
+                            "Models",
+                            "Multiplayer",
+                            "Pop Culture",
+                            "QoL",
+                            "Realistic",
+                            "Silly/Fun",
+                            "Skills",
+                            "Textures",
+                            "Traits",
+                            "Vehicles",
+                            "Weapons",
+                            "WIP"
+                        ]
                     }
                 },
                 "excludes": {

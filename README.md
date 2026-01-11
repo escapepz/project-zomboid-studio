@@ -28,5 +28,6 @@ This is a CLI tool for creating and maintaining Lua mods for Project Zomboid wit
   - **Dev branch workshop**: `{projectTitle} - dev_branch` with `_dev` suffix on mod IDs
   - Each mod in dev branch has prefix in path and id field: `Contents/mods/{modId}_dev/42.13.1/mod.info`
   - Dev branch workshop always sets visibility to `unlisted` regardless of project.json settings
+  - Dev branch workshop title appends ` - dev_branch` suffix: `title={projectTitle} - dev_branch`
   - Dev branch workshop.txt has no `id=` field (excluded automatically)
 - Updated documentation to reference original project repository
