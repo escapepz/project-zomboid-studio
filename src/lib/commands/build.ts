@@ -41,7 +41,9 @@ export async function buildCmd() {
 
         // Generate the mod.info
         log(`- Generating '${modId}' mod.info...`);
-        writeFileSync(join(outModsPath, 'mod.info'), generateModInfoText(modId, projectConfig));
+        const modVersionPath = join(outModsPath, '42.13.1');
+        mkdirSync(modVersionPath, { recursive: true });
+        writeFileSync(join(modVersionPath, 'mod.info'), generateModInfoText(modId, projectConfig));
     }
 
     // Copy the workshop preview.png

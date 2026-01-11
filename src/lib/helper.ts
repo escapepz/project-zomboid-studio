@@ -148,6 +148,26 @@ export function installLibraries(directoryPath?: string) {
 }
 
 /**
+ * Clone the docs repository
+ * @see https://github.com/escapepz/docs
+ * @param directoryPath The directory path
+ */
+export function installDocs(directoryPath?: string) {
+    log(`- Deleting '.docs'...`)
+    rmSync(join(directoryPath, '.docs'), { recursive: true, force: true });
+    
+    log(`- Cloning 'docs' into '.docs'...`);
+    const cloneResult = spawnSync('git', ['clone', '--recursive', 'https://github.com/escapepz/docs.git', join('.docs')], {
+        cwd: directoryPath,
+        shell: true, 
+        stdio: 'pipe'
+    });
+    if (cloneResult.status !== 0) {
+        error(`Failed to clone 'docs'!`);
+    }
+}
+
+/**
  * Generate the workshop text
  * @param config The project config
  * @returns {string} The workshop text

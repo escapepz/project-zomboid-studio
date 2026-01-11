@@ -1,10 +1,31 @@
 export type WorkshopVisibility = 'public' | 'friendsOnly' | 'private' | 'unlisted';
 
-export type WorkshopTags = 'Build 40' | 'Build 41' | 'Balance' | 'Building' | 
-'Clothing/Armor' | 'Food' | 'Framework' | 'Hardmode' | 'Interface' | 'Items' | 
-'Language/Translation' | 'Literature' | 'Map' | 'Military' | 'Misc' | 'Models' | 
-'Multiplayer' | 'Pop Culture' | 'Realistic' | 'Silly/Fun' | 'Textures' | 'Traits' | 
-'Vehicles' | 'Weapons';
+export type WorkshopTags =
+    | "Build 40"
+    | "Build 41"
+    | "Build 42"
+    | "Balance"
+    | "Building"
+    | "Clothing/Armor"
+    | "Food"
+    | "Framework"
+    | "Hardmode"
+    | "Interface"
+    | "Items"
+    | "Language/Translation"
+    | "Literature"
+    | "Map"
+    | "Military"
+    | "Misc"
+    | "Models"
+    | "Multiplayer"
+    | "Pop Culture"
+    | "Realistic"
+    | "Silly/Fun"
+    | "Textures"
+    | "Traits"
+    | "Vehicles"
+    | "Weapons";
 
 export interface IWorshopConfig {
     id?: number,
