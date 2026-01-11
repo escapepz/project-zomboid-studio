@@ -60,12 +60,15 @@ export function updateProjectConfig(path: string, updatedConfig: IProjectConfig)
 }
 
 /**
- * Format a title to a valid id
+ * Format a title to a valid id (Unix-compatible for Windows and Linux)
  * @param {string} title The title to format
  * @returns {string} The formatted id
  */
 export function formatTitleToId(title: string) {
-    return title.toLowerCase().replace(/[^a-z0-9_]/g, '-');
+    return title
+        .toLowerCase()
+        .replace(/\s+/g, '_')              // Replace spaces with underscores
+        .replace(/[^a-z0-9_]/g, '');       // Remove any other special characters
 }
 
 /**

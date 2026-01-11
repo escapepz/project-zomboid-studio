@@ -15,6 +15,10 @@ This is a CLI tool for creating and maintaining Lua mods for Project Zomboid wit
 
 - **Compatibility in this branch: Project Zomboid b42.13.1 MP**
 - Added AGENTS.md with build commands, architecture overview, and code style guidelines
+- Updated mod ID formatting to be Unix-compatible (Windows and Linux):
+  - Spaces converted to underscores: "Teleportal Prototype" → `teleportal_prototype`
+  - Special characters removed: "My-Cool Mod!" → `my_cool_mod`
+  - Maintains camelCase without conversion: "TeleportalPrototype" → `teleportalprototype`
 - Created `installDocs()` function to clone https://github.com/escapepz/docs repository
 - Created `installGuides()` function to clone https://github.com/demiurgeQuantified/PZModdingGuides repository
 - Integrated docs and guides installation into new project creation and project update commands
