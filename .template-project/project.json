@@ -1,12 +1,10 @@
 {
-    "$schema": "https://raw.githubusercontent.com/Konijima/project-zomboid-studio/master/pzstudio.schema.json",
+    "$schema": "https://gist.githubusercontent.com/hashtafak/1ec0f9800f4e86c74ac3f102946c88ae/raw/8b23a803ae60f9b7673945d44a81fe7ae7c55f8c/pzstudio.schema.json",
     "title": "",
     "authors": [],
     "workshop": {
-        "visibility": "public",
-        "tags": [
-            "Build 41"
-        ],
+        "visibility": "unlisted",
+        "tags": ["Build 42"],
         "excludes": []
     },
     "mods": {}
