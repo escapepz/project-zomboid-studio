@@ -1,5 +1,5 @@
 import { addHelp } from "../help";
-import { installLibraries, installDocs, projectDir, readProjectConfig } from "../helper";
+import { installLibraries, installDocs, installGuides, projectDir, readProjectConfig } from "../helper";
 import { warn } from "../logger";
 
 addHelp('update', `Update your project addons (candle, events).
@@ -30,4 +30,7 @@ export async function updateCmd() {
 
     // Install Docs
     installDocs(projectDir());
+
+    // Install Guides
+    installGuides(projectDir());
 }

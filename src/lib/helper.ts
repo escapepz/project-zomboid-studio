@@ -168,6 +168,26 @@ export function installDocs(directoryPath?: string) {
 }
 
 /**
+ * Clone the modding guides repository
+ * @see https://github.com/demiurgeQuantified/PZModdingGuides
+ * @param directoryPath The directory path
+ */
+export function installGuides(directoryPath?: string) {
+    log(`- Deleting '.guides'...`)
+    rmSync(join(directoryPath, '.guides'), { recursive: true, force: true });
+    
+    log(`- Cloning 'PZModdingGuides' into '.guides'...`);
+    const cloneResult = spawnSync('git', ['clone', '--recursive', 'https://github.com/demiurgeQuantified/PZModdingGuides.git', join('.guides')], {
+        cwd: directoryPath,
+        shell: true, 
+        stdio: 'pipe'
+    });
+    if (cloneResult.status !== 0) {
+        error(`Failed to clone 'PZModdingGuides'!`);
+    }
+}
+
+/**
  * Generate the workshop text
  * @param config The project config
  * @param overrideVisibility Optional visibility override

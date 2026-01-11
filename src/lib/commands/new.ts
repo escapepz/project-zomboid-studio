@@ -2,7 +2,7 @@ import { join } from "path";
 import { existsSync } from "fs";
 import { expect } from "../expect";
 import { addHelp } from "../help";
-import { installLibraries, installDocs, copyFolderSync, projectDir, readProjectConfig, templateDir, updateProjectConfig } from "../helper";
+import { installLibraries, installDocs, installGuides, copyFolderSync, projectDir, readProjectConfig, templateDir, updateProjectConfig } from "../helper";
 import { info, log } from "../logger";
 
 addHelp('new', `Create a new project.
@@ -57,6 +57,9 @@ export async function newCmd(projectTitle: string, modId?: string) {
 
     // Install Docs
     installDocs(projectPath);
+
+    // Install Guides
+    installGuides(projectPath);
 
     // Done
     info(`The project '${projectTitle}' has been created at '${projectPath}'`);
