@@ -1,5 +1,5 @@
 // @ts-ignore
-import { version } from '../../package.json';
+import { version, branch, buildDate } from '../../package.json';
 import { terminal } from 'terminal-kit';
 import { spawnSync } from 'child_process';
 import { addCmd } from './commands/add';
@@ -19,7 +19,9 @@ import { projectDir } from './helper';
 
 (async function () {
     terminal.clear();
-    terminal.green(`Project Zomboid Studio v${version}\n`);
+    terminal.green(
+        `Project Zomboid Studio v${version} - @${branch} (${buildDate})\n`,
+    );
 
     const command = {
         name: cmd(),
@@ -30,22 +32,22 @@ import { projectDir } from './helper';
     log('Project Dir:  ' + projectDir());
 
     // Check for updates
-    const versions = JSON.parse(
-        spawnSync('npm', ['view', 'pzstudio', 'versions', '--json'], {
-            shell: true,
-            stdio: 'pipe',
-        }).stdout.toString(),
-    );
-    if (version) {
-        const latestVersion = versions[versions.length - 1];
-        if (version !== latestVersion) {
-            warn(`\n** New version of PZStudio is available! **`);
-            warn(
-                `Execute 'npm i -g pzstudio' to update to the latest version.`,
-            );
-            warn(`Version: ${version} < ${latestVersion}\n`);
-        }
-    }
+    // const versions = JSON.parse(
+    //     spawnSync('npm', ['view', 'pzstudio', 'versions', '--json'], {
+    //         shell: true,
+    //         stdio: 'pipe',
+    //     }).stdout.toString(),
+    // );
+    // if (version) {
+    //     const latestVersion = versions[versions.length - 1];
+    //     if (version !== latestVersion) {
+    //         warn(`\n** New version of PZStudio is available! **`);
+    //         warn(
+    //             `Execute 'npm i -g pzstudio' to update to the latest version.`,
+    //         );
+    //         warn(`Version: ${version} < ${latestVersion}\n`);
+    //     }
+    // }
 
     // Execute command
     info(
