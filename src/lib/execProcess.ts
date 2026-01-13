@@ -9,12 +9,19 @@ import { workingDir } from './helper';
  * @returns A promise that resolves to the stdout of the command.
  * @throws An error if the command returns a non-zero exit code.
  */
-export function execProcessAsync(processName: string, ...params: any[]): Promise<string> {
+export function execProcessAsync(
+    processName: string,
+    ...params: any[]
+): Promise<string> {
     return new Promise((resolve, reject) => {
         log(`Executing process: ${processName}(${params.join(', ')})`);
-        const processPath = join(workingDir(), 'processes', processName + '.js');
+        const processPath = join(
+            workingDir(),
+            'processes',
+            processName + '.js',
+        );
         const child = fork(processPath, params, {
-            stdio: 'pipe'
+            stdio: 'pipe',
         });
 
         let stdout = '';

@@ -1,16 +1,25 @@
-import { existsSync } from "fs";
-import { join } from "path";
-import { expect } from "../expect";
-import { addHelp } from "../help";
-import { copyFolderSync, projectDir, readProjectConfig, templateDir, updateProjectConfig } from "../helper";
-import { log } from "../logger";
+import { existsSync } from 'fs';
+import { join } from 'path';
+import { expect } from '../expect';
+import { addHelp } from '../help';
+import {
+    copyFolderSync,
+    projectDir,
+    readProjectConfig,
+    templateDir,
+    updateProjectConfig,
+} from '../helper';
+import { log } from '../logger';
 
-addHelp('add', `Add a mod to your project.
+addHelp(
+    'add',
+    `Add a mod to your project.
 
     Usages:
         pzstudio add <modName> - Add a mod to your project.
-        pzstudio add <modName> <modId> - Add a mod to your project.`);
-    
+        pzstudio add <modName> <modId> - Add a mod to your project.`,
+);
+
 export function addCmd(modName: string, modId?: string) {
     const projectPath = projectDir();
     const projectConfig = readProjectConfig();
@@ -18,7 +27,9 @@ export function addCmd(modName: string, modId?: string) {
 
     // Check if we are in a project directory
     if (!projectConfig) {
-        throw new Error('You must execute this command within a project directory!');
+        throw new Error(
+            'You must execute this command within a project directory!',
+        );
     }
 
     // Validate params

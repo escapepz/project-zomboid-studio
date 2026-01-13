@@ -1,4 +1,10 @@
-export type ArgType = 'string' | 'number' | 'boolean' | 'string|undefined' | 'number|undefined' | 'boolean|undefined';
+export type ArgType =
+    | 'string'
+    | 'number'
+    | 'boolean'
+    | 'string|undefined'
+    | 'number|undefined'
+    | 'boolean|undefined';
 
 /**
  * Parses the type of the argument
@@ -26,7 +32,7 @@ export function cmd() {
  * @returns {string[]} The arguments passed to the program
  */
 export function args() {
-    return process.argv.slice(3).map(a => parseArgType(a));
+    return process.argv.slice(3).map((a) => parseArgType(a));
 }
 
 /**

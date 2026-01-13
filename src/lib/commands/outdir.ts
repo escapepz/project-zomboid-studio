@@ -1,21 +1,24 @@
-import { resolve } from "path";
-import { existsSync, readFileSync, writeFileSync } from "fs";
-import { expect } from "../expect";
-import { addHelp } from "../help";
-import { getStoreDir } from "../helper";
-import { log } from "../logger";
+import { resolve } from 'path';
+import { existsSync, readFileSync, writeFileSync } from 'fs';
+import { expect } from '../expect';
+import { addHelp } from '../help';
+import { getStoreDir } from '../helper';
+import { log } from '../logger';
 
-addHelp('outdir', `Change the output directory of your project.
+addHelp(
+    'outdir',
+    `Change the output directory of your project.
 
     Usages:
-        pzstudio outdir <newOutDir> - Change the output directory of your project.`);
+        pzstudio outdir <newOutDir> - Change the output directory of your project.`,
+);
 
 export function outdirCmd(newOutDir: string) {
     expect('param [newOutDir]', newOutDir, 'string');
 
     // resolve the path
     newOutDir = resolve(newOutDir);
-    
+
     // check if the new path exists
     if (!existsSync(newOutDir)) {
         throw new Error(`The output directory "${newOutDir}" does not exist.`);
@@ -27,7 +30,9 @@ export function outdirCmd(newOutDir: string) {
     if (existsSync(storePath)) {
         const oldPath = readFileSync(storePath, 'utf8');
         if (oldPath === newOutDir) {
-            throw new Error('The output directory is already set to this value.');
+            throw new Error(
+                'The output directory is already set to this value.',
+            );
         }
     }
 

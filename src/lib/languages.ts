@@ -134,6 +134,6 @@ const Languages = {
         name: 'Ukrainian',
         charset: 'windows-1251',
     },
-}
+};
 
-export { Languages }
+export { Languages };

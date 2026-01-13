@@ -2,10 +2,13 @@ import { terminal } from 'terminal-kit';
 
 /**
  * Logs a message to the console.
- * @param message 
+ * @param message
  */
 export function log(message: any) {
-    terminal.white((typeof message === 'string') ? message : JSON.stringify(message), '\n');
+    terminal.white(
+        typeof message === 'string' ? message : JSON.stringify(message),
+        '\n',
+    );
 }
 
 /**
@@ -13,7 +16,10 @@ export function log(message: any) {
  * @param message
  */
 export function info(message: any) {
-    terminal.brightCyan((typeof message === 'string') ? message : JSON.stringify(message), '\n');
+    terminal.brightCyan(
+        typeof message === 'string' ? message : JSON.stringify(message),
+        '\n',
+    );
 }
 
 /**
@@ -21,7 +27,10 @@ export function info(message: any) {
  * @param message
  */
 export function warn(message: any) {
-    terminal.yellow((typeof message === 'string') ? message : JSON.stringify(message), '\n');
+    terminal.yellow(
+        typeof message === 'string' ? message : JSON.stringify(message),
+        '\n',
+    );
 }
 
 /**

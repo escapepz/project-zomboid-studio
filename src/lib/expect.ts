@@ -1,4 +1,4 @@
-import { ArgType } from "./args";
+import { ArgType } from './args';
 
 class ArgTypeError extends Error {}
 
@@ -12,5 +12,7 @@ class ArgTypeError extends Error {}
 export function expect(name: string, value: string, type: ArgType) {
     const _type = typeof value;
     if (type.split('|').includes(_type) === false)
-        throw new ArgTypeError(`Expected ${name} to be '${type}', but got '${typeof value}'`);
+        throw new ArgTypeError(
+            `Expected ${name} to be '${type}', but got '${typeof value}'`,
+        );
 }

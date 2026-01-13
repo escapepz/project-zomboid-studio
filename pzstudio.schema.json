@@ -76,10 +76,7 @@
                     ]
                 }
             },
-            "required": [
-                "visibility",
-                "tags"
-            ]
+            "required": ["visibility", "tags"]
         },
         "mods": {
             "description": "List of mods in this projects.",
@@ -89,12 +86,7 @@
                 }
             }
         },
-        "required": [
-            "title",
-            "authors",
-            "workshop",
-            "mods"
-        ]
+        "required": ["title", "authors", "workshop", "mods"]
     },
     "$defs": {
         "mod": {
@@ -152,10 +144,7 @@
                     "type": "string"
                 }
             },
-            "required": [
-                "name",
-                "description"
-            ]
+            "required": ["name", "description"]
         }
     }
 }

@@ -1,23 +1,36 @@
-import { join } from "path";
-import { existsSync } from "fs";
-import { expect } from "../expect";
-import { addHelp } from "../help";
-import { installLibraries, installDocs, installGuides, copyFolderSync, projectDir, readProjectConfig, templateDir, updateProjectConfig } from "../helper";
-import { info, log } from "../logger";
+import { join } from 'path';
+import { existsSync } from 'fs';
+import { expect } from '../expect';
+import { addHelp } from '../help';
+import {
+    installLibraries,
+    installDocs,
+    copyFolderSync,
+    projectDir,
+    readProjectConfig,
+    templateDir,
+    updateProjectConfig,
+} from '../helper';
+import { info, log } from '../logger';
 
-addHelp('new', `Create a new project.
+addHelp(
+    'new',
+    `Create a new project.
 
     Usages:
     pzstudio new <projectTitle>         - Create a new project with the given title and automatically formatted mod id.
-    pzstudio new <projectTitle> <modId> - Create a new project with the given title and mod id.`);
-    
+    pzstudio new <projectTitle> <modId> - Create a new project with the given title and mod id.`,
+);
+
 export async function newCmd(projectTitle: string, modId?: string) {
     const templateProjectPath = templateDir('project');
     const templateModPath = templateDir('mod');
-    
+
     // Check if we are in a project directory
     if (readProjectConfig()) {
-        throw new Error('You cannot execute this command within a project directory!');
+        throw new Error(
+            'You cannot execute this command within a project directory!',
+        );
     }
 
     // Validate params
@@ -55,11 +68,8 @@ export async function newCmd(projectTitle: string, modId?: string) {
     // Update Umbrella
     installLibraries(projectPath);
 
-    // Install Docs
+    // Install Docs (includes guides as a submodule)
     installDocs(projectPath);
-
-    // Install Guides
-    installGuides(projectPath);
 
     // Done
     info(`The project '${projectTitle}' has been created at '${projectPath}'`);

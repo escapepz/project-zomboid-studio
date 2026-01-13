@@ -1,4 +1,4 @@
-const helps: {[command: string]: string} = {};
+const helps: { [command: string]: string } = {};
 
 /**
  * Add help information for a command.
