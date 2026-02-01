@@ -3,6 +3,7 @@ import { existsSync } from 'fs';
 import { expect } from '../expect';
 import { addHelp } from '../help';
 import {
+    formatTitleToId,
     installLibraries,
     installDocs,
     copyFolderSync,
@@ -41,16 +42,16 @@ export async function newCmd(projectTitle: string, modId?: string) {
     expect('param [modId]', modId, 'string|undefined');
 
     // Prepare mod id
-    modId = modId ?? projectTitle;
+    modId = formatTitleToId(modId ?? projectTitle);
 
     // Check if project already exists
-    const projectPath = join(projectDir(), projectTitle);
+    const projectPath = join(projectDir(), modId);
     if (existsSync(projectPath)) {
-        throw new Error(`The project '${projectTitle}' already exists!`);
+        throw new Error(`The project '${projectTitle}' dir '${modId}' already exists!`);
     }
 
     // Copy template
-    log(`- Creating project '${projectTitle}'...`);
+    log(`- Creating project '${projectTitle}' dir '${modId}' ...`);
     copyFolderSync(templateProjectPath, projectPath);
 
     // Copy simple mod template

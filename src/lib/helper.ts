@@ -99,7 +99,7 @@ export function copyFolderSync(
     mkdirSync(to, { recursive: true });
     const files = readdirSync(from);
     for (const file of files) {
-        if (ignoreDotFiles && file.startsWith('.')) {
+        if (ignoreDotFiles && (file.startsWith('.') || file === '.gitkeep')) {
             continue;
         }
         const current = lstatSync(join(from, file));

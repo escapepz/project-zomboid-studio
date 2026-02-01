@@ -4,6 +4,7 @@ import { expect } from '../expect';
 import { addHelp } from '../help';
 import {
     copyFolderSync,
+    formatTitleToId,
     projectDir,
     readProjectConfig,
     templateDir,
@@ -38,7 +39,7 @@ export function addCmd(modName: string, modId?: string) {
     expect('param [modId]', modId, 'string|undefined');
 
     // Prepare mod id
-    modId = modId ?? modName;
+    modId = formatTitleToId(modId ?? modName);
 
     // Check if mod already exists
     if (projectConfig.mods[modId] || existsSync(join(projectPath, modId))) {
