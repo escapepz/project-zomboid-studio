@@ -13,7 +13,7 @@ TODO.md
 .docs
 .images
 .serena
-.template-*
+# .template-*
 node_modules
 !dist/scripts
 !dist/pzstudio.cmd

@@ -1,6 +1,6 @@
 import { homedir } from 'os';
 import { spawnSync } from 'child_process';
-import { dirname, join, resolve } from 'path';
+import { basename, dirname, join, resolve } from 'path';
 import {
     copyFileSync,
     existsSync,
@@ -39,7 +39,7 @@ export function projectDir() {
  * @returns {string} The current working directory
  */
 export function workingDir() {
-    return join(dirname(__dirname), 'lib');
+    return basename(__dirname) === 'dist' ? __dirname : join(dirname(__dirname), 'lib');
 }
 
 /**
@@ -49,7 +49,8 @@ export function workingDir() {
 export function templateDir(
     template: 'language' | 'mod' | 'mod-simple' | 'project' | 'workshop',
 ) {
-    return join(dirname(__dirname), '../', `.template-${template}`);
+    const root = basename(__dirname) === 'dist' ? join(__dirname, '..') : join(dirname(__dirname), '..');
+    return join(root, `.template-${template}`);
 }
 
 /**
@@ -413,7 +414,9 @@ export function updateExperimentalScripts(
     modId?: string,
 ) {
     try {
-        const scriptPath = resolve(__dirname, '../scripts/experimental-package-scripts.js');
+        const scriptPath = basename(__dirname) === 'dist'
+            ? resolve(__dirname, 'scripts/experimental-package-scripts.js')
+            : resolve(dirname(__dirname), '../scripts/experimental-package-scripts.js');
         if (!existsSync(scriptPath)) {
             return;
         }
