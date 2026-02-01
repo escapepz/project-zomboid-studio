@@ -1,6 +1,8 @@
 // @ts-ignore
-import { version, branch, buildDate } from '../../package.json';
+import { version, branch } from '../../package.json';
 import { terminal } from 'terminal-kit';
+import { existsSync, readFileSync } from 'fs';
+import { join } from 'path';
 import { spawnSync } from 'child_process';
 import { addCmd } from './commands/add';
 import { buildCmd } from './commands/build';
@@ -18,6 +20,18 @@ import { error, info, log, warn } from './logger';
 import { projectDir } from './helper';
 
 (async function () {
+    let buildDate = 'Unknown';
+    try {
+        const buildInfoPath = join(__dirname, '../build.json');
+        if (existsSync(buildInfoPath)) {
+            buildDate =
+                JSON.parse(readFileSync(buildInfoPath, 'utf8')).buildDate ??
+                'Unknown';
+        }
+    } catch (e) {
+        // ignore
+    }
+
     terminal.clear();
     terminal.green(
         `Project Zomboid Studio v${version} - @${branch} (${buildDate})\n`,
