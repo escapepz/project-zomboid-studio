@@ -8,6 +8,7 @@
             ".serena",
             ".libraries",
             ".tmp",
+            ".docs",
             "docs",
             "Logs",
             "tmp"

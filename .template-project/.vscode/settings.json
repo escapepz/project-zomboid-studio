@@ -1,3 +1,6 @@
 {
-    "extensions.ignoreRecommendations": false
+    "extensions.ignoreRecommendations": false,
+    "files.associations": {
+        "*.txt": "ZedScripts"
+    }
 }
