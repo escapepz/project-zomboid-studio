@@ -14,7 +14,7 @@ import {
     writeFileSync,
 } from 'fs';
 import { IProjectConfig } from './project';
-import { error, log } from './logger';
+import { error, log, warn } from './logger';
 
 /**
  * Returns the current project working directory
@@ -155,8 +155,15 @@ export function getOutDir() {
  * @param directoryPath The directory path
  */
 export function installLibraries(directoryPath?: string) {
-    log(`- Deleting '.libraries'...`);
-    rmSync(join(directoryPath, '.libraries'), { recursive: true, force: true });
+    const targetDir = join(directoryPath, '.libraries');
+    if (existsSync(targetDir)) {
+        log(`- Updating 'Umbrella' in '.libraries'...`);
+        if (gitUpdate(targetDir)) {
+            return;
+        }
+        warn(`Failed to update 'Umbrella', re-cloning...`);
+        rmSync(targetDir, { recursive: true, force: true });
+    }
 
     log(`- Cloning 'Umbrella' into '.libraries'...`);
     const cloneResult = spawnSync(
@@ -165,7 +172,7 @@ export function installLibraries(directoryPath?: string) {
             'clone',
             '--recursive',
             'https://github.com/asledgehammer/Umbrella.git',
-            join('.libraries'),
+            '.libraries',
         ],
         {
             cwd: directoryPath,
@@ -184,8 +191,15 @@ export function installLibraries(directoryPath?: string) {
  * @param directoryPath The directory path
  */
 export function installDocs(directoryPath?: string) {
-    log(`- Deleting '.docs'...`);
-    rmSync(join(directoryPath, '.docs'), { recursive: true, force: true });
+    const targetDir = join(directoryPath, '.docs');
+    if (existsSync(targetDir)) {
+        log(`- Updating 'docs' in '.docs'...`);
+        if (gitUpdate(targetDir)) {
+            return;
+        }
+        warn(`Failed to update 'docs', re-cloning...`);
+        rmSync(targetDir, { recursive: true, force: true });
+    }
 
     log(`- Cloning 'docs' into '.docs'...`);
     const cloneResult = spawnSync(
@@ -194,7 +208,7 @@ export function installDocs(directoryPath?: string) {
             'clone',
             '--recursive',
             'https://github.com/escapepz/docs.git',
-            join('.docs'),
+            '.docs',
         ],
         {
             cwd: directoryPath,
@@ -214,8 +228,15 @@ export function installDocs(directoryPath?: string) {
  * @param directoryPath The directory path
  */
 export function installGuides(directoryPath?: string) {
-    log(`- Deleting '.guides'...`);
-    rmSync(join(directoryPath, '.guides'), { recursive: true, force: true });
+    const targetDir = join(directoryPath, '.guides');
+    if (existsSync(targetDir)) {
+        log(`- Updating 'PZModdingGuides' in '.guides'...`);
+        if (gitUpdate(targetDir)) {
+            return;
+        }
+        warn(`Failed to update 'PZModdingGuides', re-cloning...`);
+        rmSync(targetDir, { recursive: true, force: true });
+    }
 
     log(`- Cloning 'PZModdingGuides' into '.guides'...`);
     const cloneResult = spawnSync(
@@ -224,7 +245,7 @@ export function installGuides(directoryPath?: string) {
             'clone',
             '--recursive',
             'https://github.com/demiurgeQuantified/PZModdingGuides.git',
-            join('.guides'),
+            '.guides',
         ],
         {
             cwd: directoryPath,
@@ -235,6 +256,38 @@ export function installGuides(directoryPath?: string) {
     if (cloneResult.status !== 0) {
         error(`Failed to clone 'PZModdingGuides'!`);
     }
+}
+
+/**
+ * Update a git repository
+ * @param directoryPath The directory path
+ * @returns {boolean} Whether the update was successful
+ */
+function gitUpdate(directoryPath: string) {
+    const git = (args: string[]) =>
+        spawnSync('git', args, {
+            cwd: directoryPath,
+            shell: true,
+            stdio: 'pipe',
+        });
+
+    // git fetch --all
+    if (git(['fetch', '--all']).status !== 0) return false;
+
+    // git reset --hard origin/main
+    if (git(['reset', '--hard', 'origin/main']).status !== 0) return false;
+
+    // git submodule update --init --recursive --force
+    if (
+        git(['submodule', 'update', '--init', '--recursive', '--force'])
+            .status !== 0
+    )
+        return false;
+
+    // git clean -fdx
+    if (git(['clean', '-fdx']).status !== 0) return false;
+
+    return true;
 }
 
 /**
