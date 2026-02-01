@@ -37,7 +37,7 @@ export function workingDir() {
  * @returns {string} The template directory
  */
 export function templateDir(
-    template: 'language' | 'mod' | 'project' | 'workshop',
+    template: 'language' | 'mod' | 'mod-simple' | 'project' | 'workshop',
 ) {
     return join(dirname(__dirname), '../', `.template-${template}`);
 }
@@ -390,4 +390,40 @@ export function generateModInfoText(
     }
 
     return lines.join('\n');
+}
+/**
+ * Update experimental package scripts
+ * @param action The action to perform ('addProject', 'addMod', 'removeMod')
+ * @param projectDir The project directory
+ * @param modId The mod id (optional)
+ */
+export function updateExperimentalScripts(
+    action: 'addProject' | 'addMod' | 'removeMod',
+    projectDir: string,
+    modId?: string,
+) {
+    try {
+        const scriptPath = resolve(__dirname, '../scripts/experimental-package-scripts.js');
+        if (!existsSync(scriptPath)) {
+            return;
+        }
+
+        // Clear cache to allow modifications without rebuild
+        delete require.cache[require.resolve(scriptPath)];
+        const script = require(scriptPath);
+
+        switch (action) {
+            case 'addProject':
+                if (script.addProjectScripts) script.addProjectScripts(projectDir);
+                break;
+            case 'addMod':
+                if (script.addModScripts && modId) script.addModScripts(projectDir, modId);
+                break;
+            case 'removeMod':
+                if (script.removeModScripts && modId) script.removeModScripts(projectDir, modId);
+                break;
+        }
+    } catch (e) {
+        warn(`Failed to run experimental script: ${e}`);
+    }
 }

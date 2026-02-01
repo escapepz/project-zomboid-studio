@@ -3,7 +3,7 @@ import { existsSync, rmSync } from 'fs';
 import { expect } from '../expect';
 import { addHelp } from '../help';
 import { error, info, log } from '../logger';
-import { projectDir, readProjectConfig, updateProjectConfig } from '../helper';
+import { projectDir, readProjectConfig, updateExperimentalScripts, updateProjectConfig } from '../helper';
 
 addHelp(
     'delete',
@@ -49,4 +49,7 @@ export function deleteCmd(modId: string) {
     } else {
         error(`Mod '${modId}' not found in project.json!`);
     }
+
+    // Run experimental scripts
+    updateExperimentalScripts('removeMod', projectPath, modId);
 }

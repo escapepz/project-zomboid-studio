@@ -5,6 +5,8 @@
 .libraries
 .tmp
 .logs
+.template-mod
+.template-language
 
 Logs/
 tmp/

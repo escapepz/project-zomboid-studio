@@ -7,6 +7,7 @@ import {
     projectDir,
     readProjectConfig,
     templateDir,
+    updateExperimentalScripts,
     updateProjectConfig,
 } from '../helper';
 import { log } from '../logger';
@@ -53,6 +54,9 @@ export function addCmd(modName: string, modId?: string) {
         description: '',
     };
     updateProjectConfig(join(projectPath, 'project.json'), projectConfig);
+
+    // Run experimental scripts
+    updateExperimentalScripts('addMod', projectPath, modId);
 
     // Done
     log(`Added mod '${modName}' with id '${modId}'`);

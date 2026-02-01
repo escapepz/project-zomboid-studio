@@ -26,3 +26,15 @@ if (fs.existsSync(cmdSource)) {
     fs.copyFileSync(cmdSource, cmdDest);
     console.log(`Copied pzstudio.cmd to ${cmdDest}`);
 }
+
+// Copy experimental-package-scripts.js to dist/scripts
+const expScriptSource = path.join(__dirname, 'experimental-package-scripts.js');
+const scriptsDistDir = path.join(distPath, 'scripts');
+if (!fs.existsSync(scriptsDistDir)) {
+    fs.mkdirSync(scriptsDistDir, { recursive: true });
+}
+const expScriptDest = path.join(scriptsDistDir, 'experimental-package-scripts.js');
+if (fs.existsSync(expScriptSource)) {
+    fs.copyFileSync(expScriptSource, expScriptDest);
+    console.log(`Copied experimental-package-scripts.js to ${expScriptDest}`);
+}

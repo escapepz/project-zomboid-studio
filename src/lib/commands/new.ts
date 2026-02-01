@@ -9,6 +9,7 @@ import {
     projectDir,
     readProjectConfig,
     templateDir,
+    updateExperimentalScripts,
     updateProjectConfig,
 } from '../helper';
 import { info, log } from '../logger';
@@ -25,6 +26,8 @@ addHelp(
 export async function newCmd(projectTitle: string, modId?: string) {
     const templateProjectPath = templateDir('project');
     const templateModPath = templateDir('mod');
+    const templateSimpleModPath = templateDir('mod-simple');
+    const templateLanguagePath = templateDir('language');
 
     // Check if we are in a project directory
     if (readProjectConfig()) {
@@ -50,9 +53,17 @@ export async function newCmd(projectTitle: string, modId?: string) {
     log(`- Creating project '${projectTitle}'...`);
     copyFolderSync(templateProjectPath, projectPath);
 
+    // Copy simple mod template
+    log(`- Creating simple mod '${modId}'...`);
+    copyFolderSync(templateSimpleModPath, join(projectPath, modId));
+
     // Copy mod template
-    log(`- Creating mod '${modId}'...`);
-    copyFolderSync(templateModPath, join(projectPath, modId));
+    log(`- Creating .template-mod`);
+    copyFolderSync(templateModPath, join(projectPath, '.template-mod'));
+
+    // Copy language template
+    log(`- Creating .template-language`);
+    copyFolderSync(templateLanguagePath, join(projectPath, '.template-language'));
 
     // Update config
     log(`- Updating project config...`);
@@ -70,6 +81,10 @@ export async function newCmd(projectTitle: string, modId?: string) {
 
     // Install Docs (includes guides as a submodule)
     installDocs(projectPath);
+
+    // Run experimental scripts
+    updateExperimentalScripts('addProject', projectPath);
+    updateExperimentalScripts('addMod', projectPath, modId);
 
     // Done
     info(`The project '${projectTitle}' has been created at '${projectPath}'`);
