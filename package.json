@@ -98,6 +98,7 @@
         "clean": "del-cli --force ./dist",
         "bundle": "node scripts/bundle.js",
         "build": "npm run clean && npm run bundle && node scripts/update-build-date.js",
+        "vsce:package": "vsce package --no-dependencies",
         "watch": "npm run clean && node scripts/bundle.js --watch",
         "format": "prettier --write .",
         "format:check": "prettier --check ."
@@ -112,6 +113,7 @@
         "@types/node": "^18.7.5",
         "@types/terminal-kit": "^2.5.1",
         "@types/vscode": "^1.102.0",
+        "@vscode/vsce": "^3.7.1",
         "esbuild": "^0.27.2",
         "prettier": "^3.7.4",
         "typescript": "^5.0.4"
