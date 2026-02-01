@@ -19,7 +19,7 @@ import { arg, args, cmd } from './args';
 import { error, info, log, warn } from './logger';
 import { projectDir } from './helper';
 
-(async function () {
+export async function runCLI(cmdName?: string, cmdArgs?: string[]) {
     let buildDate = 'Unknown';
     try {
         const buildInfoPath = join(__dirname, '../build.json');
@@ -32,14 +32,16 @@ import { projectDir } from './helper';
         // ignore
     }
 
-    terminal.clear();
-    terminal.green(
-        `Project Zomboid Studio v${version} - @${branch} (${buildDate})\n`,
-    );
+    if (!cmdName) {
+        terminal.clear();
+        terminal.green(
+            `Project Zomboid Studio v${version} - @${branch} (${buildDate})\n`,
+        );
+    }
 
     const command = {
-        name: cmd(),
-        params: args(),
+        name: cmdName ?? cmd(),
+        params: cmdArgs ?? args(),
     };
 
     //log('PZStudio Dir: ' + workingDir());
@@ -70,7 +72,7 @@ import { projectDir } from './helper';
     try {
         switch (command.name) {
             case 'add':
-                await addCmd(arg(0) as string);
+                await addCmd(command.params[0] as string);
                 break;
 
             case 'build':
@@ -82,27 +84,27 @@ import { projectDir } from './helper';
                 break;
 
             case 'delete':
-                await deleteCmd(arg(0) as string);
+                await deleteCmd(command.params[0] as string);
                 break;
 
             case 'help':
-                await helpCmd(arg(0) as string);
+                await helpCmd(command.params[0] as string);
                 break;
 
             case 'lang':
-                await langCmd(arg(0) as string, arg(1) as string);
+                await langCmd(command.params[0] as string, command.params[1] as string);
                 break;
 
             case 'new':
-                await newCmd(arg(0) as string, arg(1) as string);
+                await newCmd(command.params[0] as string, command.params[1] as string);
                 break;
 
             case 'outdir':
-                await outdirCmd(arg(0) as string);
+                await outdirCmd(command.params[0] as string);
                 break;
 
             case 'rename':
-                await renameCmd(arg(0) as string, arg(1) as string);
+                await renameCmd(command.params[0] as string, command.params[1] as string);
                 break;
 
             case 'update':
@@ -124,5 +126,7 @@ import { projectDir } from './helper';
         error(e);
     }
 
-    terminal('\n');
-})();
+    if (!cmdName) {
+        terminal('\n');
+    }
+}

@@ -16,12 +16,22 @@ import {
 import { IProjectConfig } from './project';
 import { error, log, warn } from './logger';
 
+let externalProjectDir: string | undefined;
+
+/**
+ * Sets the project working directory externally (e.g. from VS Code)
+ * @param dir The directory path
+ */
+export function setProjectDir(dir: string | undefined) {
+    externalProjectDir = dir;
+}
+
 /**
  * Returns the current project working directory
  * @returns {string} The current working directory
  */
 export function projectDir() {
-    return process.cwd();
+    return externalProjectDir ?? process.cwd();
 }
 
 /**

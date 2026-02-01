@@ -1,14 +1,29 @@
 import { terminal } from 'terminal-kit';
 
+export interface ILogger {
+    log(message: string): void;
+    info(message: string): void;
+    warn(message: string): void;
+    error(message: string | Error): void;
+}
+
+let externalLogger: ILogger | undefined;
+
+export function setLogger(logger: ILogger | undefined) {
+    externalLogger = logger;
+}
+
 /**
  * Logs a message to the console.
  * @param message
  */
 export function log(message: any) {
-    terminal.white(
-        typeof message === 'string' ? message : JSON.stringify(message),
-        '\n',
-    );
+    const msg = typeof message === 'string' ? message : JSON.stringify(message);
+    if (externalLogger) {
+        externalLogger.log(msg);
+        return;
+    }
+    terminal.white(msg, '\n');
 }
 
 /**
@@ -16,10 +31,12 @@ export function log(message: any) {
  * @param message
  */
 export function info(message: any) {
-    terminal.brightCyan(
-        typeof message === 'string' ? message : JSON.stringify(message),
-        '\n',
-    );
+    const msg = typeof message === 'string' ? message : JSON.stringify(message);
+    if (externalLogger) {
+        externalLogger.info(msg);
+        return;
+    }
+    terminal.brightCyan(msg, '\n');
 }
 
 /**
@@ -27,10 +44,12 @@ export function info(message: any) {
  * @param message
  */
 export function warn(message: any) {
-    terminal.yellow(
-        typeof message === 'string' ? message : JSON.stringify(message),
-        '\n',
-    );
+    const msg = typeof message === 'string' ? message : JSON.stringify(message);
+    if (externalLogger) {
+        externalLogger.warn(msg);
+        return;
+    }
+    terminal.yellow(msg, '\n');
 }
 
 /**
@@ -38,5 +57,9 @@ export function warn(message: any) {
  * @param error
  */
 export function error(error: any) {
+    if (externalLogger) {
+        externalLogger.error(error);
+        return;
+    }
     terminal.red(error, '\n');
 }

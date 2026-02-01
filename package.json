@@ -1,10 +1,59 @@
 {
     "name": "pzstudio",
-    "version": "2.2.0",
+    "displayName": "Project Zomboid Studio",
+    "publisher": "Konijima",
+    "version": "2.2.0-b42.13.1-vscode-ext",
     "branch": "b42.13.1",
     "description": "",
-    "main": "./dist/index.js",
+    "main": "./dist/extension.js",
     "type": "commonjs",
+    "engines": {
+        "vscode": "^1.75.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "activationEvents": [],
+    "contributes": {
+        "commands": [
+            {
+                "command": "pzstudio.new",
+                "title": "PZStudio: New Project"
+            },
+            {
+                "command": "pzstudio.add",
+                "title": "PZStudio: Add Mod"
+            },
+            {
+                "command": "pzstudio.build",
+                "title": "PZStudio: Build"
+            },
+            {
+                "command": "pzstudio.clean",
+                "title": "PZStudio: Clean"
+            },
+            {
+                "command": "pzstudio.delete",
+                "title": "PZStudio: Delete Mod"
+            },
+            {
+                "command": "pzstudio.lang",
+                "title": "PZStudio: New Language"
+            },
+            {
+                "command": "pzstudio.rename",
+                "title": "PZStudio: Rename Mod"
+            },
+            {
+                "command": "pzstudio.update",
+                "title": "PZStudio: Update"
+            },
+            {
+                "command": "pzstudio.watch",
+                "title": "PZStudio: Watch"
+            }
+        ]
+    },
     "bin": {
         "pzstudio": "./dist/index.js"
     },
@@ -52,6 +101,7 @@
     "devDependencies": {
         "@types/node": "^18.7.5",
         "@types/terminal-kit": "^2.5.1",
+        "@types/vscode": "^1.108.1",
         "prettier": "^3.7.4"
     },
     "dependencies": {
@@ -59,6 +109,7 @@
         "del-cli": "^4.0.1",
         "download": "^8.0.0",
         "terminal-kit": "^3.0.0",
+        "tslib": "^2.8.1",
         "typescript": "^5.0.4"
     }
 }

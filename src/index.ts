@@ -1,2 +1,3 @@
 #!/usr/bin/env node
-import './lib/cli';
+import { runCLI } from './lib/cli';
+runCLI();
