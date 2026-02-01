@@ -1,34 +1,75 @@
-# Project Zomboid Studio
+# Project Zomboid Studio (VS Code)
 
-For complete documentation and usage information, please refer to the original project repository:
+[![Version](https://img.shields.io/badge/version-2.2.0--b42.13.1-blue.svg)](https://github.com/escapepz/project-zomboid-studio)
+[![Project Zomboid](https://img.shields.io/badge/Project%20Zomboid-b42.13.1-orange.svg)](https://projectzomboid.com/)
 
-**[Konijima/project-zomboid-studio](https://github.com/Konijima/project-zomboid-studio)**
+**Project Zomboid Studio** is a powerful environment designed to streamline the creation, management, and building of Lua mods for Project Zomboid. This extension brings the capabilities of the PZ Studio CLI directly into VS Code, providing a seamless workflow for modders.
 
-This is a CLI tool for creating and maintaining Lua mods for Project Zomboid with ease. Visit the link above for:
+## 🚀 Features
 
-- Installation instructions
-- Command reference
-- Setup requirements
-- VSCode extensions recommendations
-- Examples and more
+-   **Instant Project Creation**: Initialize a full modding project structure with templates in seconds.
+-   **Multi-Mod Support**: Manage multiple mods within a single project workspace.
+-   **Automated Building**: Build your workshop-ready folders with one click, including `mod.info` generation and dual-branch support (Main & Dev Branch).
+-   **Live Sync**: Watch mode to automatically update your workshop directory as you save files.
+-   **In-Place Documentation**: Automatically clones the latest modding docs and guides into your project.
+-   **Version Compatibility**: Optimized for **Project Zomboid b42.13.1**.
 
-## Key Changes in This Branch
+## 🛠 Commands
 
-- **Compatibility in this branch: Project Zomboid b42.13.1 MP**
-- Added AGENTS.md with build commands, architecture overview, and code style guidelines
-- Updated mod ID formatting to be Unix-compatible (Windows and Linux):
-    - Spaces converted to underscores: "Teleportal Prototype" → `teleportal_prototype`
-    - Special characters removed: "My-Cool Mod!" → `my_cool_mod`
-    - Maintains camelCase without conversion: "TeleportalPrototype" → `teleportalprototype`
-- Created `installDocs()` function to clone https://github.com/escapepz/docs repository
-- Created `installGuides()` function to clone https://github.com/demiurgeQuantified/PZModdingGuides repository (**Deprecated**: use `installDocs()` instead, which includes guides as a submodule)
-- Integrated docs and guides installation into new project creation and project update commands
-- Changed mod.info output path to version-specific directory: `{modId}/42.13.1/mod.info`
-- Enhanced build command to create dual workshop outputs:
-    - **Main workshop**: `{projectTitle}` with standard mod IDs and configured visibility
-    - **Dev branch workshop**: `{projectTitle} - dev_branch` with `_dev` suffix on mod IDs
-    - Each mod in dev branch has prefix in path and id field: `Contents/mods/{modId}_dev/42.13.1/mod.info`
-    - Dev branch workshop always sets visibility to `unlisted` regardless of project.json settings
-    - Dev branch workshop title appends ` - dev_branch` suffix: `title={projectTitle} - dev_branch`
-    - Dev branch workshop.txt has no `id=` field (excluded automatically)
-- Updated documentation to reference original project repository
+Access these commands via the **Command Palette** (`Ctrl+Shift+P` / `Cmd+Shift+P`):
+
+| Command | Description |
+| :--- | :--- |
+| `PZStudio: New Project` | Create a new project with a simple mod template. |
+| `PZStudio: Add Mod` | Add a new mod to the current project. |
+| `PZStudio: Build` | Build the project and deploy to the Workshop folder. |
+| `PZStudio: Watch` | Watch for changes and build incrementally. |
+| `PZStudio: Clean` | Clean the output directories. |
+| `PZStudio: New Language` | Add a new translation template to a mod. |
+| `PZStudio: Rename Mod` | Safely rename an existing mod. |
+| `PZStudio: Delete Mod` | Remove a mod from the project. |
+| `PZStudio: Update` | Sync libraries and documentation. |
+
+## 📂 Project Structure
+
+A typical PZ Studio project looks like this:
+
+```text
+my-project/
+├── .docs/                  # Cloned modding documentation
+├── .libraries/             # Umbrella Lua libraries for IDE support
+├── my_mod/                 # Your mod's Lua source and assets
+│   ├── media/
+│   └── mod.info            # Managed by PZ Studio
+├── project.json            # Project-wide configuration
+└── workshop/               # Workshop assets (preview.png, etc.)
+```
+
+## 📦 Automated Workshop Deployment
+
+When you run the **Build** command, PZ Studio creates two versions of your mod in your Zomboid Workshop folder:
+
+1.  **Main Workshop**: The production-ready mod.
+2.  **Dev Branch**: An unlisted version with the `_dev` suffix, allowing you to test changes in multiplayer without affecting your live subscribers.
+
+## 📝 Requirements
+
+-   **Node.js**: Required to run the underlying engine.
+-   **Git**: Required for cloning documentation and libraries.
+
+## 🔗 Links
+
+- **Marketplace**: [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=escapepz.pzstudio)
+- **Repository**: [GitHub](https://github.com/escapepz/project-zomboid-studio)
+- **Support**: [Issue Tracker](https://github.com/escapepz/project-zomboid-studio/issues)
+- **License**: [Apache-2.0](LICENSE.md)
+
+## ☕ Support
+
+If you find this tool useful, consider supporting the developers:
+
+-   [Support escapepz on Ko-fi](https://ko-fi.com/escapepz)
+-   [Support konijima on Ko-fi](https://ko-fi.com/konijima)
+
+---
+*Based on the original [Project Zomboid Studio](https://github.com/Konijima/project-zomboid-studio).*
