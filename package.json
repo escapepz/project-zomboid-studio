@@ -1,18 +1,19 @@
 {
     "name": "pzstudio",
     "displayName": "Project Zomboid Studio",
-    "publisher": "Konijima",
-    "version": "2.2.0-b42.13.1-vscode-ext",
+    "publisher": "escapepz",
+    "version": "2.2.0-b42.13.1-vscode-ext-alpha",
     "branch": "b42.13.1",
     "description": "",
     "main": "./dist/extension.js",
     "type": "commonjs",
     "engines": {
-        "vscode": "^1.75.0"
+        "vscode": "^1.102.0"
     },
     "categories": [
         "Other"
     ],
+    "icon": ".template-project/workshop/preview.png",
     "activationEvents": [],
     "contributes": {
         "commands": [
@@ -58,17 +59,21 @@
         "pzstudio": "./dist/index.js"
     },
     "publishConfig": {
-        "tag": "latest"
+        "tag": "alpha"
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/Konijima/project-zomboid-studio.git"
+        "url": "git+https://github.com/escapepz/project-zomboid-studio.git"
     },
     "bugs": {
-        "url": "https://github.com/Konijima/project-zomboid-studio/issues"
+        "url": "https://github.com/escapepz/project-zomboid-studio/issues"
     },
-    "author": "Konijima",
+    "author": "escapepz",
     "contributors": [
+        {
+            "name": "escapepz",
+            "url": "https://github.com/escapepz"
+        },
         {
             "name": "asledgehammer",
             "url": "https://github.com/asledgehammer"
@@ -81,14 +86,19 @@
     "funding": [
         {
             "type": "ko-fi",
+            "url": "https://ko-fi.com/escapepz"
+        },
+        {
+            "type": "ko-fi",
             "url": "https://ko-fi.com/konijima"
         }
     ],
     "license": "Apache License Version 2.0",
     "scripts": {
         "clean": "del-cli --force ./dist",
-        "build": "npm run clean && tsc && node scripts/update-build-date.js",
-        "watch": "npm run clean && tsc --watch",
+        "bundle": "node scripts/bundle.js",
+        "build": "npm run clean && npm run bundle && node scripts/update-build-date.js",
+        "watch": "npm run clean && node scripts/bundle.js --watch",
         "format": "prettier --write .",
         "format:check": "prettier --check ."
     },
@@ -101,15 +111,16 @@
     "devDependencies": {
         "@types/node": "^18.7.5",
         "@types/terminal-kit": "^2.5.1",
-        "@types/vscode": "^1.108.1",
-        "prettier": "^3.7.4"
+        "@types/vscode": "^1.102.0",
+        "esbuild": "^0.27.2",
+        "prettier": "^3.7.4",
+        "typescript": "^5.0.4"
     },
     "dependencies": {
         "chokidar": "^3.5.3",
         "del-cli": "^4.0.1",
         "download": "^8.0.0",
         "terminal-kit": "^3.0.0",
-        "tslib": "^2.8.1",
-        "typescript": "^5.0.4"
+        "tslib": "^2.8.1"
     }
 }

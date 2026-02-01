@@ -1,6 +1,5 @@
 // @ts-ignore
 import { version, branch } from '../../package.json';
-import { terminal } from 'terminal-kit';
 import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { spawnSync } from 'child_process';
@@ -33,8 +32,7 @@ export async function runCLI(cmdName?: string, cmdArgs?: string[]) {
     }
 
     if (!cmdName) {
-        terminal.clear();
-        terminal.green(
+        log(
             `Project Zomboid Studio v${version} - @${branch} (${buildDate})\n`,
         );
     }
@@ -127,6 +125,6 @@ export async function runCLI(cmdName?: string, cmdArgs?: string[]) {
     }
 
     if (!cmdName) {
-        terminal('\n');
+        log('\n');
     }
 }

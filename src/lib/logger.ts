@@ -1,5 +1,3 @@
-import { terminal } from 'terminal-kit';
-
 export interface ILogger {
     log(message: string): void;
     info(message: string): void;
@@ -8,6 +6,19 @@ export interface ILogger {
 }
 
 let externalLogger: ILogger | undefined;
+
+function getTerminal() {
+    try {
+        return require('terminal-kit').terminal;
+    } catch (e) {
+        return {
+            white: console.log,
+            brightCyan: console.log,
+            yellow: console.log,
+            red: console.log,
+        };
+    }
+}
 
 export function setLogger(logger: ILogger | undefined) {
     externalLogger = logger;
@@ -23,7 +34,7 @@ export function log(message: any) {
         externalLogger.log(msg);
         return;
     }
-    terminal.white(msg, '\n');
+    getTerminal().white(msg, '\n');
 }
 
 /**
@@ -36,7 +47,7 @@ export function info(message: any) {
         externalLogger.info(msg);
         return;
     }
-    terminal.brightCyan(msg, '\n');
+    getTerminal().brightCyan(msg, '\n');
 }
 
 /**
@@ -49,7 +60,7 @@ export function warn(message: any) {
         externalLogger.warn(msg);
         return;
     }
-    terminal.yellow(msg, '\n');
+    getTerminal().yellow(msg, '\n');
 }
 
 /**
@@ -61,5 +72,5 @@ export function error(error: any) {
         externalLogger.error(error);
         return;
     }
-    terminal.red(error, '\n');
+    getTerminal().red(error, '\n');
 }
