@@ -6,7 +6,6 @@
             ".git",
             ".vscode",
             ".serena",
-            ".libraries",
             ".tmp",
             ".docs",
             "docs",
