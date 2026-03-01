@@ -1,7 +1,6 @@
 # Project Zomboid Studio
 
 For complete documentation and usage information, please refer to the original project repository:
-
 **[Konijima/project-zomboid-studio](https://github.com/Konijima/project-zomboid-studio)**
 
 This is a CLI tool for creating and maintaining Lua mods for Project Zomboid with ease. Visit the link above for:
@@ -32,3 +31,46 @@ This is a CLI tool for creating and maintaining Lua mods for Project Zomboid wit
     - Dev branch workshop title appends ` - dev_branch` suffix: `title={projectTitle} - dev_branch`
     - Dev branch workshop.txt has no `id=` field (excluded automatically)
 - Updated documentation to reference original project repository
+
+## 🛠️ Building from Source
+
+This project is a monorepo managed with **pnpm**.
+
+### Prerequisites
+
+- [Node.js](https://nodejs.org/) (v16+)
+- [pnpm](https://pnpm.io/)
+
+### 1. Install Dependencies
+
+From the project root, run:
+
+```bash
+pnpm install
+```
+
+### 2. Build the CLI Tool
+
+First, build the main CLI project (this is required before building the extension):
+
+```bash
+pnpm build
+```
+
+### 3. Build the VS Code Extension
+
+After the CLI project is built, you can build the extension:
+
+```bash
+pnpm --filter pzstudio build
+```
+
+The extension bundle will be available at `packages/vscode-extension/dist/extension.js`.
+
+### 4. Package for Marketplace (Optional)
+
+To generate a `.vsix` file for local installation or publishing:
+
+```bash
+pnpm --filter pzstudio vsce:package
+```

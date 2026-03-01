@@ -1,9 +1,29 @@
 {
-    "name": "pzstudio",
-    "version": "2.2.0",
+    "name": "pzstudio-cli",
+    "version": "2.242131.2",
     "branch": "b42.13.1",
     "description": "",
     "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "require": "./dist/index.js"
+        },
+        "./api": {
+            "types": "./dist/api.d.ts",
+            "import": "./dist/api.js",
+            "require": "./dist/api.js"
+        }
+    },
+    "typesVersions": {
+        "*": {
+            "api": [
+                "dist/api.d.ts"
+            ]
+        }
+    },
     "type": "commonjs",
     "bin": {
         "pzstudio": "./dist/index.js"

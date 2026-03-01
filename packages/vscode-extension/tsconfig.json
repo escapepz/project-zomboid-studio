@@ -3,22 +3,19 @@
         "target": "esnext",
         "module": "CommonJS",
         "moduleResolution": "node",
-        "lib": ["esnext", "DOM"],
+        "lib": ["esnext"],
         "outDir": "dist",
         "rootDir": "src",
         "strict": true,
         "skipLibCheck": true,
-        "importHelpers": true,
-        "noImplicitAny": true,
         "esModuleInterop": true,
-        "strictNullChecks": false,
         "resolveJsonModule": true,
-        "strictFunctionTypes": true,
-        "emitDecoratorMetadata": true,
-        "experimentalDecorators": true,
-        "allowSyntheticDefaultImports": true,
-        "declaration": true,
-        "typeRoots": ["./node_modules/@types"]
+        "declaration": false,
+        "typeRoots": ["./node_modules/@types"],
+        "baseUrl": ".",
+        "paths": {
+            "pzstudio-cli/*": ["../../dist/*"]
+        }
     },
     "include": ["./src/**/*.ts"],
     "exclude": ["./node_modules"]
