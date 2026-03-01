@@ -38,7 +38,7 @@ importers:
 
     packages/vscode-extension:
         dependencies:
-            pzstudio:
+            pzstudio-cli:
                 specifier: workspace:*
                 version: link:../..
         devDependencies:

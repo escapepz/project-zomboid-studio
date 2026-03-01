@@ -4,3 +4,5 @@
 .serena
 packages/*/dist
 packages/*/node_modules
+
+*.vsix

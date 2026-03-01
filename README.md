@@ -1,7 +1,6 @@
 # Project Zomboid Studio
 
 For complete documentation and usage information, please refer to the original project repository:
-
 **[Konijima/project-zomboid-studio](https://github.com/Konijima/project-zomboid-studio)**
 
 This is a CLI tool for creating and maintaining Lua mods for Project Zomboid with ease. Visit the link above for:
@@ -63,7 +62,7 @@ pnpm build
 After the CLI project is built, you can build the extension:
 
 ```bash
-pnpm --filter pzstudio-vscode build
+pnpm --filter pzstudio build
 ```
 
 The extension bundle will be available at `packages/vscode-extension/dist/extension.js`.
@@ -73,5 +72,5 @@ The extension bundle will be available at `packages/vscode-extension/dist/extens
 To generate a `.vsix` file for local installation or publishing:
 
 ```bash
-pnpm --filter pzstudio-vscode vsce:package
+pnpm --filter pzstudio vsce:package
 ```

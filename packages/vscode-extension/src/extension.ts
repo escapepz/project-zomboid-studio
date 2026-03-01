@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { setLogger, setProjectDir, runCLI } from 'pzstudio/api';
+import { setLogger, setProjectDir, runCLI } from 'pzstudio-cli/api';
 
 function getTimestamp() {
     const now = new Date();

@@ -1,5 +1,5 @@
 {
-    "name": "pzstudio-vscode",
+    "name": "pzstudio",
     "displayName": "Project Zomboid Studio",
     "publisher": "escapepz",
     "version": "2.242131.2",
@@ -103,6 +103,6 @@
         "esbuild": "^0.27.2"
     },
     "dependencies": {
-        "pzstudio": "workspace:*"
+        "pzstudio-cli": "workspace:*"
     }
 }
