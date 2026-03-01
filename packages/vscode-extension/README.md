@@ -1,6 +1,6 @@
 # Project Zomboid Studio (VS Code)
 
-[![Version](https://img.shields.io/badge/version-2.242131.2-blue.svg)](https://github.com/escapepz/project-zomboid-studio)
+[![Version](https://img.shields.io/badge/version-2.242131.3-blue.svg)](https://github.com/escapepz/project-zomboid-studio)
 [![Project Zomboid](https://img.shields.io/badge/Project%20Zomboid-b42.13.1-orange.svg)](https://projectzomboid.com/)
 
 **Project Zomboid Studio** is a powerful environment designed to streamline the creation, management, and building of Lua mods for Project Zomboid. This extension brings the capabilities of the PZ Studio CLI directly into VS Code, providing a seamless workflow for modders.
