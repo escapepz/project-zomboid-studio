@@ -59,7 +59,7 @@ function getEmbeddedTemplateDir(category: TemplateCategory): string {
         basename(__dirname) === 'dist'
             ? join(__dirname, '..')
             : join(dirname(__dirname), '..');
-    return join(root, `.template-${category}`);
+    return join(root, '.template-legacy', `.template-${category}`);
 }
 
 function isDirNonEmpty(dir: string): boolean {

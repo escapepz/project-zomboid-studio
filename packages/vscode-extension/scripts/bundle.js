@@ -57,8 +57,18 @@ async function run() {
             ];
 
             for (const template of templates) {
-                const from = path.join(__dirname, '../../../', template);
-                const to = path.join(__dirname, '../', template);
+                const from = path.join(
+                    __dirname,
+                    '../../../',
+                    '.template-legacy/',
+                    template,
+                );
+                const to = path.join(
+                    __dirname,
+                    '../',
+                    '.template-legacy/',
+                    template,
+                );
 
                 if (fs.existsSync(from)) {
                     console.log(`Syncing ${template}...`);
