@@ -2,3 +2,5 @@
 /dist
 .idea
 .serena
+packages/*/dist
+packages/*/node_modules

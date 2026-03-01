@@ -1,0 +1,108 @@
+{
+    "name": "pzstudio-vscode",
+    "displayName": "Project Zomboid Studio",
+    "publisher": "escapepz",
+    "version": "2.242131.2",
+    "description": "Effortlessly create and maintain Lua mods for Project Zomboid with intuitive structuring and real-time change monitoring.",
+    "main": "./dist/extension.js",
+    "type": "commonjs",
+    "engines": {
+        "vscode": "^1.102.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "icon": "icon.png",
+    "activationEvents": [],
+    "contributes": {
+        "commands": [
+            {
+                "command": "pzstudio.new",
+                "title": "PZStudio: New Project"
+            },
+            {
+                "command": "pzstudio.add",
+                "title": "PZStudio: Add Mod"
+            },
+            {
+                "command": "pzstudio.build",
+                "title": "PZStudio: Build"
+            },
+            {
+                "command": "pzstudio.clean",
+                "title": "PZStudio: Clean"
+            },
+            {
+                "command": "pzstudio.delete",
+                "title": "PZStudio: Delete Mod"
+            },
+            {
+                "command": "pzstudio.lang",
+                "title": "PZStudio: New Language"
+            },
+            {
+                "command": "pzstudio.rename",
+                "title": "PZStudio: Rename Mod"
+            },
+            {
+                "command": "pzstudio.update",
+                "title": "PZStudio: Update"
+            },
+            {
+                "command": "pzstudio.watch",
+                "title": "PZStudio: Watch"
+            }
+        ]
+    },
+    "homepage": "https://marketplace.visualstudio.com/items?itemName=escapepz.pzstudio",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/escapepz/project-zomboid-studio.git",
+        "directory": "packages/vscode-extension"
+    },
+    "bugs": {
+        "url": "https://github.com/escapepz/project-zomboid-studio/issues"
+    },
+    "author": "escapepz",
+    "contributors": [
+        {
+            "name": "escapepz",
+            "url": "https://github.com/escapepz"
+        },
+        {
+            "name": "asledgehammer",
+            "url": "https://github.com/asledgehammer"
+        },
+        {
+            "name": "demiurgeQuantified",
+            "url": "https://github.com/demiurgeQuantified"
+        }
+    ],
+    "funding": [
+        {
+            "type": "ko-fi",
+            "url": "https://ko-fi.com/escapepz"
+        },
+        {
+            "type": "ko-fi",
+            "url": "https://ko-fi.com/konijima"
+        }
+    ],
+    "license": "Apache-2.0",
+    "scripts": {
+        "clean": "del-cli --force ./dist",
+        "bundle": "node scripts/bundle.js",
+        "build": "npm run clean && npm run bundle",
+        "vsce:package": "vsce package --no-dependencies",
+        "watch": "npm run clean && node scripts/bundle.js --watch"
+    },
+    "devDependencies": {
+        "@types/vscode": "^1.102.0",
+        "@vscode/vsce": "^3.7.1",
+        "del-cli": "^4.0.1",
+        "esbuild": "^0.27.2"
+    },
+    "dependencies": {
+        "pzstudio": "workspace:*"
+    }
+}

@@ -1,9 +1,13 @@
 {
     "name": "pzstudio",
-    "version": "2.2.0",
+    "version": "2.242131.2",
     "branch": "b42.13.1",
     "description": "",
     "main": "./dist/index.js",
+    "exports": {
+        ".": "./dist/index.js",
+        "./api": "./dist/api.js"
+    },
     "type": "commonjs",
     "bin": {
         "pzstudio": "./dist/index.js"

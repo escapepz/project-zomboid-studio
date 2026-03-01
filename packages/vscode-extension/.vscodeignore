@@ -1,0 +1,8 @@
+.git
+.gitignore
+src
+scripts
+tsconfig.json
+node_modules
+!dist/extension.js
+!dist/extension.js.map
