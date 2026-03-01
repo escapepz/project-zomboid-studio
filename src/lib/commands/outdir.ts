@@ -25,22 +25,28 @@ export function outdirCmd(newOutDir: string) {
     }
 
     const storeDir = getStoreDir();
-    const outDirFile = join(storeDir, 'outdir');
+    const configPath = join(storeDir, 'config.json');
 
     // Ensure store directory exists
     mkdirSync(storeDir, { recursive: true });
 
-    // check if the new path is the same as the old one
-    if (existsSync(outDirFile)) {
-        const oldPath = readFileSync(outDirFile, 'utf8').trim();
-        if (oldPath === newOutDir) {
-            throw new Error(
-                'The output directory is already set to this value.',
-            );
+    // Read existing config or create new one
+    let config: any = { templates: {} };
+    if (existsSync(configPath)) {
+        try {
+            config = JSON.parse(readFileSync(configPath, 'utf8'));
+        } catch (e) {
+            // Use default config
         }
     }
 
-    // write the new path
-    writeFileSync(outDirFile, newOutDir);
+    // check if the new path is the same as the old one
+    if (config.outdir && config.outdir === newOutDir) {
+        throw new Error('The output directory is already set to this value.');
+    }
+
+    // write the new path to config.json
+    config.outdir = newOutDir;
+    writeFileSync(configPath, JSON.stringify(config, null, 4), 'utf8');
     log(`The output directory has been changed to "${newOutDir}".`);
 }

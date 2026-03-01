@@ -149,33 +149,42 @@ export function getFilesRecursively(dir: string, filelist: string[] = []) {
  * Returns the store directory
  * @returns {string} The store directory
  */
-export function getStoreDir() {
+/**
+ * Migrate legacy file-based store to directory-based store
+ */
+export function migrateStoreDirIfNeeded() {
     const storeDir = join(homedir(), '.pzstudio');
 
-    // Migrate legacy file-based store to directory-based store
+    // Check if legacy file exists
     if (existsSync(storeDir) && statSync(storeDir).isFile()) {
         try {
             const outDirContent = readFileSync(storeDir, 'utf8').trim();
-            const backupPath = storeDir + '.backup';
 
-            // Backup old file if not already backed up
-            if (!existsSync(backupPath)) {
-                copyFileSync(storeDir, backupPath);
-            }
-
-            // Remove file and create directory
+            // Remove file first and create directory
             rmSync(storeDir);
             mkdirSync(storeDir, { recursive: true });
 
-            // Write outdir to new location
-            writeFileSync(join(storeDir, 'outdir'), outDirContent);
+            // Backup old file content in new directory
+            const backupPath = join(storeDir, '.pzstudio.bak');
+            writeFileSync(backupPath, outDirContent);
+
+            // Save to config.json
+            const configPath = join(storeDir, 'config.json');
+            const config = existsSync(configPath)
+                ? JSON.parse(readFileSync(configPath, 'utf8'))
+                : {};
+            config.outdir = outDirContent;
+            writeFileSync(configPath, JSON.stringify(config, null, 4), 'utf8');
+
             log(`- Migrated legacy .pzstudio file to directory structure`);
         } catch (e) {
             warn(`Failed to migrate legacy store: ${e}`);
         }
     }
+}
 
-    return storeDir;
+export function getStoreDir() {
+    return join(homedir(), '.pzstudio');
 }
 
 /**
@@ -184,12 +193,25 @@ export function getStoreDir() {
  */
 export function getOutDir() {
     let storeDir = getStoreDir();
-    const outDirFile = join(storeDir, 'outdir');
+    const configPath = join(storeDir, 'config.json');
+    const backupPath = join(storeDir, '.pzstudio.bak');
 
-    // Check new directory-based outdir file
-    if (existsSync(outDirFile)) {
+    // 1. Try config.json
+    if (existsSync(configPath)) {
         try {
-            return resolve(readFileSync(outDirFile, 'utf8').trim());
+            const config = JSON.parse(readFileSync(configPath, 'utf8'));
+            if (config.outdir) {
+                return resolve(config.outdir);
+            }
+        } catch (e) {
+            // Fall through to next option
+        }
+    }
+
+    // 2. Fall back to .pzstudio.bak
+    if (existsSync(backupPath)) {
+        try {
+            return resolve(readFileSync(backupPath, 'utf8').trim());
         } catch (e) {
             // Fall through to default
         }
