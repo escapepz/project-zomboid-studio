@@ -58,8 +58,8 @@ export interface IModConfig {
         /**
          * Controls whether mod.info is auto-generated from project.json.
          *
-         * - "auto"   (default) — generate mod.info from project.json as today
-         * - "skip"             — never generate; use whatever file exists in the mod folder
+         * - "skip"   (default) — never generate; use whatever file exists in the mod folder
+         * - "auto"             — generate mod.info from project.json
          * - "auto-if-missing"  — generate only if mod.info is not already present in the output
          */
         modInfo?: 'auto' | 'skip' | 'auto-if-missing';

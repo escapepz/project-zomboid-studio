@@ -17,7 +17,7 @@ import {
     projectDir,
     readProjectConfig,
 } from '../helper';
-import { error, info, log } from '../logger';
+import { error, info, log, warn } from '../logger';
 
 addHelp(
     'watch',
@@ -151,7 +151,15 @@ export async function watchCmd() {
                 )) {
                     // Generate the mod.info
                     const modInfoFlag =
-                        projectConfig.mods[modId].build?.modInfo ?? 'auto';
+                        projectConfig.mods[modId].build?.modInfo;
+                    if (modInfoFlag === undefined) {
+                        warn(
+                            `[BREAKING CHANGE] The default 'modInfo' flag has changed from 'auto' to 'skip'. ` +
+                                `If you want to continue auto-generating mod.info for '${modId}', please set 'build.modInfo': 'auto' in your project.json.`,
+                        );
+                    }
+
+                    const effectiveModInfoFlag = modInfoFlag ?? 'skip';
                     const modInfoPath = join(
                         outPath,
                         'Contents',
@@ -160,12 +168,12 @@ export async function watchCmd() {
                         'mod.info',
                     );
 
-                    if (modInfoFlag === 'skip') {
+                    if (effectiveModInfoFlag === 'skip') {
                         log(
                             `- Skipping '${modId}' mod.info re-generation (build.modInfo: "skip")...`,
                         );
                     } else if (
-                        modInfoFlag === 'auto-if-missing' &&
+                        effectiveModInfoFlag === 'auto-if-missing' &&
                         existsSync(modInfoPath)
                     ) {
                         log(

@@ -51,17 +51,23 @@ async function buildWorkshop(
         copyFolderSync(join(projectPath, modId), outModsPath, true);
 
         // Generate the mod.info
-        const modInfoFlag = projectConfig.mods[modId].build?.modInfo ?? 'auto';
-        const modVersionPath = join(outModsPath, '42.13.1');
-        mkdirSync(modVersionPath, { recursive: true });
-        const modInfoPath = join(modVersionPath, 'mod.info');
+        const modInfoFlag = projectConfig.mods[modId].build?.modInfo;
+        if (modInfoFlag === undefined) {
+            warn(
+                `[BREAKING CHANGE] The default 'modInfo' flag has changed from 'auto' to 'skip'. ` +
+                    `If you want to continue auto-generating mod.info for '${modId}', please set 'build.modInfo': 'auto' in your project.json.`,
+            );
+        }
 
-        if (modInfoFlag === 'skip') {
+        const effectiveModInfoFlag = modInfoFlag ?? 'skip';
+        const modInfoPath = join(outModsPath, 'mod.info');
+
+        if (effectiveModInfoFlag === 'skip') {
             log(
                 `- Skipping '${modId}' mod.info generation (build.modInfo: "skip")...`,
             );
         } else if (
-            modInfoFlag === 'auto-if-missing' &&
+            effectiveModInfoFlag === 'auto-if-missing' &&
             existsSync(modInfoPath)
         ) {
             log(
