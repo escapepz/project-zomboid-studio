@@ -47,7 +47,9 @@ export async function newCmd(projectTitle: string, modId?: string) {
     // Check if project already exists
     const projectPath = join(projectDir(), modId);
     if (existsSync(projectPath)) {
-        throw new Error(`The project '${projectTitle}' dir '${modId}' already exists!`);
+        throw new Error(
+            `The project '${projectTitle}' dir '${modId}' already exists!`,
+        );
     }
 
     // Copy template
@@ -64,7 +66,10 @@ export async function newCmd(projectTitle: string, modId?: string) {
 
     // Copy language template
     log(`- Creating .template-language`);
-    copyFolderSync(templateLanguagePath, join(projectPath, '.template-language'));
+    copyFolderSync(
+        templateLanguagePath,
+        join(projectPath, '.template-language'),
+    );
 
     // Update config
     log(`- Updating project config...`);

@@ -13,7 +13,7 @@ if (!fs.existsSync(distPath)) {
 // Update buildDate to today's ISO date
 const today = new Date().toISOString();
 const buildInfo = {
-    buildDate: today
+    buildDate: today,
 };
 
 fs.writeFileSync(buildPath, JSON.stringify(buildInfo, null, 4) + '\n', 'utf8');
@@ -33,7 +33,10 @@ const scriptsDistDir = path.join(distPath, 'scripts');
 if (!fs.existsSync(scriptsDistDir)) {
     fs.mkdirSync(scriptsDistDir, { recursive: true });
 }
-const expScriptDest = path.join(scriptsDistDir, 'experimental-package-scripts.js');
+const expScriptDest = path.join(
+    scriptsDistDir,
+    'experimental-package-scripts.js',
+);
 if (fs.existsSync(expScriptSource)) {
     fs.copyFileSync(expScriptSource, expScriptDest);
     console.log(`Copied experimental-package-scripts.js to ${expScriptDest}`);

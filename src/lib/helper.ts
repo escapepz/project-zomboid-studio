@@ -403,7 +403,10 @@ export function updateExperimentalScripts(
     modId?: string,
 ) {
     try {
-        const scriptPath = resolve(__dirname, '../scripts/experimental-package-scripts.js');
+        const scriptPath = resolve(
+            __dirname,
+            '../scripts/experimental-package-scripts.js',
+        );
         if (!existsSync(scriptPath)) {
             return;
         }
@@ -414,13 +417,16 @@ export function updateExperimentalScripts(
 
         switch (action) {
             case 'addProject':
-                if (script.addProjectScripts) script.addProjectScripts(projectDir);
+                if (script.addProjectScripts)
+                    script.addProjectScripts(projectDir);
                 break;
             case 'addMod':
-                if (script.addModScripts && modId) script.addModScripts(projectDir, modId);
+                if (script.addModScripts && modId)
+                    script.addModScripts(projectDir, modId);
                 break;
             case 'removeMod':
-                if (script.removeModScripts && modId) script.removeModScripts(projectDir, modId);
+                if (script.removeModScripts && modId)
+                    script.removeModScripts(projectDir, modId);
                 break;
         }
     } catch (e) {

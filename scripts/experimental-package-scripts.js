@@ -6,7 +6,8 @@ const path = require('path');
  * These will be added to the project's package.json.
  */
 const PROJECT_SCRIPTS = {
-    'experimental:setup:vanilla': 'mkdir .tmp & mklink /J "%CD%\\.tmp\\vanilla" "%ProgramFiles(x86)%\\Steam\\steamapps\\common\\ProjectZomboid\\media\\lua"'
+    'experimental:setup:vanilla':
+        'mkdir .tmp & mklink /J "%CD%\\.tmp\\vanilla" "%ProgramFiles(x86)%\\Steam\\steamapps\\common\\ProjectZomboid\\media\\lua"',
 };
 
 /**
@@ -14,12 +15,13 @@ const PROJECT_SCRIPTS = {
  * {modId} will be replaced with the actual mod id.
  */
 const MOD_SCRIPTS = {
-    'experimental:setup:nonsteam:{modId}': 'mklink /J "C:\\ZomboidClient1\\mods\\{modId}" "%CD%\\{modId}"'
+    'experimental:setup:nonsteam:{modId}':
+        'mklink /J "C:\\ZomboidClient1\\mods\\{modId}" "%CD%\\{modId}"',
 };
 
 /**
  * Add experimental project scripts to package.json
- * @param {string} projectDir 
+ * @param {string} projectDir
  */
 function addProjectScripts(projectDir) {
     const packagePath = path.join(projectDir, 'package.json');
@@ -37,8 +39,8 @@ function addProjectScripts(projectDir) {
 
 /**
  * Add experimental mod scripts to package.json
- * @param {string} projectDir 
- * @param {string} modId 
+ * @param {string} projectDir
+ * @param {string} modId
  */
 function addModScripts(projectDir, modId) {
     const packagePath = path.join(projectDir, 'package.json');
@@ -58,8 +60,8 @@ function addModScripts(projectDir, modId) {
 
 /**
  * Remove experimental mod scripts from package.json
- * @param {string} projectDir 
- * @param {string} modId 
+ * @param {string} projectDir
+ * @param {string} modId
  */
 function removeModScripts(projectDir, modId) {
     const packagePath = path.join(projectDir, 'package.json');
@@ -79,5 +81,5 @@ function removeModScripts(projectDir, modId) {
 module.exports = {
     addProjectScripts,
     addModScripts,
-    removeModScripts
+    removeModScripts,
 };

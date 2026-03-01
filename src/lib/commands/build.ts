@@ -51,13 +51,29 @@ async function buildWorkshop(
         copyFolderSync(join(projectPath, modId), outModsPath, true);
 
         // Generate the mod.info
-        log(`- Generating '${modId}' mod.info...`);
+        const modInfoFlag = projectConfig.mods[modId].build?.modInfo ?? 'auto';
         const modVersionPath = join(outModsPath, '42.13.1');
         mkdirSync(modVersionPath, { recursive: true });
-        writeFileSync(
-            join(modVersionPath, 'mod.info'),
-            generateModInfoText(modId, projectConfig, prefixedModId),
-        );
+        const modInfoPath = join(modVersionPath, 'mod.info');
+
+        if (modInfoFlag === 'skip') {
+            log(
+                `- Skipping '${modId}' mod.info generation (build.modInfo: "skip")...`,
+            );
+        } else if (
+            modInfoFlag === 'auto-if-missing' &&
+            existsSync(modInfoPath)
+        ) {
+            log(
+                `- Skipping '${modId}' mod.info generation (already exists, build.modInfo: "auto-if-missing")...`,
+            );
+        } else {
+            log(`- Generating '${modId}' mod.info...`);
+            writeFileSync(
+                modInfoPath,
+                generateModInfoText(modId, projectConfig, prefixedModId),
+            );
+        }
     }
 
     // Copy the workshop preview.png

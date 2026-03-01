@@ -49,6 +49,21 @@ export interface IModConfig {
     url?: string;
     versionMin?: string;
     versionMax?: string;
+
+    /**
+     * Custom build flags for this mod.
+     * Omitting a flag uses the default (auto) behaviour.
+     */
+    build?: {
+        /**
+         * Controls whether mod.info is auto-generated from project.json.
+         *
+         * - "auto"   (default) — generate mod.info from project.json as today
+         * - "skip"             — never generate; use whatever file exists in the mod folder
+         * - "auto-if-missing"  — generate only if mod.info is not already present in the output
+         */
+        modInfo?: 'auto' | 'skip' | 'auto-if-missing';
+    };
 }
 
 export interface IProjectConfig {
