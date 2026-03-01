@@ -1,6 +1,6 @@
 {
     "name": "pzstudio-cli",
-    "version": "2.242131.2",
+    "version": "2.242131.3",
     "branch": "b42.13.1",
     "description": "Effortlessly create and maintain Lua mods for Project Zomboid with intuitive structuring.",
     "main": "./dist/index.js",

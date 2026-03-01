@@ -51,7 +51,7 @@ export async function newCmd(projectTitle: string, modId?: string) {
     expect('param [modId]', modId, 'string|undefined');
 
     // Prepare mod id
-    modId = formatTitleToId(modId ?? projectTitle);
+    modId = formatTitleToId(modId || projectTitle);
 
     // Check if project already exists
     const projectPath = join(projectDir(), modId);
