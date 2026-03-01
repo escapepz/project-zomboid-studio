@@ -150,11 +150,34 @@ export async function watchCmd() {
                     (modId) => !projectConfig.workshop.excludes.includes(modId),
                 )) {
                     // Generate the mod.info
-                    log(`- Re-generating '${modId}' mod.info...`);
-                    writeFileSync(
-                        join(outPath, 'Contents', 'mods', modId, 'mod.info'),
-                        generateModInfoText(modId, projectConfig),
+                    const modInfoFlag =
+                        projectConfig.mods[modId].build?.modInfo ?? 'auto';
+                    const modInfoPath = join(
+                        outPath,
+                        'Contents',
+                        'mods',
+                        modId,
+                        'mod.info',
                     );
+
+                    if (modInfoFlag === 'skip') {
+                        log(
+                            `- Skipping '${modId}' mod.info re-generation (build.modInfo: "skip")...`,
+                        );
+                    } else if (
+                        modInfoFlag === 'auto-if-missing' &&
+                        existsSync(modInfoPath)
+                    ) {
+                        log(
+                            `- Skipping '${modId}' mod.info re-generation (already exists, build.modInfo: "auto-if-missing")...`,
+                        );
+                    } else {
+                        log(`- Re-generating '${modId}' mod.info...`);
+                        writeFileSync(
+                            modInfoPath,
+                            generateModInfoText(modId, projectConfig),
+                        );
+                    }
                 }
             }
         })

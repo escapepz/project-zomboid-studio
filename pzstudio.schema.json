@@ -142,6 +142,19 @@
                 "versionMax": {
                     "description": "",
                     "type": "string"
+                },
+                "build": {
+                    "description": "Custom build flags for this mod.",
+                    "type": "object",
+                    "properties": {
+                        "modInfo": {
+                            "description": "Controls whether mod.info is auto-generated from project.json.\n- \"auto\" (default) — generate mod.info from project.json\n- \"skip\" — never generate; use whatever file exists in the mod folder\n- \"auto-if-missing\" — generate only if mod.info is not already present in the output",
+                            "type": "string",
+                            "enum": ["auto", "skip", "auto-if-missing"],
+                            "default": "auto"
+                        }
+                    },
+                    "additionalProperties": false
                 }
             },
             "required": ["name", "description"]
