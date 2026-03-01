@@ -9,11 +9,12 @@ import {
     copyFolderSync,
     projectDir,
     readProjectConfig,
-    templateDir,
     updateExperimentalScripts,
     updateProjectConfig,
 } from '../helper';
 import { info, log } from '../logger';
+import { extractFlag } from '../cli';
+import { resolveTemplateDir } from '../templateManager';
 
 addHelp(
     'new',
@@ -21,14 +22,22 @@ addHelp(
 
     Usages:
     pzstudio new <projectTitle>         - Create a new project with the given title and automatically formatted mod id.
-    pzstudio new <projectTitle> <modId> - Create a new project with the given title and mod id.`,
+    pzstudio new <projectTitle> <modId> - Create a new project with the given title and mod id.
+    
+    Flags:
+    --template <url> - Use a custom template URL for the project template.`,
 );
 
 export async function newCmd(projectTitle: string, modId?: string) {
-    const templateProjectPath = templateDir('project');
-    const templateModPath = templateDir('mod');
-    const templateSimpleModPath = templateDir('mod-simple');
-    const templateLanguagePath = templateDir('language');
+    const projectTemplateUrl = extractFlag('template');
+
+    const templateProjectPath = resolveTemplateDir(
+        'project',
+        projectTemplateUrl,
+    );
+    const templateModPath = resolveTemplateDir('mod');
+    const templateSimpleModPath = resolveTemplateDir('mod');
+    const templateLanguagePath = resolveTemplateDir('language');
 
     // Check if we are in a project directory
     if (readProjectConfig()) {

@@ -8,9 +8,9 @@ import {
     getOutDir,
     projectDir,
     readProjectConfig,
-    templateDir,
 } from '../helper';
 import { info, log, warn } from '../logger';
+import { resolveTemplateDir } from '../templateManager';
 
 addHelp(
     'build',
@@ -29,7 +29,7 @@ async function buildWorkshop(
     titleSuffix?: string,
 ) {
     const projectPath = projectDir();
-    const templateWorkshopPath = templateDir('workshop');
+    const templateWorkshopPath = resolveTemplateDir('workshop');
 
     // Remove the output directory
     rmSync(outPath, { recursive: true, force: true });

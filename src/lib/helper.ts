@@ -149,6 +149,40 @@ export function getFilesRecursively(dir: string, filelist: string[] = []) {
  * Returns the store directory
  * @returns {string} The store directory
  */
+/**
+ * Migrate legacy file-based store to directory-based store
+ */
+export function migrateStoreDirIfNeeded() {
+    const storeDir = join(homedir(), '.pzstudio');
+
+    // Check if legacy file exists
+    if (existsSync(storeDir) && statSync(storeDir).isFile()) {
+        try {
+            const outDirContent = readFileSync(storeDir, 'utf8').trim();
+
+            // Remove file first and create directory
+            rmSync(storeDir);
+            mkdirSync(storeDir, { recursive: true });
+
+            // Backup old file content in new directory
+            const backupPath = join(storeDir, '.pzstudio.bak');
+            writeFileSync(backupPath, outDirContent);
+
+            // Save to config.json
+            const configPath = join(storeDir, 'config.json');
+            const config = existsSync(configPath)
+                ? JSON.parse(readFileSync(configPath, 'utf8'))
+                : {};
+            config.outdir = outDirContent;
+            writeFileSync(configPath, JSON.stringify(config, null, 4), 'utf8');
+
+            log(`- Migrated legacy .pzstudio file to directory structure`);
+        } catch (e) {
+            warn(`Failed to migrate legacy store: ${e}`);
+        }
+    }
+}
+
 export function getStoreDir() {
     return join(homedir(), '.pzstudio');
 }
@@ -158,10 +192,31 @@ export function getStoreDir() {
  * @returns {string} The output directory
  */
 export function getOutDir() {
-    let storePath = getStoreDir();
-    if (existsSync(storePath)) {
-        return resolve(readFileSync(storePath, 'utf8'));
+    let storeDir = getStoreDir();
+    const configPath = join(storeDir, 'config.json');
+    const backupPath = join(storeDir, '.pzstudio.bak');
+
+    // 1. Try config.json
+    if (existsSync(configPath)) {
+        try {
+            const config = JSON.parse(readFileSync(configPath, 'utf8'));
+            if (config.outdir) {
+                return resolve(config.outdir);
+            }
+        } catch (e) {
+            // Fall through to next option
+        }
     }
+
+    // 2. Fall back to .pzstudio.bak
+    if (existsSync(backupPath)) {
+        try {
+            return resolve(readFileSync(backupPath, 'utf8').trim());
+        } catch (e) {
+            // Fall through to default
+        }
+    }
+
     return join(homedir(), 'Zomboid', 'Workshop');
 }
 

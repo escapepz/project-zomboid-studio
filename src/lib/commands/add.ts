@@ -7,11 +7,12 @@ import {
     formatTitleToId,
     projectDir,
     readProjectConfig,
-    templateDir,
     updateExperimentalScripts,
     updateProjectConfig,
 } from '../helper';
 import { log } from '../logger';
+import { extractFlag } from '../cli';
+import { resolveTemplateDir } from '../templateManager';
 
 addHelp(
     'add',
@@ -19,13 +20,17 @@ addHelp(
 
     Usages:
         pzstudio add <modName> - Add a mod to your project.
-        pzstudio add <modName> <modId> - Add a mod to your project.`,
+        pzstudio add <modName> <modId> - Add a mod to your project.
+    
+    Flags:
+    --template <url> - Use a custom template URL for the mod template.`,
 );
 
 export function addCmd(modName: string, modId?: string) {
     const projectPath = projectDir();
     const projectConfig = readProjectConfig();
-    const templateModPath = templateDir('mod');
+    const modTemplateUrl = extractFlag('template');
+    const templateModPath = resolveTemplateDir('mod', modTemplateUrl);
 
     // Check if we are in a project directory
     if (!projectConfig) {

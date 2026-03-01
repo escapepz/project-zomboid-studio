@@ -14,7 +14,7 @@
 - **In-Place Documentation**: Automatically clones the latest modding docs and guides into your project.
 - **Integrated Output Logging**: Standardized timestamps and labels (`[INFO]`, `[WARN]`, `[ERROR]`) in the VS Code output channel for easier troubleshooting.
 - **Clean execution**: Automatic log clearing at the start of command execution.
-- **Version Compatibility**: Optimized for **Project Zomboid b42.13.1**.
+- **Version Compatibility**: Optimized for **Project Zomboid b42.13.1** and later versions.
 
 ## 🛠 Commands
 
