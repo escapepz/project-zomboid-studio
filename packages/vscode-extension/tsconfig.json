@@ -11,7 +11,11 @@
         "esModuleInterop": true,
         "resolveJsonModule": true,
         "declaration": false,
-        "typeRoots": ["./node_modules/@types"]
+        "typeRoots": ["./node_modules/@types"],
+        "baseUrl": ".",
+        "paths": {
+            "pzstudio-cli/*": ["../../dist/*"]
+        }
     },
     "include": ["./src/**/*.ts"],
     "exclude": ["./node_modules"]

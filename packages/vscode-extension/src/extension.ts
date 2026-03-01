@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { setLogger, setProjectDir, runCLI } from 'pzstudio-cli/api';
+import { setLogger, setProjectDir, runCLI, ILogger } from 'pzstudio-cli/api';
 
 function getTimestamp() {
     const now = new Date();
@@ -18,12 +18,12 @@ export function activate(context: vscode.ExtensionContext) {
     );
 
     setLogger({
-        log: (msg) => outputChannel.appendLine(msg),
-        info: (msg) =>
+        log: (msg: string) => outputChannel.appendLine(msg),
+        info: (msg: string) =>
             outputChannel.appendLine(`[${getTimestamp()}] [INFO] ${msg}`),
-        warn: (msg) =>
+        warn: (msg: string) =>
             outputChannel.appendLine(`[${getTimestamp()}] [WARN] ${msg}`),
-        error: (err) => {
+        error: (err: string | Error) => {
             const timestamp = getTimestamp();
             if (err instanceof Error) {
                 outputChannel.appendLine(
