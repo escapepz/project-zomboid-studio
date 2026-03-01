@@ -1,5 +1,5 @@
-import { resolve } from 'path';
-import { existsSync, readFileSync, writeFileSync } from 'fs';
+import { resolve, join } from 'path';
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { expect } from '../expect';
 import { addHelp } from '../help';
 import { getStoreDir } from '../helper';
@@ -24,11 +24,15 @@ export function outdirCmd(newOutDir: string) {
         throw new Error(`The output directory "${newOutDir}" does not exist.`);
     }
 
-    let storePath = getStoreDir();
+    const storeDir = getStoreDir();
+    const outDirFile = join(storeDir, 'outdir');
+
+    // Ensure store directory exists
+    mkdirSync(storeDir, { recursive: true });
 
     // check if the new path is the same as the old one
-    if (existsSync(storePath)) {
-        const oldPath = readFileSync(storePath, 'utf8');
+    if (existsSync(outDirFile)) {
+        const oldPath = readFileSync(outDirFile, 'utf8').trim();
         if (oldPath === newOutDir) {
             throw new Error(
                 'The output directory is already set to this value.',
@@ -37,6 +41,6 @@ export function outdirCmd(newOutDir: string) {
     }
 
     // write the new path
-    writeFileSync(storePath, newOutDir);
+    writeFileSync(outDirFile, newOutDir);
     log(`The output directory has been changed to "${newOutDir}".`);
 }

@@ -3,7 +3,7 @@
     "displayName": "Project Zomboid Studio",
     "publisher": "escapepz",
     "version": "2.242131.2",
-    "description": "Effortlessly create and maintain Lua mods for Project Zomboid with intuitive structuring and real-time change monitoring.",
+    "description": "Effortlessly create and maintain Lua mods for Project Zomboid with intuitive structuring.",
     "main": "./dist/extension.js",
     "type": "commonjs",
     "engines": {

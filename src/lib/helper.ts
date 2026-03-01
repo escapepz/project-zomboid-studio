@@ -150,7 +150,32 @@ export function getFilesRecursively(dir: string, filelist: string[] = []) {
  * @returns {string} The store directory
  */
 export function getStoreDir() {
-    return join(homedir(), '.pzstudio');
+    const storeDir = join(homedir(), '.pzstudio');
+
+    // Migrate legacy file-based store to directory-based store
+    if (existsSync(storeDir) && statSync(storeDir).isFile()) {
+        try {
+            const outDirContent = readFileSync(storeDir, 'utf8').trim();
+            const backupPath = storeDir + '.backup';
+
+            // Backup old file if not already backed up
+            if (!existsSync(backupPath)) {
+                copyFileSync(storeDir, backupPath);
+            }
+
+            // Remove file and create directory
+            rmSync(storeDir);
+            mkdirSync(storeDir, { recursive: true });
+
+            // Write outdir to new location
+            writeFileSync(join(storeDir, 'outdir'), outDirContent);
+            log(`- Migrated legacy .pzstudio file to directory structure`);
+        } catch (e) {
+            warn(`Failed to migrate legacy store: ${e}`);
+        }
+    }
+
+    return storeDir;
 }
 
 /**
@@ -158,10 +183,18 @@ export function getStoreDir() {
  * @returns {string} The output directory
  */
 export function getOutDir() {
-    let storePath = getStoreDir();
-    if (existsSync(storePath)) {
-        return resolve(readFileSync(storePath, 'utf8'));
+    let storeDir = getStoreDir();
+    const outDirFile = join(storeDir, 'outdir');
+
+    // Check new directory-based outdir file
+    if (existsSync(outDirFile)) {
+        try {
+            return resolve(readFileSync(outDirFile, 'utf8').trim());
+        } catch (e) {
+            // Fall through to default
+        }
     }
+
     return join(homedir(), 'Zomboid', 'Workshop');
 }
 

@@ -13,9 +13,23 @@ import { outdirCmd } from './commands/outdir';
 import { renameCmd } from './commands/rename';
 import { updateCmd } from './commands/update';
 import { watchCmd } from './commands/watch';
-import { arg, args, cmd } from './args';
+import { arg, args, cmd, processArgs } from './args';
 import { clear, error, info, log, warn } from './logger';
 import { projectDir } from './helper';
+
+/**
+ * Extract a flag value from command arguments
+ * @param name The flag name (without dashes)
+ * @returns The flag value or undefined
+ */
+export function extractFlag(name: string): string | undefined {
+    const allArgs = processArgs();
+    const flagIndex = allArgs.findIndex((a) => a === `--${name}`);
+    if (flagIndex !== -1 && flagIndex + 1 < allArgs.length) {
+        return allArgs[flagIndex + 1];
+    }
+    return undefined;
+}
 
 export async function runCLI(cmdName?: string, cmdArgs?: string[]) {
     clear();
