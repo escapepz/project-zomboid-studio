@@ -2,6 +2,17 @@
 
 All notable changes to the **Project Zomboid Studio** VSCode extension will be documented in this file.
 
+## [2.242131.3-alpha] - 2026-03-02
+
+### Changed
+
+- Split templates into separate Git repositories for better modularity and maintenance.
+- Added `.template-legacy` for backwards compatibility.
+
+### Fixed
+
+- Fixed `new` command failing when modId parameter is empty string by using logical OR operator instead of nullish coalescing, allowing proper fallback to projectTitle.
+
 ## [2.242131.2-alpha] - 2026-03-01
 
 ### Added
