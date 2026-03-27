@@ -1,4 +1,9 @@
-```
+## pzstudio
+.idea
+.serena
+.template-*
+*.vsix
+
 # Compiled and build artifacts
 *.pyc
 __pycache__/
@@ -129,4 +134,3 @@ julia-*/
 
 # MyPy cache
 .mypy_cache/
-```
