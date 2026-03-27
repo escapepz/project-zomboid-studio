@@ -62,8 +62,10 @@ export function renameCmd(oldModId: string, newModId: string) {
         .concat(getFilesRecursively(join(projectPath, newModId)))
         .forEach((file) => {
             const content = readFileSync(file, 'utf-8');
+            // Escape special regex characters to prevent ReDoS and regex injection
+            const escapedOldModId = oldModId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             const newContent = content.replace(
-                new RegExp(oldModId, 'g'),
+                new RegExp(escapedOldModId, 'g'),
                 newModId,
             );
             if (content !== newContent) {
