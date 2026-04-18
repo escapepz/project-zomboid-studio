@@ -1,9 +1,17 @@
+.agent
+.agents
+.qwen
+.claude
+.repowise
+.specify
 .development
 .idea
 .serena
 
 packages/*/.template-*
 *.vsix
+skills-lock.json
+.mcp.json
 
 .github/DRAFTS
 .vscode
