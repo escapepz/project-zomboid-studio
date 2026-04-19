@@ -24,6 +24,8 @@ addHelp(
     
     Flags:
     --template <url> - Use a custom template URL for the mod template.
+    --offline        - Bypass network updates and use local cache or legacy templates.
+    --force-update   - Force refresh of cached templates from remote.
     --symlinks       - Use directory junctions for .libraries and .docs (if supported).`,
 );
 
@@ -38,6 +40,8 @@ export function addCmd(modName: string, modId?: string) {
     }
 
     const modTemplateUrl = extractFlag('template');
+    const isOffline = hasFlag('offline');
+    const forceUpdate = hasFlag('force-update');
     const useSymlinks = hasFlag('symlinks') || resolveUseSymlinks();
 
     // US2: Check for local .template-mod tier-0 guard
@@ -53,7 +57,12 @@ export function addCmd(modName: string, modId?: string) {
         templateModPath = localTemplatePath;
         usedLocalTemplate = true;
     } else {
-        templateModPath = resolveTemplateDir('mod', modTemplateUrl);
+        templateModPath = resolveTemplateDir(
+            'mod',
+            modTemplateUrl,
+            isOffline,
+            forceUpdate,
+        );
     }
 
     // Validate params

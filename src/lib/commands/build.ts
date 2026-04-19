@@ -10,7 +10,7 @@ import {
     readProjectConfig,
 } from '../helper';
 import { info, log, warn } from '../logger';
-import { resolveTemplateDir } from '../templateManager';
+import { createIgnoreFilter, resolveTemplateDir } from '../templateManager';
 
 addHelp(
     'build',
@@ -38,7 +38,10 @@ async function buildWorkshop(
     mkdirSync(outPath, { recursive: true });
 
     // Copy the workshop template
-    copyFolderSync(templateWorkshopPath, outPath, true);
+    const workshopFilter = createIgnoreFilter(templateWorkshopPath, {
+        excludeIgnoreFile: true,
+    });
+    copyFolderSync(templateWorkshopPath, outPath, true, workshopFilter);
 
     // Copy the mods
     for (const modId of Object.keys(projectConfig.mods).filter(
@@ -48,7 +51,11 @@ async function buildWorkshop(
         // Copy the mod
         const outModsPath = join(outPath, 'Contents', 'mods', prefixedModId);
         log(`- Copying mod '${modId}'...`);
-        copyFolderSync(join(projectPath, modId), outModsPath, true);
+        const modSrcPath = join(projectPath, modId);
+        const modFilter = createIgnoreFilter(modSrcPath, {
+            excludeIgnoreFile: true,
+        });
+        copyFolderSync(modSrcPath, outModsPath, true, modFilter);
 
         // Generate the mod.info
         const modInfoFlag = projectConfig.mods[modId].build?.modInfo;

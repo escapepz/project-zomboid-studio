@@ -4,7 +4,6 @@ import { expect } from '../expect';
 import { addHelp } from '../help';
 import {
     formatTitleToId,
-    installLibraries,
     copyFolderSync,
     projectDir,
     readProjectConfig,
@@ -149,11 +148,6 @@ export async function newCmd(projectTitle: string, modId?: string) {
         description: '',
     };
     updateProjectConfig(newProjectConfigPath, newProjectConfig);
-
-    // Update Umbrella (if not present in template)
-    if (!existsSync(join(projectPath, '.libraries'))) {
-        installLibraries(projectPath);
-    }
 
     // Run experimental scripts
     updateExperimentalScripts('addProject', projectPath);

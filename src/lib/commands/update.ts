@@ -1,34 +1,45 @@
 import { addHelp } from '../help';
-import { installLibraries, projectDir, readProjectConfig } from '../helper';
-import { warn } from '../logger';
+import { info, log, warn } from '../logger';
+import { resolveTemplateDir, TemplateCategory } from '../templateManager';
 
 addHelp(
     'update',
-    `Update your project addons (candle, events).
+    `Update global template caches to the latest version.
+    This command pulls the latest changes for all template categories (project, mod, workshop, language)
+    and resets the local cache to match the remote source.
 
     Usages:
-        pzstudio update - Update your project addons.`,
+        pzstudio update - Refresh all global template caches from their remote sources.`,
 );
 
 export async function updateCmd() {
-    // Update PZStudio
-    // log(`Updating PZStudio...`);
-    // const updateResult = spawnSync('npm', ['install', '-g', 'pzstudio'], { shell: true, stdio: 'pipe' });
-    // if (updateResult.status !== 0) {
-    //     error(`Failed to update PZStudio!`);
-    // }
-    // else {
-    //     log(`PZStudio updated successfully!`);
-    // }
+    log(`\nRefreshing global template caches...`);
 
-    // Check if we are in a project directory
-    if (!readProjectConfig()) {
-        warn(
-            'You must execute this command within a project directory to update a project!',
-        );
-        return;
+    const categories: TemplateCategory[] = [
+        'project',
+        'mod',
+        'workshop',
+        'language',
+    ];
+
+    let successCount = 0;
+    for (const category of categories) {
+        try {
+            log(`- Updating '${category}' templates...`);
+            resolveTemplateDir(category, undefined, false, true);
+            successCount++;
+        } catch (e: any) {
+            warn(`Failed to update ${category} template: ${e.message}`);
+        }
     }
 
-    // clone Umbrella
-    installLibraries(projectDir());
+    if (successCount === categories.length) {
+        info('\nAll template caches refreshed successfully!');
+    } else if (successCount > 0) {
+        warn(
+            `\nRefreshed ${successCount}/${categories.length} template caches. Some updates failed.`,
+        );
+    } else {
+        warn('\nFailed to refresh template caches.');
+    }
 }

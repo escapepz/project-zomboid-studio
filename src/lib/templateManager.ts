@@ -20,8 +20,15 @@ import { minimatch } from 'minimatch';
  * @param sourceDir The source directory to compute relative paths from
  * @returns A filter function compatible with fs.cpSync
  */
+/**
+ * Creates a filter for fs.cpSync derived from .pzstudioignore or hardcoded defaults.
+ * @param sourceDir The source directory to compute relative paths from
+ * @param options Filter options
+ * @returns A filter function compatible with fs.cpSync
+ */
 export function createIgnoreFilter(
     sourceDir: string,
+    options: { excludeIgnoreFile?: boolean } = {},
 ): (src: string, dest: string) => boolean {
     const ignorePath = join(sourceDir, '.pzstudioignore');
     // Built-in defaults: always ignore .git, .github, and any .gitkeep
@@ -51,12 +58,15 @@ export function createIgnoreFilter(
         // Normalize to forward slashes for consistent glob matching
         relPath = relPath.replace(/\\/g, '/');
 
+        // Rule: .pzstudioignore is special
+        if (relPath === '.pzstudioignore') {
+            return !options.excludeIgnoreFile;
+        }
+
         for (const pattern of allPatterns) {
             try {
                 // We use { dot: true } to ensure .git and .github are matched even if they start with a dot
                 if (minimatch(relPath, pattern, { dot: true })) {
-                    // Special case: do not ignore .pzstudioignore itself if it was explicitly added to the ignore list
-                    if (relPath === '.pzstudioignore') continue;
                     return false;
                 }
             } catch (e) {

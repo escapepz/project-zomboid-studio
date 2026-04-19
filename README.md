@@ -24,9 +24,9 @@ This is a CLI tool for creating and maintaining Lua mods for Project Zomboid wit
     - Spaces converted to underscores: "Teleportal Prototype" → `teleportal_prototype`
     - Special characters removed: "My-Cool Mod!" → `my_cool_mod`
     - Maintains camelCase without conversion: "TeleportalPrototype" → `teleportalprototype`
-- Created `installDocs()` function to clone https://github.com/escapepz/docs repository
-- Created `installGuides()` function to clone https://github.com/demiurgeQuantified/PZModdingGuides repository (**Deprecated**: use `installDocs()` instead, which includes guides as a submodule)
-- Integrated docs and guides installation into new project creation and project update commands
+- Reworked scaffolding to rely on cached templates with explicit refresh via `--force-update` or `pzstudio update`
+- Removed the legacy `installLibraries()` fallback from intended scaffolding behavior in favor of template-driven project creation
+- Added `.pzstudioignore` filtering for scaffold and build flows, with built-in maintenance exclusions such as `**/.gitkeep`
 - Changed mod.info output path to version-specific directory: `{modId}/42.13.1/mod.info`
 - Enhanced build command to create dual workshop outputs:
     - **Main workshop**: `{projectTitle}` with standard mod IDs and configured visibility
