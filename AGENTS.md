@@ -2,9 +2,9 @@
 
 ## Build & Commands
 
-- **Build**: `npm run build` - Compiles TypeScript to JavaScript in dist/
-- **Clean**: `npm run clean` - Removes dist/ directory
-- **Watch**: `npm run watch` - Watches for TypeScript changes and recompiles
+- **Build**: `pnpm run build` - Compiles TypeScript to JavaScript in dist/
+- **Clean**: `pnpm run clean` - Removes dist/ directory
+- **Watch**: `pnpm run watch` - Watches for TypeScript changes and recompiles
 - **No tests available** - Project is CLI tooling without test suite
 
 ## Architecture

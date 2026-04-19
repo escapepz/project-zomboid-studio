@@ -1,9 +1,9 @@
-import { resolve, join } from 'path';
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
+import { resolve } from 'path';
+import { existsSync } from 'fs';
 import { expect } from '../expect';
 import { addHelp } from '../help';
-import { getStoreDir } from '../helper';
 import { log } from '../logger';
+import { readGlobalConfig, writeGlobalConfig } from '../templateManager';
 
 addHelp(
     'outdir',
@@ -24,22 +24,7 @@ export function outdirCmd(newOutDir: string) {
         throw new Error(`The output directory "${newOutDir}" does not exist.`);
     }
 
-    const storeDir = getStoreDir();
-    const configPath = join(storeDir, 'config.json');
-
-    // Ensure store directory exists
-    mkdirSync(storeDir, { recursive: true });
-
-    // Read existing config or create new one
-    let config: any = { templates: {} };
-    if (existsSync(configPath)) {
-        try {
-            const content = readFileSync(configPath, 'utf8');
-            config = { ...config, ...JSON.parse(content) };
-        } catch (e) {
-            // Use default config
-        }
-    }
+    const config = readGlobalConfig();
 
     // check if the new path is the same as the old one
     if (config.outdir && config.outdir === newOutDir) {
@@ -48,6 +33,6 @@ export function outdirCmd(newOutDir: string) {
 
     // write the new path to config.json
     config.outdir = newOutDir;
-    writeFileSync(configPath, JSON.stringify(config, null, 4), 'utf8');
+    writeGlobalConfig(config);
     log(`The output directory has been changed to "${newOutDir}".`);
 }

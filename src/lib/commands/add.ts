@@ -1,9 +1,8 @@
-import { existsSync } from 'fs';
+import { existsSync, readdirSync } from 'fs';
 import { join } from 'path';
 import { expect } from '../expect';
 import { addHelp } from '../help';
 import {
-    copyFolderSync,
     formatTitleToId,
     projectDir,
     readProjectConfig,
@@ -12,7 +11,7 @@ import {
 } from '../helper';
 import { log } from '../logger';
 import { extractFlag } from '../cli';
-import { resolveTemplateDir } from '../templateManager';
+import { resolveTemplateDir, scaffoldProject } from '../templateManager';
 
 addHelp(
     'add',
@@ -29,14 +28,29 @@ addHelp(
 export function addCmd(modName: string, modId?: string) {
     const projectPath = projectDir();
     const projectConfig = readProjectConfig();
-    const modTemplateUrl = extractFlag('template');
-    const templateModPath = resolveTemplateDir('mod', modTemplateUrl);
-
     // Check if we are in a project directory
     if (!projectConfig) {
         throw new Error(
             'You must execute this command within a project directory!',
         );
+    }
+
+    const modTemplateUrl = extractFlag('template');
+
+    // US2: Check for local .template-mod tier-0 guard
+    const localTemplatePath = join(projectPath, '.template-mod');
+    let templateModPath: string;
+    let usedLocalTemplate = false;
+
+    if (
+        !modTemplateUrl &&
+        existsSync(localTemplatePath) &&
+        readdirSync(localTemplatePath).length > 0
+    ) {
+        templateModPath = localTemplatePath;
+        usedLocalTemplate = true;
+    } else {
+        templateModPath = resolveTemplateDir('mod', modTemplateUrl);
     }
 
     // Validate params
@@ -52,7 +66,12 @@ export function addCmd(modName: string, modId?: string) {
     }
 
     // Copy mod template
-    copyFolderSync(templateModPath, join(projectPath, modId));
+    scaffoldProject(templateModPath, join(projectPath, modId));
+
+    // Seed local cache if we resolved a remote template and no local one existed
+    if (!usedLocalTemplate && !modTemplateUrl) {
+        scaffoldProject(templateModPath, localTemplatePath);
+    }
 
     // Update config
     projectConfig.mods[modId] = {

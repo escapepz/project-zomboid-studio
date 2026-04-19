@@ -23,7 +23,7 @@ export function createIgnoreFilter(
     templateDir: string,
 ): (src: string, dest: string) => boolean {
     const ignorePath = join(templateDir, '.pzstudioignore');
-    let ignoreList = ['.git']; // Always ignore .git
+    let ignoreList = ['.git', '.github']; // Always ignore .git and .github
 
     if (existsSync(ignorePath)) {
         try {
@@ -66,6 +66,7 @@ export interface TemplateConfig {
 
 export interface GlobalConfig {
     templates: Partial<Record<TemplateCategory, TemplateConfig>>;
+    outdir?: string;
 }
 
 const DEFAULT_TEMPLATES: Record<TemplateCategory, TemplateConfig> = {
@@ -245,7 +246,16 @@ export function readGlobalConfig(): GlobalConfig {
  */
 export function migrateGlobalConfigIfNeeded(): void {
     const configPath = getConfigPath();
-    if (!existsSync(configPath)) return;
+    if (!existsSync(configPath)) {
+        try {
+            writeGlobalConfig({ templates: {} });
+        } catch (e) {
+            warn(
+                'Failed to create initial config.json, continuing with in-memory defaults',
+            );
+        }
+        return;
+    }
 
     try {
         const content = readFileSync(configPath, 'utf-8');
@@ -259,7 +269,13 @@ export function migrateGlobalConfigIfNeeded(): void {
 
         if (needsMigration) {
             log(`- Migrating config.json to include 'templates' key...`);
-            writeGlobalConfig(config);
+            try {
+                writeGlobalConfig(config);
+            } catch (e) {
+                warn(
+                    'Failed to persist config migration, continuing with in-memory defaults',
+                );
+            }
         }
     } catch (e) {
         // Silently fail if config is corrupt, readGlobalConfig will handle it
@@ -389,17 +405,7 @@ export function scaffoldProject(templateDir: string, destDir: string): void {
     cpSync(templateDir, destDir, {
         recursive: true,
         filter: (src, dest) => {
-            const result = filter(src, dest);
-            // Additionally strip .github if it wasn't in ignore list
-            const rel = relative(templateDir, src);
-            if (
-                rel === '.github' ||
-                rel.startsWith('.github/') ||
-                rel.startsWith('.github\\')
-            ) {
-                return false;
-            }
-            return result;
+            return filter(src, dest);
         },
     });
 }
