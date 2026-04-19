@@ -7,7 +7,9 @@
 .development
 .idea
 .serena
+.tmp
 
+specs/
 packages/*/.template-*
 *.vsix
 skills-lock.json
