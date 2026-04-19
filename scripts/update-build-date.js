@@ -41,3 +41,29 @@ if (fs.existsSync(expScriptSource)) {
     fs.copyFileSync(expScriptSource, expScriptDest);
     console.log(`Copied experimental-package-scripts.js to ${expScriptDest}`);
 }
+
+// Copy .template-legacy to dist
+const templateLegacySource = path.join(__dirname, '../.template-legacy');
+const templateLegacyDest = path.join(distPath, '.template-legacy');
+
+function copyDirRecursive(src, dest) {
+    if (!fs.existsSync(src)) return;
+    if (!fs.existsSync(dest)) {
+        fs.mkdirSync(dest, { recursive: true });
+    }
+    const entries = fs.readdirSync(src, { withFileTypes: true });
+    for (const entry of entries) {
+        const srcPath = path.join(src, entry.name);
+        const destPath = path.join(dest, entry.name);
+        if (entry.isDirectory()) {
+            copyDirRecursive(srcPath, destPath);
+        } else {
+            fs.copyFileSync(srcPath, destPath);
+        }
+    }
+}
+
+if (fs.existsSync(templateLegacySource)) {
+    copyDirRecursive(templateLegacySource, templateLegacyDest);
+    console.log(`Copied .template-legacy to ${templateLegacyDest}`);
+}

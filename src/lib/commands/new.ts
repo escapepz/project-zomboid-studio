@@ -38,13 +38,14 @@ export async function newCmd(projectTitle: string, modId?: string) {
         isOffline,
     );
     const templateModPath = resolveTemplateDir('mod', undefined, isOffline);
-    const templateSimpleModPath = resolveTemplateDir(
-        'mod',
+    const templateSimpleModPath = templateModPath;
+    const templateLanguagePath = resolveTemplateDir(
+        'language',
         undefined,
         isOffline,
     );
-    const templateLanguagePath = resolveTemplateDir(
-        'language',
+    const templateWorkshopPath = resolveTemplateDir(
+        'workshop',
         undefined,
         isOffline,
     );
@@ -89,6 +90,10 @@ export async function newCmd(projectTitle: string, modId?: string) {
         templateLanguagePath,
         join(projectPath, '.template-language'),
     );
+
+    // Copy workshop template
+    log(`- Creating workshop`);
+    scaffoldProject(templateWorkshopPath, join(projectPath, 'workshop'));
 
     // Update config
     log(`- Updating project config...`);

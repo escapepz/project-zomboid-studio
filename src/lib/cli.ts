@@ -16,6 +16,7 @@ import { watchCmd } from './commands/watch';
 import { arg, args, cmd, processArgs } from './args';
 import { clear, error, info, log, warn } from './logger';
 import { projectDir, migrateStoreDirIfNeeded } from './helper';
+import { migrateGlobalConfigIfNeeded } from './templateManager';
 
 /**
  * Extract a flag value from command arguments
@@ -41,8 +42,9 @@ export function hasFlag(name: string): boolean {
 }
 
 export async function runCLI(cmdName?: string, cmdArgs?: string[]) {
-    // Migrate legacy store on first CLI call
+    // Migrate legacy store and config on first CLI call
     migrateStoreDirIfNeeded();
+    migrateGlobalConfigIfNeeded();
 
     clear();
     log('\n');

@@ -34,7 +34,8 @@ export function outdirCmd(newOutDir: string) {
     let config: any = { templates: {} };
     if (existsSync(configPath)) {
         try {
-            config = JSON.parse(readFileSync(configPath, 'utf8'));
+            const content = readFileSync(configPath, 'utf8');
+            config = { ...config, ...JSON.parse(content) };
         } catch (e) {
             // Use default config
         }

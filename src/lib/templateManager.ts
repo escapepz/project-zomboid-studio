@@ -1,6 +1,6 @@
 import { homedir } from 'os';
 import { spawnSync } from 'child_process';
-import { basename, dirname, join } from 'path';
+import { basename, dirname, join, resolve } from 'path';
 import {
     existsSync,
     lstatSync,
@@ -154,7 +154,20 @@ function getTemplateCacheDir(category: TemplateCategory): string {
 }
 
 function getEmbeddedTemplateDir(category: TemplateCategory): string {
-    return join(getConfigDir(), '.template-legacy', `.template-${category}`);
+    const searchPaths = [
+        join(dirname(__dirname), '.template-legacy'), // dist/.template-legacy
+        join(dirname(dirname(__dirname)), '.template-legacy'), // root/.template-legacy
+        join(getConfigDir(), '.template-legacy'), // user-home/.pzstudio/.template-legacy
+    ];
+
+    for (const basePath of searchPaths) {
+        const fullPath = join(basePath, `.template-${category}`);
+        if (existsSync(fullPath) && isDirNonEmpty(fullPath)) {
+            return fullPath;
+        }
+    }
+
+    return join(searchPaths[0], `.template-${category}`);
 }
 
 function isDirNonEmpty(dir: string): boolean {
@@ -207,13 +220,49 @@ export function cloneRemoteTemplate(
  */
 export function readGlobalConfig(): GlobalConfig {
     const configPath = getConfigPath();
+    const defaultConfig: GlobalConfig = { templates: {} };
     if (!existsSync(configPath)) {
-        return { templates: {} };
+        return defaultConfig;
     }
     try {
-        return JSON.parse(readFileSync(configPath, 'utf-8'));
+        const content = readFileSync(configPath, 'utf-8');
+        const config = JSON.parse(content);
+        return {
+            ...defaultConfig,
+            ...config,
+            templates: {
+                ...defaultConfig.templates,
+                ...(config.templates || {}),
+            },
+        };
     } catch {
-        return { templates: {} };
+        return defaultConfig;
+    }
+}
+
+/**
+ * Migrates the global config to the latest version if needed.
+ */
+export function migrateGlobalConfigIfNeeded(): void {
+    const configPath = getConfigPath();
+    if (!existsSync(configPath)) return;
+
+    try {
+        const content = readFileSync(configPath, 'utf-8');
+        const config = JSON.parse(content);
+
+        let needsMigration = false;
+        if (!config.templates) {
+            config.templates = {};
+            needsMigration = true;
+        }
+
+        if (needsMigration) {
+            log(`- Migrating config.json to include 'templates' key...`);
+            writeGlobalConfig(config);
+        }
+    } catch (e) {
+        // Silently fail if config is corrupt, readGlobalConfig will handle it
     }
 }
 
