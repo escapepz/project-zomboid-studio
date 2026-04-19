@@ -31,6 +31,15 @@ export function extractFlag(name: string): string | undefined {
     return undefined;
 }
 
+/**
+ * Check if a flag exists in command arguments
+ * @param name The flag name (without dashes)
+ * @returns True if the flag exists
+ */
+export function hasFlag(name: string): boolean {
+    return processArgs().some((a) => a === `--${name}`);
+}
+
 export async function runCLI(cmdName?: string, cmdArgs?: string[]) {
     // Migrate legacy store on first CLI call
     migrateStoreDirIfNeeded();

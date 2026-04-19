@@ -1,10 +1,5 @@
 import { addHelp } from '../help';
-import {
-    installLibraries,
-    installDocs,
-    projectDir,
-    readProjectConfig,
-} from '../helper';
+import { installLibraries, projectDir, readProjectConfig } from '../helper';
 import { warn } from '../logger';
 
 addHelp(
@@ -36,7 +31,4 @@ export async function updateCmd() {
 
     // clone Umbrella
     installLibraries(projectDir());
-
-    // Install Docs (includes guides as a submodule)
-    installDocs(projectDir());
 }
