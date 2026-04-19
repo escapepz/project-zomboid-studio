@@ -12,9 +12,30 @@ import {
     rmSync,
     statSync,
     writeFileSync,
+    symlinkSync,
 } from 'fs';
 import { IProjectConfig } from './project';
 import { error, log, warn } from './logger';
+import { readGlobalConfig } from './templateManager';
+
+/**
+ * Resolves the useSymlinks configuration flag following the hierarchy:
+ * project.json > config.json > default (false)
+ * @returns {boolean} The resolved useSymlinks flag
+ */
+export function resolveUseSymlinks(): boolean {
+    const projectConfig = readProjectConfig();
+    if (projectConfig && projectConfig.useSymlinks !== undefined) {
+        return projectConfig.useSymlinks;
+    }
+
+    const globalConfig = readGlobalConfig();
+    if (globalConfig && globalConfig.useSymlinks !== undefined) {
+        return globalConfig.useSymlinks;
+    }
+
+    return false; // Default
+}
 
 let externalProjectDir: string | undefined;
 
@@ -222,11 +243,75 @@ export function getOutDir() {
 
 /**
  * Clone the Umbrella repository
+ * @param cwd The directory to clone into
+ * @param dest The name of the destination directory
+ */
+function cloneUmbrella(cwd: string, dest: string = '.libraries') {
+    log(`- Cloning 'Umbrella' into '${dest}'...`);
+    const cloneResult = spawnSync(
+        'git',
+        [
+            'clone',
+            '--recursive',
+            'https://github.com/asledgehammer/Umbrella.git',
+            dest,
+        ],
+        {
+            cwd,
+            shell: true,
+            stdio: 'pipe',
+        },
+    );
+    if (cloneResult.status !== 0) {
+        error(`Failed to clone 'Umbrella'!`);
+    }
+}
+
+/**
+ * Clone the Umbrella repository
  * @see https://github.com/asledgehammer/Candle
  * @param directoryPath The directory path
  */
 export function installLibraries(directoryPath?: string) {
     const targetDir = join(directoryPath, '.libraries');
+    const useSymlinks = resolveUseSymlinks();
+
+    if (useSymlinks) {
+        const globalCacheDir = join(getStoreDir(), 'libraries');
+        if (!existsSync(globalCacheDir)) {
+            mkdirSync(globalCacheDir, { recursive: true });
+        }
+
+        const umbrellaPath = join(globalCacheDir, 'Umbrella');
+
+        // Ensure Umbrella is in global cache
+        if (existsSync(umbrellaPath)) {
+            log(`- Updating 'Umbrella' in global cache...`);
+            if (!gitUpdate(umbrellaPath)) {
+                warn(
+                    `Failed to update 'Umbrella' in global cache, re-cloning...`,
+                );
+                rmSync(umbrellaPath, { recursive: true, force: true });
+                cloneUmbrella(globalCacheDir, 'Umbrella');
+            }
+        } else {
+            cloneUmbrella(globalCacheDir, 'Umbrella');
+        }
+
+        // Create junction
+        log(`- Creating junction for '.libraries'...`);
+        try {
+            rmSync(targetDir, { recursive: true, force: true });
+            symlinkSync(umbrellaPath, targetDir, 'junction');
+            return;
+        } catch (e) {
+            warn(
+                `Failed to create junction for '.libraries', falling back to physical copy.`,
+            );
+        }
+    }
+
+    // Physical copy / fallback
     if (existsSync(targetDir)) {
         log(`- Updating 'Umbrella' in '.libraries'...`);
         if (gitUpdate(targetDir)) {
@@ -236,24 +321,7 @@ export function installLibraries(directoryPath?: string) {
         rmSync(targetDir, { recursive: true, force: true });
     }
 
-    log(`- Cloning 'Umbrella' into '.libraries'...`);
-    const cloneResult = spawnSync(
-        'git',
-        [
-            'clone',
-            '--recursive',
-            'https://github.com/asledgehammer/Umbrella.git',
-            '.libraries',
-        ],
-        {
-            cwd: directoryPath,
-            shell: true,
-            stdio: 'pipe',
-        },
-    );
-    if (cloneResult.status !== 0) {
-        error(`Failed to clone 'Umbrella'!`);
-    }
+    cloneUmbrella(directoryPath, '.libraries');
 }
 
 /**

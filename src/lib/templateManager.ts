@@ -10,6 +10,7 @@ import {
     rmSync,
     writeFileSync,
     cpSync,
+    symlinkSync,
 } from 'fs';
 import { log, warn } from './logger';
 import { relative } from 'path';
@@ -67,6 +68,7 @@ export interface TemplateConfig {
 export interface GlobalConfig {
     templates: Partial<Record<TemplateCategory, TemplateConfig>>;
     outdir?: string;
+    useSymlinks?: boolean;
 }
 
 const DEFAULT_TEMPLATES: Record<TemplateCategory, TemplateConfig> = {
@@ -393,19 +395,73 @@ export function resolveTemplateDir(
 
 /**
  * Scaffolds a project by copying files from a template with filtering.
+ * Supports directory junctions for specific folders if useSymlinks is enabled.
  */
-export function scaffoldProject(templateDir: string, destDir: string): void {
+export function scaffoldProject(
+    templateDir: string,
+    destDir: string,
+    useSymlinks: boolean = false,
+    asJunction: boolean = false,
+): void {
+    if (useSymlinks && asJunction) {
+        try {
+            if (existsSync(destDir)) {
+                rmSync(destDir, { recursive: true, force: true });
+            }
+            mkdirSync(dirname(destDir), { recursive: true });
+            symlinkSync(templateDir, destDir, 'junction');
+            log(`  - Created template junction: ${basename(destDir)}`);
+            return;
+        } catch (e) {
+            warn(
+                `  - Failed to create template junction for ${basename(
+                    destDir,
+                )}, falling back to copy.`,
+            );
+        }
+    }
+
     if (!existsSync(destDir)) {
         mkdirSync(destDir, { recursive: true });
     }
 
-    log(`- Scaffolding project into ${destDir}...`);
+    log(`- Scaffolding into ${destDir}...`);
 
     const filter = createIgnoreFilter(templateDir);
-    cpSync(templateDir, destDir, {
-        recursive: true,
-        filter: (src, dest) => {
-            return filter(src, dest);
-        },
+    const symlinkFolders = ['.libraries', '.docs'];
+
+    readdirSync(templateDir).forEach((file) => {
+        const srcPath = join(templateDir, file);
+        const destPath = join(destDir, file);
+
+        if (!filter(srcPath, destPath)) {
+            return;
+        }
+
+        const stats = lstatSync(srcPath);
+
+        if (
+            useSymlinks &&
+            stats.isDirectory() &&
+            symlinkFolders.includes(file)
+        ) {
+            try {
+                if (existsSync(destPath)) {
+                    rmSync(destPath, { recursive: true, force: true });
+                }
+                symlinkSync(srcPath, destPath, 'junction');
+                log(`  - Created junction: ${file}`);
+                return;
+            } catch (e) {
+                warn(
+                    `  - Failed to create junction for ${file}, falling back to copy.`,
+                );
+            }
+        }
+
+        cpSync(srcPath, destPath, {
+            recursive: true,
+            filter: (src, dest) => filter(src, dest),
+        });
     });
 }

@@ -71,4 +71,5 @@ export interface IProjectConfig {
     authors: string | string[];
     workshop: IWorshopConfig;
     mods: { [modId: string]: IModConfig };
+    useSymlinks?: boolean;
 }

@@ -6,11 +6,12 @@ import {
     formatTitleToId,
     projectDir,
     readProjectConfig,
+    resolveUseSymlinks,
     updateExperimentalScripts,
     updateProjectConfig,
 } from '../helper';
 import { log } from '../logger';
-import { extractFlag } from '../cli';
+import { extractFlag, hasFlag } from '../cli';
 import { resolveTemplateDir, scaffoldProject } from '../templateManager';
 
 addHelp(
@@ -22,7 +23,8 @@ addHelp(
         pzstudio add <modName> <modId> - Add a mod to your project.
     
     Flags:
-    --template <url> - Use a custom template URL for the mod template.`,
+    --template <url> - Use a custom template URL for the mod template.
+    --symlinks       - Use directory junctions for .libraries and .docs (if supported).`,
 );
 
 export function addCmd(modName: string, modId?: string) {
@@ -36,6 +38,7 @@ export function addCmd(modName: string, modId?: string) {
     }
 
     const modTemplateUrl = extractFlag('template');
+    const useSymlinks = hasFlag('symlinks') || resolveUseSymlinks();
 
     // US2: Check for local .template-mod tier-0 guard
     const localTemplatePath = join(projectPath, '.template-mod');
@@ -66,11 +69,11 @@ export function addCmd(modName: string, modId?: string) {
     }
 
     // Copy mod template
-    scaffoldProject(templateModPath, join(projectPath, modId));
+    scaffoldProject(templateModPath, join(projectPath, modId), useSymlinks);
 
     // Seed local cache if we resolved a remote template and no local one existed
     if (!usedLocalTemplate && !modTemplateUrl) {
-        scaffoldProject(templateModPath, localTemplatePath);
+        scaffoldProject(templateModPath, localTemplatePath, useSymlinks);
     }
 
     // Update config

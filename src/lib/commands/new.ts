@@ -8,6 +8,7 @@ import {
     copyFolderSync,
     projectDir,
     readProjectConfig,
+    resolveUseSymlinks,
     updateExperimentalScripts,
     updateProjectConfig,
 } from '../helper';
@@ -25,12 +26,14 @@ addHelp(
     
     Flags:
     --template <url> - Use a custom template URL for the project template.
-    --offline        - Bypass network updates and use local cache or legacy templates.`,
+    --offline        - Bypass network updates and use local cache or legacy templates.
+    --symlinks       - Use directory junctions for .libraries and .docs (if supported).`,
 );
 
 export async function newCmd(projectTitle: string, modId?: string) {
     const projectTemplateUrl = extractFlag('template');
     const isOffline = hasFlag('offline');
+    const useSymlinks = hasFlag('symlinks') || resolveUseSymlinks();
 
     const templateProjectPath = resolveTemplateDir(
         'project',
@@ -74,26 +77,41 @@ export async function newCmd(projectTitle: string, modId?: string) {
 
     // Copy template
     log(`- Creating project '${projectTitle}' dir '${modId}' ...`);
-    scaffoldProject(templateProjectPath, projectPath);
+    scaffoldProject(templateProjectPath, projectPath, useSymlinks);
 
     // Copy simple mod template
     log(`- Creating simple mod '${modId}'...`);
-    scaffoldProject(templateSimpleModPath, join(projectPath, modId));
+    scaffoldProject(
+        templateSimpleModPath,
+        join(projectPath, modId),
+        useSymlinks,
+    );
 
     // Copy mod template
     log(`- Creating .template-mod`);
-    scaffoldProject(templateModPath, join(projectPath, '.template-mod'));
+    scaffoldProject(
+        templateModPath,
+        join(projectPath, '.template-mod'),
+        useSymlinks,
+        true,
+    );
 
     // Copy language template
     log(`- Creating .template-language`);
     scaffoldProject(
         templateLanguagePath,
         join(projectPath, '.template-language'),
+        useSymlinks,
+        true,
     );
 
     // Copy workshop template
     log(`- Creating workshop`);
-    scaffoldProject(templateWorkshopPath, join(projectPath, 'workshop'));
+    scaffoldProject(
+        templateWorkshopPath,
+        join(projectPath, 'workshop'),
+        useSymlinks,
+    );
 
     // Update config
     log(`- Updating project config...`);
