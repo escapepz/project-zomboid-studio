@@ -514,7 +514,6 @@ export function scaffoldProject(
     log(`- Scaffolding into ${destDir}...`);
 
     const filter = createIgnoreFilter(templateDir);
-    const symlinkFolders = ['.libraries', '.docs'];
 
     readdirSync(templateDir).forEach((file: string) => {
         const srcPath = join(templateDir, file);
@@ -522,27 +521,6 @@ export function scaffoldProject(
 
         if (!filter(srcPath, destPath)) {
             return;
-        }
-
-        const stats = lstatSync(srcPath);
-
-        if (
-            useSymlinks &&
-            stats.isDirectory() &&
-            symlinkFolders.includes(file)
-        ) {
-            try {
-                if (existsSync(destPath)) {
-                    rmSync(destPath, { recursive: true, force: true });
-                }
-                symlinkSync(srcPath, destPath, 'junction');
-                log(`  - Created junction: ${file}`);
-                return;
-            } catch (e) {
-                warn(
-                    `  - Failed to create junction for ${file}, falling back to copy.`,
-                );
-            }
         }
 
         cpSync(srcPath, destPath, {
