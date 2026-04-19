@@ -1,0 +1,4 @@
+.pzstudioignore
+.libraries/.git
+.libraries/README.md
+.libraries/CONTRIBUTING.md

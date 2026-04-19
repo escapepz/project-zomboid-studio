@@ -1,6 +1,6 @@
 import { homedir } from 'os';
 import { spawnSync } from 'child_process';
-import { basename, dirname, join, resolve } from 'path';
+import { basename, dirname, join, resolve, relative } from 'path';
 import {
     existsSync,
     lstatSync,
@@ -13,27 +13,28 @@ import {
     symlinkSync,
 } from 'fs';
 import { log, warn } from './logger';
-import { relative } from 'path';
+import { minimatch } from 'minimatch';
 
 /**
  * Creates a filter for fs.cpSync derived from .pzstudioignore or hardcoded defaults.
- * @param templateDir The source template directory
+ * @param sourceDir The source directory to compute relative paths from
  * @returns A filter function compatible with fs.cpSync
  */
 export function createIgnoreFilter(
-    templateDir: string,
+    sourceDir: string,
 ): (src: string, dest: string) => boolean {
-    const ignorePath = join(templateDir, '.pzstudioignore');
-    let ignoreList = ['.git', '.github']; // Always ignore .git and .github
+    const ignorePath = join(sourceDir, '.pzstudioignore');
+    // Built-in defaults: always ignore .git, .github, and any .gitkeep
+    const builtInPatterns = ['.git/**', '.github/**', '**/.gitkeep'];
+    let userPatterns: string[] = [];
 
     if (existsSync(ignorePath)) {
         try {
             const content = readFileSync(ignorePath, 'utf-8');
-            const lines = content
+            userPatterns = content
                 .split(/\r?\n/)
-                .map((line) => line.trim())
-                .filter((line) => line && !line.startsWith('#'));
-            ignoreList = [...new Set([...ignoreList, ...lines])];
+                .map((line: string) => line.trim())
+                .filter((line: string) => line && !line.startsWith('#'));
         } catch (e) {
             warn(
                 `Failed to read .pzstudioignore at ${ignorePath}. Using default ignores.`,
@@ -41,20 +42,29 @@ export function createIgnoreFilter(
         }
     }
 
+    const allPatterns = [...builtInPatterns, ...userPatterns];
+
     return (src: string) => {
-        const relPath = relative(templateDir, src);
+        let relPath = relative(sourceDir, src);
         if (!relPath) return true; // Include root itself
 
-        // Simple prefix match for ignore list
-        return !ignoreList.some((pattern) => {
-            if (pattern === relPath) return true;
-            if (
-                relPath.startsWith(pattern + '/') ||
-                relPath.startsWith(pattern + '\\')
-            )
-                return true;
-            return false;
-        });
+        // Normalize to forward slashes for consistent glob matching
+        relPath = relPath.replace(/\\/g, '/');
+
+        for (const pattern of allPatterns) {
+            try {
+                // We use { dot: true } to ensure .git and .github are matched even if they start with a dot
+                if (minimatch(relPath, pattern, { dot: true })) {
+                    // Special case: do not ignore .pzstudioignore itself if it was explicitly added to the ignore list
+                    if (relPath === '.pzstudioignore') continue;
+                    return false;
+                }
+            } catch (e) {
+                warn(`Invalid ignore pattern skipped: "${pattern}"`);
+            }
+        }
+
+        return true;
     };
 }
 
@@ -158,9 +168,9 @@ function getTemplateCacheDir(category: TemplateCategory): string {
 
 function getEmbeddedTemplateDir(category: TemplateCategory): string {
     const searchPaths = [
-        join(dirname(__dirname), '.template-legacy'), // dist/.template-legacy
-        join(dirname(dirname(__dirname)), '.template-legacy'), // root/.template-legacy
-        join(getConfigDir(), '.template-legacy'), // user-home/.pzstudio/.template-legacy
+        '.template-legacy',
+        join('..', '.template-legacy'),
+        join(getConfigDir(), '.template-legacy'),
     ];
 
     for (const basePath of searchPaths) {
@@ -171,6 +181,22 @@ function getEmbeddedTemplateDir(category: TemplateCategory): string {
     }
 
     return join(searchPaths[0], `.template-${category}`);
+}
+
+/**
+ * Checks if a directory is a valid git repository and non-empty.
+ */
+function isCacheValid(dir: string): boolean {
+    if (!existsSync(dir)) return false;
+    try {
+        if (!lstatSync(dir).isDirectory()) return false;
+        if (readdirSync(dir).length === 0) return false;
+        // Basic git check: must have a .git directory
+        if (!existsSync(join(dir, '.git'))) return false;
+    } catch {
+        return false;
+    }
+    return true;
 }
 
 function isDirNonEmpty(dir: string): boolean {
@@ -216,6 +242,41 @@ export function cloneRemoteTemplate(
 
     const result = spawnSync('git', args, { shell: true, stdio: 'pipe' });
     return result.status === 0;
+}
+
+/**
+ * Refreshes a cached template repository using git fetch and hard reset.
+ * @param dir The cache directory
+ * @param ref Optional branch or tag
+ * @returns True if the refresh was successful
+ */
+export function refreshCachedTemplate(dir: string, ref?: string): boolean {
+    log(`- Refreshing template cache at ${dir}...`);
+    const git = (args: string[]) =>
+        spawnSync('git', args, {
+            cwd: dir,
+            shell: true,
+            stdio: 'pipe',
+        });
+
+    // 1. git fetch --all
+    if (git(['fetch', '--all']).status !== 0) return false;
+
+    // 2. git reset --hard origin/<ref> or just origin/HEAD if ref is missing
+    const target = ref && ref !== 'default' ? `origin/${ref}` : 'origin/HEAD';
+    if (git(['reset', '--hard', target]).status !== 0) return false;
+
+    // 3. git submodule update --init --recursive --force
+    if (
+        git(['submodule', 'update', '--init', '--recursive', '--force'])
+            .status !== 0
+    )
+        return false;
+
+    // 4. git clean -fdx
+    if (git(['clean', '-fdx']).status !== 0) return false;
+
+    return true;
 }
 
 /**
@@ -296,27 +357,27 @@ export function writeGlobalConfig(config: GlobalConfig): void {
 }
 
 /**
- * Validates that a template directory exists and has content
- * (Just checks if directory is non-empty after clone)
+ * Validates that a template directory exists and has content.
  */
 export function validateTemplateManifest(
     dir: string,
     expectedCategory: TemplateCategory,
 ): boolean {
-    if (!isDirNonEmpty(dir)) {
-        return false;
-    }
-    // Future: Can enhance to validate template.json if repos add it
-    return true;
+    return isCacheValid(dir);
 }
 
 /**
  * Resolves the template directory for a given category.
  *
  * Resolution chain:
- * 1. overrideUrl → clone to namespace cache, validate manifest, return
- * 2. Cached template exists → return cached path (if offline or freshness ok)
- * 3. Cache missing or online → clone from config or hardcoded default → cache
+ * 1. overrideUrl → resolve cache path, if exists and valid:
+ *    - if forceUpdate: refresh, return
+ *    - else: return cached
+ *    - if missing/invalid or refresh fails: delete, clone, return
+ * 2. Cached default exists and valid:
+ *    - if forceUpdate: refresh, return
+ *    - else: return cached
+ * 3. Cache missing or invalid: clone from config or hardcoded default → cache
  * 4. Clone fails → fall back to local .template-legacy
  * 5. Nothing found → throw actionable error
  */
@@ -324,6 +385,7 @@ export function resolveTemplateDir(
     category: TemplateCategory,
     overrideUrl?: string,
     isOffline?: boolean,
+    forceUpdate?: boolean,
 ): string {
     const override = overrideUrl ? parseTemplateUrl(overrideUrl) : undefined;
 
@@ -343,7 +405,7 @@ export function resolveTemplateDir(
 
     // If offline, try cache first, then legacy for defaults
     if (isOffline) {
-        if (isDirNonEmpty(cacheDir)) {
+        if (isCacheValid(cacheDir)) {
             return cacheDir;
         }
         if (!overrideUrl) {
@@ -356,21 +418,35 @@ export function resolveTemplateDir(
         }
         throw new Error(
             overrideUrl
-                ? `Template '${overrideUrl}' not found in cache. Run without --offline first.`
-                : `No cached or legacy template found for '${category}'.`,
+                ? `Template '${overrideUrl}' not found or invalid in cache. Run without --offline first.`
+                : `No valid cached or legacy template found for '${category}'.`,
         );
     }
 
-    // Online mode: ensure freshness by deleting and re-cloning
+    // Online mode: use cache if valid and not forcing update
+    if (isCacheValid(cacheDir)) {
+        if (forceUpdate) {
+            if (refreshCachedTemplate(cacheDir, templateConfig.ref)) {
+                return cacheDir;
+            }
+            warn(`Failed to refresh template cache. Re-cloning...`);
+            rmSync(cacheDir, { recursive: true, force: true });
+        } else {
+            return cacheDir;
+        }
+    } else if (existsSync(cacheDir)) {
+        // Invalid cache: clean up before re-clone
+        warn(`Template cache at ${cacheDir} is invalid. Re-cloning...`);
+        rmSync(cacheDir, { recursive: true, force: true });
+    }
+
+    // Re-clone or initial clone
     if (!isOfficialTemplate(templateConfig.url)) {
         warn(
             `⚠ Cloning from community template '${templateConfig.url}'. Not verified by PZStudio.`,
         );
     }
 
-    if (existsSync(cacheDir)) {
-        rmSync(cacheDir, { recursive: true, force: true });
-    }
     mkdirSync(dirname(cacheDir), { recursive: true });
 
     if (cloneRemoteTemplate(templateConfig.url, cacheDir, templateConfig.ref)) {
@@ -381,7 +457,7 @@ export function resolveTemplateDir(
         warn(`Failed to clone template from '${templateConfig.url}'.`);
     }
 
-    // Fallback to legacy for official templates only if clone failed
+    // Fallback to legacy for official templates only if clone/cache failed
     if (!overrideUrl && isDirNonEmpty(legacyDir)) {
         warn(`Falling back to offline legacy template for '${category}'.`);
         return legacyDir;
@@ -430,7 +506,7 @@ export function scaffoldProject(
     const filter = createIgnoreFilter(templateDir);
     const symlinkFolders = ['.libraries', '.docs'];
 
-    readdirSync(templateDir).forEach((file) => {
+    readdirSync(templateDir).forEach((file: string) => {
         const srcPath = join(templateDir, file);
         const destPath = join(destDir, file);
 
@@ -461,7 +537,7 @@ export function scaffoldProject(
 
         cpSync(srcPath, destPath, {
             recursive: true,
-            filter: (src, dest) => filter(src, dest),
+            filter: (src: string, dest: string) => filter(src, dest),
         });
     });
 }

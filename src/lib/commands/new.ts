@@ -1,5 +1,5 @@
+import { existsSync, readdirSync } from 'fs';
 import { join } from 'path';
-import { existsSync } from 'fs';
 import { expect } from '../expect';
 import { addHelp } from '../help';
 import {
@@ -14,7 +14,11 @@ import {
 } from '../helper';
 import { info, log, warn } from '../logger';
 import { extractFlag, hasFlag } from '../cli';
-import { resolveTemplateDir, scaffoldProject } from '../templateManager';
+import {
+    createIgnoreFilter,
+    resolveTemplateDir,
+    scaffoldProject,
+} from '../templateManager';
 
 addHelp(
     'new',
@@ -25,32 +29,24 @@ addHelp(
     pzstudio new <projectTitle> <modId> - Create a new project with the given title and mod id.
     
     Flags:
-    --template <url> - Use a custom template URL for the project template.
+    --template <url> - Use a custom template URL for the mod template.
     --offline        - Bypass network updates and use local cache or legacy templates.
+    --force-update   - Force refresh of cached templates from remote.
     --symlinks       - Use directory junctions for .libraries and .docs (if supported).`,
 );
 
 export async function newCmd(projectTitle: string, modId?: string) {
     const projectTemplateUrl = extractFlag('template');
+    const modTemplateUrl = extractFlag('template');
     const isOffline = hasFlag('offline');
+    const forceUpdate = hasFlag('force-update');
     const useSymlinks = hasFlag('symlinks') || resolveUseSymlinks();
 
     const templateProjectPath = resolveTemplateDir(
         'project',
         projectTemplateUrl,
         isOffline,
-    );
-    const templateModPath = resolveTemplateDir('mod', undefined, isOffline);
-    const templateSimpleModPath = templateModPath;
-    const templateLanguagePath = resolveTemplateDir(
-        'language',
-        undefined,
-        isOffline,
-    );
-    const templateWorkshopPath = resolveTemplateDir(
-        'workshop',
-        undefined,
-        isOffline,
+        forceUpdate,
     );
 
     // Check if we are in a project directory
@@ -75,17 +71,45 @@ export async function newCmd(projectTitle: string, modId?: string) {
         );
     }
 
+    // US2: Check for local .template-mod tier-0 guard
+    const localTemplatePath = join(projectPath, '.template-mod');
+    let templateModPath: string;
+
+    if (
+        !modTemplateUrl &&
+        existsSync(localTemplatePath) &&
+        readdirSync(localTemplatePath).length > 0
+    ) {
+        templateModPath = localTemplatePath;
+    } else {
+        templateModPath = resolveTemplateDir(
+            'mod',
+            modTemplateUrl,
+            isOffline,
+            forceUpdate,
+        );
+    }
+
+    const templateLanguagePath = resolveTemplateDir(
+        'language',
+        undefined,
+        isOffline,
+        forceUpdate,
+    );
+    const templateWorkshopPath = resolveTemplateDir(
+        'workshop',
+        undefined,
+        isOffline,
+        forceUpdate,
+    );
+
     // Copy template
     log(`- Creating project '${projectTitle}' dir '${modId}' ...`);
     scaffoldProject(templateProjectPath, projectPath, useSymlinks);
 
     // Copy simple mod template
     log(`- Creating simple mod '${modId}'...`);
-    scaffoldProject(
-        templateSimpleModPath,
-        join(projectPath, modId),
-        useSymlinks,
-    );
+    scaffoldProject(templateModPath, join(projectPath, modId), useSymlinks);
 
     // Copy mod template
     log(`- Creating .template-mod`);
@@ -107,10 +131,12 @@ export async function newCmd(projectTitle: string, modId?: string) {
 
     // Copy workshop template
     log(`- Creating workshop`);
-    scaffoldProject(
+    const workshopFilter = createIgnoreFilter(templateWorkshopPath);
+    copyFolderSync(
         templateWorkshopPath,
         join(projectPath, 'workshop'),
-        useSymlinks,
+        true,
+        workshopFilter,
     );
 
     // Update config

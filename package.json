@@ -70,7 +70,7 @@
         "project-zomboid-studio"
     ],
     "devDependencies": {
-        "@types/node": "^18.7.5",
+        "@types/node": "^18.19.130",
         "@types/terminal-kit": "^2.5.1",
         "lefthook": "^2.1.1",
         "prettier": "^3.7.4"
@@ -79,6 +79,7 @@
         "chokidar": "^3.5.3",
         "del-cli": "^4.0.1",
         "download": "^8.0.0",
+        "minimatch": "^10.2.5",
         "terminal-kit": "^3.0.0",
         "typescript": "^5.0.4"
     }

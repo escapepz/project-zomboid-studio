@@ -78,7 +78,10 @@ export async function runCLI(cmdName?: string, cmdArgs?: string[]) {
     try {
         switch (command.name) {
             case 'add':
-                await addCmd(command.params[0] as string);
+                await addCmd(
+                    command.params[0] as string,
+                    command.params[1] as string,
+                );
                 break;
 
             case 'build':

@@ -132,6 +132,7 @@ export function copyFolderSync(
     from: string,
     to: string,
     ignoreDotFiles: boolean = false,
+    filter?: (src: string, dest: string) => boolean,
 ) {
     mkdirSync(to, { recursive: true });
     const files = readdirSync(from);
@@ -139,14 +140,21 @@ export function copyFolderSync(
         if (ignoreDotFiles && (file.startsWith('.') || file === '.gitkeep')) {
             continue;
         }
-        const current = lstatSync(join(from, file));
+        const srcFile = join(from, file);
+        const destFile = join(to, file);
+
+        if (filter && !filter(srcFile, destFile)) {
+            continue;
+        }
+
+        const current = lstatSync(srcFile);
         if (current.isDirectory()) {
-            copyFolderSync(join(from, file), join(to, file), ignoreDotFiles);
+            copyFolderSync(srcFile, destFile, ignoreDotFiles, filter);
         } else if (current.isSymbolicLink()) {
-            const symlink = readlinkSync(join(from, file));
-            writeFileSync(join(to, file), symlink);
+            const symlink = readlinkSync(srcFile);
+            writeFileSync(destFile, symlink);
         } else {
-            copyFileSync(join(from, file), join(to, file));
+            copyFileSync(srcFile, destFile);
         }
     }
 }
