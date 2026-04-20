@@ -13,7 +13,6 @@ import {
     symlinkSync,
 } from 'fs';
 import { log, warn } from './logger';
-import { minimatch } from 'minimatch';
 
 /**
  * Creates a filter for fs.cpSync derived from .pzstudioignore or hardcoded defaults.
@@ -26,19 +25,11 @@ export function createIgnoreFilter(
     sourceRoot: string,
     options: { excludeIgnoreFile?: boolean; ignoreDotFiles?: boolean } = {},
 ): (src: string, dest: string) => boolean {
-    const builtInPatterns = [
-        '.git',
-        '.git/**',
-        '.gitmodules',
-        '**/.gitkeep',
-        '.github/**',
-    ];
-
     // Cache for compiled filter functions per directory
     const filterCache: Record<string, (relPath: string) => boolean | null> = {};
 
     /**
-     * Resolves and caches ignore patterns for a specific directory.
+     * Resolves and caches ignore rules for a specific directory.
      * Searches for .pzstudioignore in the given directory.
      */
     const getFilterForDir = (
@@ -47,12 +38,12 @@ export function createIgnoreFilter(
         if (filterCache[dir]) return filterCache[dir];
 
         const ignorePath = join(dir, '.pzstudioignore');
-        let patterns: string[] = [];
+        let entries: string[] = [];
 
         if (existsSync(ignorePath)) {
             try {
                 const content = readFileSync(ignorePath, 'utf-8');
-                patterns = content
+                entries = content
                     .split(/\r?\n/)
                     .map((line: string) => line.trim())
                     .filter((line: string) => line && !line.startsWith('#'));
@@ -61,20 +52,24 @@ export function createIgnoreFilter(
             }
         }
 
-        if (patterns.length === 0) {
+        if (entries.length === 0) {
             filterCache[dir] = () => null; // No local rules
             return filterCache[dir];
         }
 
         filterCache[dir] = (relPath: string) => {
             // RelPath is relative to the directory where .pzstudioignore lives
-            for (const pattern of patterns) {
-                try {
-                    if (minimatch(relPath, pattern, { dot: true })) {
-                        return false; // Ignored
-                    }
-                } catch (_e) {
-                    warn(`Invalid ignore pattern skipped: "${pattern}"`);
+            for (let entry of entries) {
+                // Normalize entry to use forward slashes
+                entry = entry.replace(/\\/g, '/');
+
+                // Remove trailing slashes for directory prefix matching
+                if (entry.endsWith('/')) {
+                    entry = entry.slice(0, -1);
+                }
+
+                if (relPath === entry || relPath.startsWith(entry + '/')) {
+                    return false; // Ignored
                 }
             }
             return true; // Not ignored by this file
@@ -88,20 +83,24 @@ export function createIgnoreFilter(
         if (!relToRoot) return true; // Include root itself
         relToRoot = relToRoot.replace(/\\/g, '/');
 
+        const name = basename(src);
+
         // Rule 0: Built-in defaults always apply
-        for (const pattern of builtInPatterns) {
-            if (minimatch(relToRoot, pattern, { dot: true })) {
-                return false;
-            }
+        if (name === '.gitkeep') return false;
+
+        if (
+            relToRoot === '.git' ||
+            relToRoot.startsWith('.git/') ||
+            relToRoot === '.github' ||
+            relToRoot.startsWith('.github/') ||
+            relToRoot === '.gitmodules'
+        ) {
+            return false;
         }
 
         // Rule 0.5: Optional dotfile ignore (matching copyFolderSync legacy behavior)
         if (options.ignoreDotFiles) {
-            const name = basename(src);
-            if (
-                (name.startsWith('.') || name === '.gitkeep') &&
-                name !== '.pzstudioignore'
-            ) {
+            if (name.startsWith('.') && name !== '.pzstudioignore') {
                 return false;
             }
         }

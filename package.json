@@ -91,7 +91,6 @@
         "chokidar": "^3.5.3",
         "del-cli": "^4.0.1",
         "download": "^8.0.0",
-        "minimatch": "^10.2.5",
         "terminal-kit": "^3.0.0",
         "typescript": "^5.0.4"
     }
