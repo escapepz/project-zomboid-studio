@@ -50,8 +50,8 @@ function addModScripts(projectDir, modId) {
     pkg.scripts = pkg.scripts || {};
 
     for (const [name, script] of Object.entries(MOD_SCRIPTS)) {
-        const scriptName = name.replace(/{modId}/g, modId);
-        const scriptContent = script.replace(/{modId}/g, modId);
+        const scriptName = name.replaceAll('{modId}', modId);
+        const scriptContent = script.replaceAll('{modId}', modId);
         pkg.scripts[scriptName] = scriptContent;
     }
 
@@ -71,7 +71,7 @@ function removeModScripts(projectDir, modId) {
     if (!pkg.scripts) return;
 
     for (const name of Object.keys(MOD_SCRIPTS)) {
-        const scriptName = name.replace(/{modId}/g, modId);
+        const scriptName = name.replaceAll('{modId}', modId);
         delete pkg.scripts[scriptName];
     }
 

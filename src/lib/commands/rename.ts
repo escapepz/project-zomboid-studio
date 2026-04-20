@@ -62,10 +62,7 @@ export function renameCmd(oldModId: string, newModId: string) {
         .concat(getFilesRecursively(join(projectPath, newModId)))
         .forEach((file) => {
             const content = readFileSync(file, 'utf-8');
-            const newContent = content.replace(
-                new RegExp(oldModId, 'g'),
-                newModId,
-            );
+            const newContent = content.replaceAll(oldModId, newModId);
             if (content !== newContent) {
                 writeFileSync(file, newContent, { encoding: 'utf-8' });
                 log(`- Updated file ${file} with new mod id '${newModId}'`);
