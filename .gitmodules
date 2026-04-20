@@ -1,0 +1,12 @@
+[submodule ".template-legacy/.template-project"]
+	path = .template-legacy/.template-project
+	url = https://github.com/escapepz/pzstudio-template-project
+[submodule ".template-legacy/.template-mod"]
+	path = .template-legacy/.template-mod
+	url = https://github.com/escapepz/pzstudio-template-mod
+[submodule ".template-legacy/.template-workshop"]
+	path = .template-legacy/.template-workshop
+	url = https://github.com/escapepz/pzstudio-template-workshop
+[submodule ".template-legacy/.template-language"]
+	path = .template-legacy/.template-language
+	url = https://github.com/escapepz/pzstudio-template-language
