@@ -150,11 +150,11 @@ export interface GlobalConfig {
 const DEFAULT_TEMPLATES: Record<TemplateCategory, TemplateConfig> = {
     project: {
         url: 'https://github.com/escapepz/pzstudio-template-project.git',
-        ref: '42.13.1',
+        ref: '42.17.0',
     },
     mod: {
         url: 'https://github.com/escapepz/pzstudio-template-mod.git',
-        ref: '42.13.1-simple',
+        ref: '42.17.0',
     },
     workshop: {
         url: 'https://github.com/escapepz/pzstudio-template-workshop.git',

@@ -1,7 +1,7 @@
 {
     "name": "pzstudio-cli",
-    "version": "2.242131.3",
-    "branch": "b42.13.1",
+    "version": "2.242170.0",
+    "branch": "b42.17.0",
     "description": "Effortlessly create and maintain Lua mods for Project Zomboid with intuitive structuring.",
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
@@ -84,14 +84,13 @@
         "globals": "^15.9.0",
         "lefthook": "^2.1.1",
         "prettier": "^3.7.4",
+        "del-cli": "^4.0.1",
+        "typescript": "^5.0.4",
         "typescript-eslint": "^8.58.2",
         "vitest": "^4.1.4"
     },
     "dependencies": {
         "chokidar": "^3.5.3",
-        "del-cli": "^4.0.1",
-        "download": "^8.0.0",
-        "terminal-kit": "^3.0.0",
-        "typescript": "^5.0.4"
+        "terminal-kit": "^3.0.0"
     }
 }

@@ -48,7 +48,7 @@ All notable changes to the **Project Zomboid Studio** VSCode extension will be d
 
 ### Added
 
-- **Project Zomboid b42.13.1 MP** compatibility.
+- **Project Zomboid b42.17.0 MP** compatibility.
 - Integrated **VS Code Extension** support with dedicated commands for building, watching, and project management.
 - Dual-branch build system:
     - **Main Branch**: Production-ready workshop structure.
@@ -56,12 +56,12 @@ All notable changes to the **Project Zomboid Studio** VSCode extension will be d
 - Automated documentation and guide installation (`.docs` and `.guides` submodules).
 - Unix-compatible mod ID formatting (automatically sanitizes spaces and special characters for cross-platform compatibility).
 - `AGENTS.md` for better developer onboarding and project architecture overview.
-- Support for `mod.info` deployment in version-specific folders (`{modId}/42.13.1/mod.info`).
+- Support for `mod.info` deployment in version-specific folders (`{modId}/42.17.0/mod.info`).
 - JSON Schema for `project.json` to provide autocompletion and validation in VS Code.
 
 ### Changed
 
-- Refactored build output to support the new Project Zomboid 42.13.1 folder structure.
+- Refactored build output to support the new Project Zomboid 42.17.0 folder structure.
 - Updated project configuration to move `buildDate` to a separate file, preventing unnecessary `package.json` churn.
 - Standardized file paths across CLI and VS Code extension to ensure reliable template copying.
 
