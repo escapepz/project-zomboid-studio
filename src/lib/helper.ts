@@ -16,7 +16,7 @@ import {
 } from 'fs';
 import { IProjectConfig } from './project';
 import { error, log, warn } from './logger';
-import { readGlobalConfig } from './templateManager';
+import { readGlobalConfig, writeGlobalConfig } from './templateManager';
 
 /**
  * Resolves the useSymlinks configuration flag following the hierarchy:
@@ -198,12 +198,9 @@ export function migrateStoreDirIfNeeded() {
             writeFileSync(backupPath, outDirContent);
 
             // Save to config.json
-            const configPath = join(storeDir, 'config.json');
-            const config = existsSync(configPath)
-                ? JSON.parse(readFileSync(configPath, 'utf8'))
-                : {};
+            const config = readGlobalConfig();
             config.outdir = outDirContent;
-            writeFileSync(configPath, JSON.stringify(config, null, 4), 'utf8');
+            writeGlobalConfig(config);
 
             log(`- Migrated legacy .pzstudio file to directory structure`);
         } catch (e) {
@@ -222,21 +219,13 @@ export function getStoreDir() {
  */
 export function getOutDir() {
     const storeDir = getStoreDir();
-    const configPath = join(storeDir, 'config.json');
-    const backupPath = join(storeDir, '.pzstudio.bak');
-
     // 1. Try config.json
-    if (existsSync(configPath)) {
-        try {
-            const config = JSON.parse(readFileSync(configPath, 'utf8'));
-            if (config.outdir) {
-                return resolve(config.outdir);
-            }
-        } catch (e) {
-            // Fall through to next option
-        }
+    const config = readGlobalConfig();
+    if (config.outdir) {
+        return resolve(config.outdir);
     }
 
+    const backupPath = join(storeDir, '.pzstudio.bak');
     // 2. Fall back to .pzstudio.bak
     if (existsSync(backupPath)) {
         try {
