@@ -17,6 +17,7 @@ import {
     createIgnoreFilter,
     resolveTemplateDir,
     scaffoldProject,
+    scaffoldTemplateFolder,
 } from '../templateManager';
 
 addHelp(
@@ -102,34 +103,43 @@ export async function newCmd(projectTitle: string, modId?: string) {
         forceUpdate,
     );
 
-    // Copy template
+    // Copy template (excluding shared folders that will be linked)
     log(`- Creating project '${projectTitle}' dir '${modId}' ...`);
+    const projectFilter = createIgnoreFilter(templateProjectPath);
+    const sharedFolders = ['.template-mod', '.template-language', '.libraries'];
+
     scaffoldProject(templateProjectPath, projectPath, useSymlinks);
 
-    // Copy simple mod template
-    log(`- Creating simple mod '${modId}'...`);
+    // Copy mod template into the project mod folder
+    log(`- Creating mod '${modId}'...`);
     scaffoldProject(templateModPath, join(projectPath, modId), useSymlinks);
 
-    // Copy mod template
-    log(`- Creating .template-mod`);
-    scaffoldProject(
+    // Link or copy shared template folders
+    log(`- Creating shared template folders...`);
+
+    scaffoldTemplateFolder(
         templateModPath,
         join(projectPath, '.template-mod'),
         useSymlinks,
-        true,
     );
 
-    // Copy language template
-    log(`- Creating .template-language`);
-    scaffoldProject(
+    scaffoldTemplateFolder(
         templateLanguagePath,
         join(projectPath, '.template-language'),
         useSymlinks,
-        true,
     );
 
+    const templateLibrariesPath = join(templateProjectPath, '.libraries');
+    if (existsSync(templateLibrariesPath)) {
+        scaffoldTemplateFolder(
+            templateLibrariesPath,
+            join(projectPath, '.libraries'),
+            useSymlinks,
+        );
+    }
+
     // Copy workshop template
-    log(`- Creating workshop`);
+    log(`- Creating workshop folder...`);
     const workshopFilter = createIgnoreFilter(templateWorkshopPath);
     copyFolderSync(
         templateWorkshopPath,

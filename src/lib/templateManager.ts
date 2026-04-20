@@ -22,56 +22,101 @@ import { minimatch } from 'minimatch';
  */
 /**
  * Creates a filter for fs.cpSync derived from .pzstudioignore or hardcoded defaults.
- * @param sourceDir The source directory to compute relative paths from
+ * Supports nested .pzstudioignore files where the closest one to the subtree wins.
+ * @param sourceRoot The root directory of the copy operation
  * @param options Filter options
  * @returns A filter function compatible with fs.cpSync
  */
 export function createIgnoreFilter(
-    sourceDir: string,
+    sourceRoot: string,
     options: { excludeIgnoreFile?: boolean } = {},
 ): (src: string, dest: string) => boolean {
-    const ignorePath = join(sourceDir, '.pzstudioignore');
-    // Built-in defaults: always ignore .git, .github, and any .gitkeep
     const builtInPatterns = ['.git/**', '.github/**', '**/.gitkeep'];
-    let userPatterns: string[] = [];
 
-    if (existsSync(ignorePath)) {
-        try {
-            const content = readFileSync(ignorePath, 'utf-8');
-            userPatterns = content
-                .split(/\r?\n/)
-                .map((line: string) => line.trim())
-                .filter((line: string) => line && !line.startsWith('#'));
-        } catch (_e) {
-            warn(
-                `Failed to read .pzstudioignore at ${ignorePath}. Using default ignores.`,
-            );
+    // Cache for compiled filter functions per directory
+    const filterCache: Record<string, (relPath: string) => boolean | null> = {};
+
+    /**
+     * Resolves and caches ignore patterns for a specific directory.
+     * Searches for .pzstudioignore in the given directory.
+     */
+    const getFilterForDir = (
+        dir: string,
+    ): ((relPath: string) => boolean | null) => {
+        if (filterCache[dir]) return filterCache[dir];
+
+        const ignorePath = join(dir, '.pzstudioignore');
+        let patterns: string[] = [];
+
+        if (existsSync(ignorePath)) {
+            try {
+                const content = readFileSync(ignorePath, 'utf-8');
+                patterns = content
+                    .split(/\r?\n/)
+                    .map((line: string) => line.trim())
+                    .filter((line: string) => line && !line.startsWith('#'));
+            } catch (_e) {
+                warn(`Failed to read .pzstudioignore at ${ignorePath}.`);
+            }
         }
-    }
 
-    const allPatterns = [...builtInPatterns, ...userPatterns];
+        if (patterns.length === 0) {
+            filterCache[dir] = () => null; // No local rules
+            return filterCache[dir];
+        }
+
+        filterCache[dir] = (relPath: string) => {
+            // RelPath is relative to the directory where .pzstudioignore lives
+            for (const pattern of patterns) {
+                try {
+                    if (minimatch(relPath, pattern, { dot: true })) {
+                        return false; // Ignored
+                    }
+                } catch (_e) {
+                    warn(`Invalid ignore pattern skipped: "${pattern}"`);
+                }
+            }
+            return true; // Not ignored by this file
+        };
+
+        return filterCache[dir];
+    };
 
     return (src: string) => {
-        let relPath = relative(sourceDir, src);
-        if (!relPath) return true; // Include root itself
+        let relToRoot = relative(sourceRoot, src);
+        if (!relToRoot) return true; // Include root itself
+        relToRoot = relToRoot.replace(/\\/g, '/');
 
-        // Normalize to forward slashes for consistent glob matching
-        relPath = relPath.replace(/\\/g, '/');
+        // Rule 0: Built-in defaults always apply
+        for (const pattern of builtInPatterns) {
+            if (minimatch(relToRoot, pattern, { dot: true })) {
+                return false;
+            }
+        }
 
-        // Rule: .pzstudioignore is special
-        if (relPath === '.pzstudioignore') {
+        // Rule 1: .pzstudioignore is special
+        if (
+            relToRoot === '.pzstudioignore' ||
+            relToRoot.endsWith('/.pzstudioignore')
+        ) {
             return !options.excludeIgnoreFile;
         }
 
-        for (const pattern of allPatterns) {
-            try {
-                // We use { dot: true } to ensure .git and .github are matched even if they start with a dot
-                if (minimatch(relPath, pattern, { dot: true })) {
-                    return false;
-                }
-            } catch (_e) {
-                warn(`Invalid ignore pattern skipped: "${pattern}"`);
+        // Rule 2: Search for the closest .pzstudioignore in the hierarchy up to sourceRoot
+        let currentPath = lstatSync(src).isDirectory() ? src : dirname(src);
+
+        while (currentPath.length >= sourceRoot.length) {
+            const filter = getFilterForDir(currentPath);
+            const relToIgnore = relative(currentPath, src).replace(/\\/g, '/');
+
+            if (relToIgnore) {
+                const result = filter(relToIgnore);
+                if (result === false) return false;
+                if (result === true) return true; // Closest one wins
             }
+
+            if (currentPath === sourceRoot) break;
+            currentPath = dirname(currentPath);
         }
 
         return true;
@@ -525,7 +570,40 @@ export function scaffoldProject(
 
         cpSync(srcPath, destPath, {
             recursive: true,
-            filter: (src: string, dest: string) => filter(src, dest),
+            filter: (src: string, _dest: string) => filter(src, _dest),
         });
     });
+}
+
+/**
+ * Specialized helper to scaffold a specific template folder as a link or copy.
+ * Used for .template-mod, .template-language, and .libraries.
+ */
+export function scaffoldTemplateFolder(
+    templateDir: string,
+    destDir: string,
+    useSymlinks: boolean,
+): void {
+    if (useSymlinks) {
+        try {
+            if (existsSync(destDir)) {
+                // If it's already a link or dir, we might want to skip or recreate
+                // For safety in 'new', we assume destDir shouldn't exist or we can overwrite
+                rmSync(destDir, { recursive: true, force: true });
+            }
+            mkdirSync(dirname(destDir), { recursive: true });
+            symlinkSync(templateDir, destDir, 'junction');
+            log(`  - Linked shared folder: ${basename(destDir)}`);
+            return;
+        } catch (_e) {
+            warn(
+                `  - Failed to link shared folder ${basename(
+                    destDir,
+                )}, falling back to copy.`,
+            );
+        }
+    }
+
+    // Fallback or explicit copy
+    scaffoldProject(templateDir, destDir, false, false);
 }

@@ -1,4 +1,4 @@
-﻿# AGENTS.md - Project Zomboid Studio
+# AGENTS.md - Project Zomboid Studio
 
 ## Build & Commands
 
