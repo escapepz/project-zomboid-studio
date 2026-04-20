@@ -233,21 +233,42 @@ function getConfigPath(): string {
 //     return join(getConfigDir(), 'templates', category);
 // }
 
-function getEmbeddedTemplateDir(category: TemplateCategory): string {
-    const searchPaths = [
-        '.template-legacy',
-        join('..', '.template-legacy'),
-        join(getConfigDir(), '.template-legacy'),
+function bootstrapLegacyTemplates(): void {
+    const globalLegacyDir = join(getConfigDir(), '.template-legacy');
+    if (existsSync(globalLegacyDir) && isDirNonEmpty(globalLegacyDir)) {
+        return;
+    }
+
+    // Find the bundled .template-legacy directory
+    const installRootPaths = [
+        join(__dirname, '..', '..', '.template-legacy'),
+        join(__dirname, '..', '.template-legacy'),
+        join(process.cwd(), '.template-legacy'),
     ];
 
-    for (const basePath of searchPaths) {
-        const fullPath = join(basePath, `.template-${category}`);
-        if (existsSync(fullPath) && isDirNonEmpty(fullPath)) {
-            return fullPath;
+    let bundledLegacyDir: string | undefined;
+    for (const p of installRootPaths) {
+        if (existsSync(p) && isDirNonEmpty(p)) {
+            bundledLegacyDir = p;
+            break;
         }
     }
 
-    return join(searchPaths[0], `.template-${category}`);
+    if (bundledLegacyDir) {
+        log(`- Bootstrapping legacy templates to ${globalLegacyDir}...`);
+        try {
+            mkdirSync(dirname(globalLegacyDir), { recursive: true });
+            cpSync(bundledLegacyDir, globalLegacyDir, { recursive: true });
+        } catch (e) {
+            warn(`Failed to bootstrap legacy templates: ${e}`);
+        }
+    }
+}
+
+function getEmbeddedTemplateDir(category: TemplateCategory): string {
+    bootstrapLegacyTemplates();
+    const globalLegacyDir = join(getConfigDir(), '.template-legacy');
+    return join(globalLegacyDir, `.template-${category}`);
 }
 
 /**

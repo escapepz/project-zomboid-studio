@@ -87,7 +87,7 @@
             }
         },
         "useSymlinks": {
-            "description": "Whether to use symlinks (junctions on Windows) for .libraries and .docs folders to save disk space.",
+            "description": "Whether to use symlinks (junctions on Windows) for .libraries folders to save disk space.",
             "type": "boolean",
             "default": false
         },
