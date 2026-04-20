@@ -2,17 +2,14 @@ import { homedir } from 'os';
 import { spawnSync } from 'child_process';
 import { basename, dirname, join, resolve } from 'path';
 import {
-    copyFileSync,
     existsSync,
     lstatSync,
     mkdirSync,
     readFileSync,
     readdirSync,
-    readlinkSync,
     rmSync,
     statSync,
     writeFileSync,
-    symlinkSync,
 } from 'fs';
 import { IProjectConfig } from './project';
 import { error, log, warn } from './logger';
@@ -66,20 +63,6 @@ export function workingDir() {
 }
 
 /**
- * Returns the template directory
- * @returns {string} The template directory
- */
-export function templateDir(
-    template: 'language' | 'mod' | 'project' | 'workshop',
-) {
-    const root =
-        basename(__dirname) === 'dist'
-            ? join(__dirname, '..')
-            : join(dirname(__dirname), '..');
-    return join(root, `.template-${template}`);
-}
-
-/**
  * Returns the current project config
  * @returns {IProjectConfig} The current project config
  */
@@ -121,54 +104,6 @@ export function formatTitleToId(title: string) {
         .toLowerCase()
         .replace(/\s+/g, '_') // Replace spaces with underscores
         .replace(/[^a-z0-9_]/g, ''); // Remove any other special characters
-}
-
-/**
- * Copy a folder recursively
- * @param {string} from The source folder
- * @param {string} to The destination folder
- * @param {boolean} ignoreDotFiles Whether to ignore files starting with a dot
- * @param {function} filter An optional filter function
- */
-export function copyFolderSync(
-    from: string,
-    to: string,
-    ignoreDotFiles: boolean = false,
-    filter?: (src: string, dest: string) => boolean,
-) {
-    if (!existsSync(to)) {
-        mkdirSync(to, { recursive: true });
-    }
-    const files = readdirSync(from);
-    for (const file of files) {
-        if (ignoreDotFiles && (file.startsWith('.') || file === '.gitkeep')) {
-            // Special exception: .pzstudioignore should be handled by the filter instead
-            if (file !== '.pzstudioignore') {
-                continue;
-            }
-        }
-        const srcFile = join(from, file);
-        const destFile = join(to, file);
-
-        if (filter && !filter(srcFile, destFile)) {
-            continue;
-        }
-
-        const current = lstatSync(srcFile);
-        if (current.isDirectory()) {
-            copyFolderSync(srcFile, destFile, ignoreDotFiles, filter);
-        } else if (current.isSymbolicLink()) {
-            try {
-                const target = readlinkSync(srcFile);
-                symlinkSync(target, destFile, 'junction');
-            } catch (_e) {
-                // Fallback: copy file content if symlink fails
-                copyFileSync(srcFile, destFile);
-            }
-        } else {
-            copyFileSync(srcFile, destFile);
-        }
-    }
 }
 
 /**

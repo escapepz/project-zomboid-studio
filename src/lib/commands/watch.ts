@@ -10,7 +10,6 @@ import {
 } from 'fs';
 import { addHelp } from '../help';
 import {
-    copyFolderSync,
     generateModInfoText,
     generateWorkshopText,
     getOutDir,
@@ -18,6 +17,7 @@ import {
     readProjectConfig,
 } from '../helper';
 import { error, info, log, warn } from '../logger';
+import { scaffoldProject } from '../templateManager';
 
 addHelp(
     'watch',
@@ -247,7 +247,10 @@ export async function watchCmd() {
                 try {
                     log(`- Creating '${modFile}'...`);
                     mkdirSync(dirname(modFile), { recursive: true });
-                    copyFolderSync(changePath, modFile, true);
+                    scaffoldProject(changePath, modFile, false, false, {
+                        ignoreDotFiles: true,
+                        excludeIgnoreFile: true,
+                    });
                 } catch (err) {
                     error(err);
                 }

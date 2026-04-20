@@ -85,6 +85,7 @@ export function addCmd(modName: string, modId?: string) {
         false,
         {
             excludeIgnoreFile: true,
+            ignoreDotFiles: false,
         },
     );
 
@@ -97,6 +98,7 @@ export function addCmd(modName: string, modId?: string) {
             false,
             {
                 excludeIgnoreFile: true,
+                ignoreDotFiles: false,
             },
         );
     }

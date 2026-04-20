@@ -2,7 +2,6 @@ import { join } from 'path';
 import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'fs';
 import { addHelp } from '../help';
 import {
-    copyFolderSync,
     generateModInfoText,
     generateWorkshopText,
     getOutDir,
@@ -10,7 +9,7 @@ import {
     readProjectConfig,
 } from '../helper';
 import { info, log, warn } from '../logger';
-import { createIgnoreFilter, resolveTemplateDir } from '../templateManager';
+import { resolveTemplateDir, scaffoldProject } from '../templateManager';
 
 addHelp(
     'build',
@@ -38,10 +37,11 @@ async function buildWorkshop(
     mkdirSync(outPath, { recursive: true });
 
     // Copy the workshop template
-    const workshopFilter = createIgnoreFilter(templateWorkshopPath, {
+    log(`- Copying workshop template...`);
+    scaffoldProject(templateWorkshopPath, outPath, false, false, {
         excludeIgnoreFile: true,
+        ignoreDotFiles: true,
     });
-    copyFolderSync(templateWorkshopPath, outPath, true, workshopFilter);
 
     // Copy the mods
     for (const modId of Object.keys(projectConfig.mods).filter(
@@ -52,10 +52,10 @@ async function buildWorkshop(
         const outModsPath = join(outPath, 'Contents', 'mods', prefixedModId);
         log(`- Copying mod '${modId}'...`);
         const modSrcPath = join(projectPath, modId);
-        const modFilter = createIgnoreFilter(modSrcPath, {
+        scaffoldProject(modSrcPath, outModsPath, false, false, {
             excludeIgnoreFile: true,
+            ignoreDotFiles: true,
         });
-        copyFolderSync(modSrcPath, outModsPath, true, modFilter);
 
         // Generate the mod.info
         const modInfoFlag = projectConfig.mods[modId].build?.modInfo;

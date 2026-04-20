@@ -4,7 +4,6 @@ import { expect } from '../expect';
 import { addHelp } from '../help';
 import {
     formatTitleToId,
-    copyFolderSync,
     projectDir,
     readProjectConfig,
     resolveUseSymlinks,
@@ -14,7 +13,6 @@ import {
 import { info, log, warn } from '../logger';
 import { extractFlag, hasFlag } from '../cli';
 import {
-    createIgnoreFilter,
     resolveTemplateDir,
     scaffoldProject,
     scaffoldTemplateFolder,
@@ -36,15 +34,14 @@ addHelp(
 );
 
 export async function newCmd(projectTitle: string, modId?: string) {
-    const projectTemplateUrl = extractFlag('template');
-    const modTemplateUrl = extractFlag('template');
+    const templateUrl = extractFlag('template');
     const isOffline = hasFlag('offline');
     const forceUpdate = hasFlag('force-update');
     const useSymlinks = hasFlag('symlinks') || resolveUseSymlinks();
 
     const templateProjectPath = resolveTemplateDir(
         'project',
-        projectTemplateUrl,
+        templateUrl,
         isOffline,
         forceUpdate,
     );
@@ -76,7 +73,7 @@ export async function newCmd(projectTitle: string, modId?: string) {
     let templateModPath: string;
 
     if (
-        !modTemplateUrl &&
+        !templateUrl &&
         existsSync(localTemplatePath) &&
         readdirSync(localTemplatePath).length > 0
     ) {
@@ -84,7 +81,7 @@ export async function newCmd(projectTitle: string, modId?: string) {
     } else {
         templateModPath = resolveTemplateDir(
             'mod',
-            modTemplateUrl,
+            templateUrl,
             isOffline,
             forceUpdate,
         );
@@ -136,11 +133,10 @@ export async function newCmd(projectTitle: string, modId?: string) {
 
     // Copy workshop template
     log(`- Creating workshop folder...`);
-    copyFolderSync(
+    scaffoldProject(
         templateWorkshopPath,
         join(projectPath, 'workshop'),
-        true,
-        createIgnoreFilter(templateWorkshopPath),
+        useSymlinks,
     );
 
     // Update config

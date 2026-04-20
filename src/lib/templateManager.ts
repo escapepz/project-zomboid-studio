@@ -17,11 +17,6 @@ import { minimatch } from 'minimatch';
 
 /**
  * Creates a filter for fs.cpSync derived from .pzstudioignore or hardcoded defaults.
- * @param sourceDir The source directory to compute relative paths from
- * @returns A filter function compatible with fs.cpSync
- */
-/**
- * Creates a filter for fs.cpSync derived from .pzstudioignore or hardcoded defaults.
  * Supports nested .pzstudioignore files where the closest one to the subtree wins.
  * @param sourceRoot The root directory of the copy operation
  * @param options Filter options
@@ -29,7 +24,7 @@ import { minimatch } from 'minimatch';
  */
 export function createIgnoreFilter(
     sourceRoot: string,
-    options: { excludeIgnoreFile?: boolean } = {},
+    options: { excludeIgnoreFile?: boolean; ignoreDotFiles?: boolean } = {},
 ): (src: string, dest: string) => boolean {
     const builtInPatterns = [
         '.git',
@@ -96,6 +91,17 @@ export function createIgnoreFilter(
         // Rule 0: Built-in defaults always apply
         for (const pattern of builtInPatterns) {
             if (minimatch(relToRoot, pattern, { dot: true })) {
+                return false;
+            }
+        }
+
+        // Rule 0.5: Optional dotfile ignore (matching copyFolderSync legacy behavior)
+        if (options.ignoreDotFiles) {
+            const name = basename(src);
+            if (
+                (name.startsWith('.') || name === '.gitkeep') &&
+                name !== '.pzstudioignore'
+            ) {
                 return false;
             }
         }
@@ -539,7 +545,7 @@ export function scaffoldProject(
     destDir: string,
     useSymlinks: boolean = false,
     asJunction: boolean = false,
-    options: { excludeIgnoreFile?: boolean } = {},
+    options: { excludeIgnoreFile?: boolean; ignoreDotFiles?: boolean } = {},
 ): void {
     if (useSymlinks && asJunction) {
         try {

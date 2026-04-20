@@ -3,13 +3,13 @@ import { existsSync, readFileSync, rmSync, writeFileSync } from 'fs';
 import { expect } from '../expect';
 import { addHelp } from '../help';
 import {
-    copyFolderSync,
     getFilesRecursively,
     projectDir,
     readProjectConfig,
     updateProjectConfig,
 } from '../helper';
 import { log } from '../logger';
+import { scaffoldProject } from '../templateManager';
 
 addHelp(
     'rename',
@@ -50,9 +50,11 @@ export function renameCmd(oldModId: string, newModId: string) {
     // Rename mod
     if (existsSync(join(projectPath, oldModId))) {
         log(`- Renaming mod '${oldModId}' to '${newModId}'...`);
-        copyFolderSync(
+        scaffoldProject(
             join(projectPath, oldModId),
             join(projectPath, newModId),
+            false,
+            false,
         );
         rmSync(join(projectPath, oldModId), { force: true, recursive: true });
     }
