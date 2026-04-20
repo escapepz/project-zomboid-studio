@@ -1,6 +1,6 @@
 import { homedir } from 'os';
 import { spawnSync } from 'child_process';
-import { basename, dirname, join, resolve, relative } from 'path';
+import { basename, dirname, join, relative } from 'path';
 import {
     existsSync,
     lstatSync,
@@ -42,7 +42,7 @@ export function createIgnoreFilter(
                 .split(/\r?\n/)
                 .map((line: string) => line.trim())
                 .filter((line: string) => line && !line.startsWith('#'));
-        } catch (e) {
+        } catch (_e) {
             warn(
                 `Failed to read .pzstudioignore at ${ignorePath}. Using default ignores.`,
             );
@@ -69,7 +69,7 @@ export function createIgnoreFilter(
                 if (minimatch(relPath, pattern, { dot: true })) {
                     return false;
                 }
-            } catch (e) {
+            } catch (_e) {
                 warn(`Invalid ignore pattern skipped: "${pattern}"`);
             }
         }
@@ -172,9 +172,9 @@ function getConfigPath(): string {
     return join(getConfigDir(), 'config.json');
 }
 
-function getTemplateCacheDir(category: TemplateCategory): string {
-    return join(getConfigDir(), 'templates', category);
-}
+// function getTemplateCacheDir(category: TemplateCategory): string {
+//     return join(getConfigDir(), 'templates', category);
+// }
 
 function getEmbeddedTemplateDir(category: TemplateCategory): string {
     const searchPaths = [
@@ -322,7 +322,7 @@ export function migrateGlobalConfigIfNeeded(): void {
     if (!existsSync(configPath)) {
         try {
             writeGlobalConfig({ templates: {} });
-        } catch (e) {
+        } catch (_e) {
             warn(
                 'Failed to create initial config.json, continuing with in-memory defaults',
             );
@@ -344,7 +344,7 @@ export function migrateGlobalConfigIfNeeded(): void {
             log(`- Migrating config.json to include 'templates' key...`);
             try {
                 writeGlobalConfig(config);
-            } catch (e) {
+            } catch (_e) {
                 warn(
                     'Failed to persist config migration, continuing with in-memory defaults',
                 );
@@ -371,7 +371,7 @@ export function writeGlobalConfig(config: GlobalConfig): void {
  */
 export function validateTemplateManifest(
     dir: string,
-    expectedCategory: TemplateCategory,
+    _expectedCategory: TemplateCategory,
 ): boolean {
     return isCacheValid(dir);
 }
@@ -498,7 +498,7 @@ export function scaffoldProject(
             symlinkSync(templateDir, destDir, 'junction');
             log(`  - Created template junction: ${basename(destDir)}`);
             return;
-        } catch (e) {
+        } catch (_e) {
             warn(
                 `  - Failed to create template junction for ${basename(
                     destDir,

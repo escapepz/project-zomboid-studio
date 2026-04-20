@@ -1,7 +1,7 @@
 # Project Zomboid Studio
 
 [![Version](https://img.shields.io/badge/version-2.242131.3-blue.svg)](https://github.com/escapepz/project-zomboid-studio)
-[![Project Zomboid](https://img.shields.io/badge/Project%20Zomboid-42.13.1-orange.svg)](https://projectzomboid.com/)
+[![Project Zomboid](https://img.shields.io/badge/Project%20Zomboid-42.16.3-orange.svg)](https://projectzomboid.com/)
 [![zread](https://img.shields.io/badge/Ask_Zread-_.svg?style=flat&color=00b0aa&labelColor=000000&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQuOTYxNTYgMS42MDAxSDIuMjQxNTZDMS44ODgxIDEuNjAwMSAxLjYwMTU2IDEuODg2NjQgMS42MDE1NiAyLjI0MDFWNC45NjAxQzEuNjAxNTYgNS4zMTM1NiAxLjg4ODEgNS42MDAxIDIuMjQxNTYgNS42MDAxSDQuOTYxNTZDNS4zMTUwMiA1LjYwMDEgNS42MDE1NiA1LjMxMzU2IDUuNjAxNTYgNC45NjAxVjIuMjQwMUM1LjYwMTU2IDEuODg2NjQgNS4zMTUwMiAxLjYwMDEgNC45NjE1NiAxLjYwMDFaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik00Ljk2MTU2IDEwLjM5OTlIMi4yNDE1NkMxLjg4ODEgMTAuMzk5OSAxLjYwMTU2IDEwLjY4NjQgMS42MDE1NiAxMS4wMzk5VjEzLjc1OTlDMS42MDE1NiAxNC4xMTM0IDEuODg4MSAxNC4zOTk5IDIuMjQxNTYgMTQuMzk5OUg0Ljk2MTU2QzUuMzE1MDIgMTQuMzk5OSA1LjYwMTU2IDE0LjExMzQgNS42MDE1NiAxMy43NTk5VjExLjAzOTlDNS42MDE1NiAxMC42ODY0IDUuMzE1MDIgMTAuMzk5OSA0Ljk2MTU2IDEwLjM5OTlaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik0xMy43NTg0IDEuNjAwMUgxMS4wMzg0QzEwLjY4NSAxLjYwMDEgMTAuMzk4NCAxLjg4NjY0IDEwLjM5ODQgMi4yNDAxVjQuOTYwMUMxMC4zOTg0IDUuMzEzNTYgMTAuNjg1IDUuNjAwMSAxMS4wMzg0IDUuNjAwMUgxMy43NTg0QzE0LjExMTkgNS42MDAxIDE0LjM5ODQgNS4zMTM1NiAxNC4zOTg0IDQuOTYwMVYyLjI0MDFDMTQuMzk4NCAxLjg4NjY0IDE0LjExMTkgMS42MDAxIDEzLjc1ODQgMS42MDAxWiIgZmlsbD0iI2ZmZiIvPgo8cGF0aCBkPSJNNCAxMkwxMiA0TDQgMTJaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik00IDEyTDEyIDQiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgo8L3N2Zz4K&logoColor=ffffff)](https://zread.ai/escapepz/project-zomboid-studio)
 [![DeepWiki](https://img.shields.io/badge/DeepWiki-_.svg?style=flat&color=6a0dad&labelColor=000000&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI%2BPHBhdGggZD0iTTEyIDJMMiA3bDEwIDUgMTAtNS0xMC01eiIvPjxwYXRoIGQ9Ik0yIDE3bDEwIDUgMTAtNXBNMiAxMmwxMCA1IDEwLTUiLz48L3N2Zz4%3D&logoColor=ffffff)](https://deepwiki.com/escapepz/project-zomboid-studio)
 
@@ -37,9 +37,34 @@ This is a CLI tool for creating and maintaining Lua mods for Project Zomboid wit
     - Dev branch workshop.txt has no `id=` field (excluded automatically)
 - Updated documentation to reference original project repository
 
+### 4. Quality Workflows
+
+Maintain code quality using the following commands:
+
+```bash
+# Run linting
+pnpm run lint
+
+# Run linting and fix auto-fixable issues
+pnpm run lint:fix
+
+# Run unit tests
+pnpm run test
+
+# Run tests in watch mode
+pnpm run test:watch
+
+# Run tests with coverage
+pnpm run test:coverage
+```
+
+The automated test suite currently covers deterministic library logic including argument parsing, expectation validation, and shared helper utilities. Manual verification remains required for terminal UI, file watching, and integration-heavy command flows.
+
+---
+
 ## 🛠️ Building from Source
 
-This project is a monorepo managed with **pnpm**.
+This project is a TypeScript CLI tool. While it uses some workspace features, you can build it directly from the root.
 
 ### Prerequisites
 
@@ -56,26 +81,14 @@ pnpm install
 
 ### 2. Build the CLI Tool
 
-First, build the main CLI project (this is required before building the extension):
-
 ```bash
-pnpm build
+pnpm run build
 ```
 
-### 3. Build the VS Code Extension
-
-After the CLI project is built, you can build the extension:
+### 3. Run Quality Checks
 
 ```bash
-pnpm --filter pzstudio build
+pnpm run lint
+pnpm run test
 ```
 
-The extension bundle will be available at `packages/vscode-extension/dist/extension.js`.
-
-### 4. Package for Marketplace (Optional)
-
-To generate a `.vsix` file for local installation or publishing:
-
-```bash
-pnpm --filter pzstudio vsce:package
-```

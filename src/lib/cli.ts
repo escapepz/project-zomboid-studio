@@ -1,5 +1,7 @@
-// @ts-ignore
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-ignore - necessary because we can't reliably predict if typescript will resolve this outside src without structural errors in some configs
 import { version, branch } from '../../package.json';
+/* eslint-enable @typescript-eslint/ban-ts-comment */
 import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { addCmd } from './commands/add';
@@ -57,7 +59,7 @@ export async function runCLI(cmdName?: string, cmdArgs?: string[]) {
                 JSON.parse(readFileSync(buildInfoPath, 'utf8')).buildDate ??
                 'Unknown';
         }
-    } catch (e) {
+    } catch (_e) {
         // ignore
     }
 

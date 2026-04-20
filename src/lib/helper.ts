@@ -221,7 +221,7 @@ export function getStoreDir() {
  * @returns {string} The output directory
  */
 export function getOutDir() {
-    let storeDir = getStoreDir();
+    const storeDir = getStoreDir();
     const configPath = join(storeDir, 'config.json');
     const backupPath = join(storeDir, '.pzstudio.bak');
 

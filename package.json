@@ -58,10 +58,15 @@
     "license": "Apache License Version 2.0",
     "scripts": {
         "clean": "del-cli --force ./dist",
-        "build": "npm run clean && tsc && node scripts/update-build-date.js",
+        "build": "npm run clean && tsc -p tsconfig.build.json && node scripts/update-build-date.js",
         "watch": "npm run clean && tsc --watch",
         "format": "prettier --write .",
-        "format:check": "prettier --check ."
+        "format:check": "prettier --check .",
+        "lint": "eslint .",
+        "lint:fix": "eslint . --fix",
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "test:coverage": "vitest run --coverage"
     },
     "keywords": [
         "pzstudio",
@@ -70,10 +75,17 @@
         "project-zomboid-studio"
     ],
     "devDependencies": {
-        "@types/node": "^18.19.130",
+        "@types/node": "^20.0.0",
         "@types/terminal-kit": "^2.5.1",
+        "@vitest/coverage-v8": "^4.1.4",
+        "@eslint/js": "^10.0.0",
+        "eslint": "^10.2.1",
+        "eslint-config-prettier": "^10.1.8",
+        "globals": "^15.9.0",
         "lefthook": "^2.1.1",
-        "prettier": "^3.7.4"
+        "prettier": "^3.7.4",
+        "typescript-eslint": "^8.58.2",
+        "vitest": "^4.1.4"
     },
     "dependencies": {
         "chokidar": "^3.5.3",

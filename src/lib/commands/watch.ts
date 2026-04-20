@@ -89,6 +89,7 @@ export async function watchCmd() {
                     error(err);
                 }
             } else if (modId === 'workshop') {
+                // ignore
             }
         })
 
@@ -218,6 +219,7 @@ export async function watchCmd() {
                     error(err);
                 }
             } else if (modId === 'workshop') {
+                // ignore
             }
         })
 
@@ -250,6 +252,7 @@ export async function watchCmd() {
                     error(err);
                 }
             } else if (modId === 'workshop') {
+                // ignore
             }
         })
 
@@ -281,6 +284,7 @@ export async function watchCmd() {
                     error(err);
                 }
             } else if (modId === 'workshop') {
+                // ignore
             }
         })
         .on('error', error);
