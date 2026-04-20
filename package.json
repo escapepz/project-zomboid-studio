@@ -57,9 +57,9 @@
     ],
     "license": "Apache License Version 2.0",
     "scripts": {
-        "clean": "del-cli --force ./dist",
-        "build": "npm run clean && tsc -p tsconfig.build.json && node scripts/update-build-date.js",
-        "watch": "npm run clean && tsc --watch",
+        "clean": "node -e \"require('fs').rmSync('./dist', { recursive: true, force: true })\"",
+        "build": "pnpm run clean && tsc -p tsconfig.build.json && node scripts/update-build-date.js",
+        "watch": "pnpm run clean && tsc --watch",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
         "lint": "eslint .",
@@ -84,7 +84,6 @@
         "globals": "^15.9.0",
         "lefthook": "^2.1.1",
         "prettier": "^3.7.4",
-        "del-cli": "^4.0.1",
         "typescript": "^5.0.4",
         "typescript-eslint": "^8.58.2",
         "vitest": "^4.1.4"
