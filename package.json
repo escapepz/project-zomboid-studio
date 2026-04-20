@@ -56,6 +56,15 @@
         }
     ],
     "license": "Apache License Version 2.0",
+    "pnpm": {
+        "overrides": {
+            "picomatch": "^2.3.2",
+            "minimatch": "^3.1.4",
+            "brace-expansion": "^1.1.13",
+            "undici": "^7.24.0",
+            "lodash": "^4.17.24"
+        }
+    },
     "scripts": {
         "clean": "node -e \"require('fs').rmSync('./dist', { recursive: true, force: true })\"",
         "build": "pnpm run clean && tsc -p tsconfig.build.json && node scripts/update-build-date.js",
