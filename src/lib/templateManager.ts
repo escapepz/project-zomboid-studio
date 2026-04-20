@@ -326,12 +326,28 @@ export function refreshCachedTemplate(dir: string, ref?: string): boolean {
             stdio: 'pipe',
         });
 
-    // 1. git fetch --all
-    if (git(['fetch', '--all']).status !== 0) return false;
+    // 1. git fetch --all (include tags so tag-based refs can be refreshed too)
+    if (git(['fetch', '--all', '--tags']).status !== 0) return false;
 
-    // 2. git reset --hard origin/<ref> or just origin/HEAD if ref is missing
-    const target = ref && ref !== 'default' ? `origin/${ref}` : 'origin/HEAD';
-    if (git(['reset', '--hard', target]).status !== 0) return false;
+    // 2. Reset to the requested ref.
+    // Branch refs live under origin/<ref>, but some templates use tags.
+    const resetTargets = ref
+        ? ref === 'default'
+            ? ['origin/HEAD']
+            : [`origin/${ref}`, `refs/tags/${ref}`, ref]
+        : ['origin/HEAD'];
+
+    let resetSucceeded = false;
+    for (const target of resetTargets) {
+        if (git(['reset', '--hard', target]).status === 0) {
+            if (target !== resetTargets[0]) {
+                log(`  - Refreshed using ${target}.`);
+            }
+            resetSucceeded = true;
+            break;
+        }
+    }
+    if (!resetSucceeded) return false;
 
     // 3. git submodule update --init --recursive --force
     if (
