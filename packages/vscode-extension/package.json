@@ -90,16 +90,15 @@
     ],
     "license": "Apache-2.0",
     "scripts": {
-        "clean": "del-cli --force ./dist",
+        "clean": "node -e \"require('fs').rmSync('./dist', { recursive: true, force: true })\"",
         "bundle": "node scripts/bundle.js",
-        "build": "npm run clean && npm run bundle",
+        "build": "pnpm run clean && pnpm run bundle",
         "vsce:package": "vsce package --no-dependencies",
-        "watch": "npm run clean && node scripts/bundle.js --watch"
+        "watch": "pnpm run clean && node scripts/bundle.js --watch"
     },
     "devDependencies": {
         "@types/vscode": "^1.102.0",
         "@vscode/vsce": "^3.7.1",
-        "del-cli": "^4.0.1",
         "esbuild": "^0.27.2"
     },
     "dependencies": {

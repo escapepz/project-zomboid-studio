@@ -71,9 +71,6 @@ importers:
       '@vscode/vsce':
         specifier: ^3.7.1
         version: 3.7.1
-      del-cli:
-        specifier: ^4.0.1
-        version: 4.0.1
       esbuild:
         specifier: ^0.27.2
         version: 0.27.3
