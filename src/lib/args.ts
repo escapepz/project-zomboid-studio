@@ -54,11 +54,39 @@ export function arg(index: number, argv: string[] = process.argv) {
     return args(argv)[index];
 }
 
-/**
- * Returns the arguments passed to the program
- * @param argv Optional argument array (defaults to process.argv)
- * @returns {string[]} The arguments passed to the program
- */
 export function processArgs(argv: string[] = process.argv) {
     return argv.slice(2);
+}
+
+/**
+ * Separates flags from positional arguments.
+ * @param rawArgs The raw arguments to process
+ * @returns An object containing the separated flags and positionals
+ */
+export function splitArgs(rawArgs: string[]) {
+    const positionals: string[] = [];
+    const flags: string[] = [];
+
+    // Flags that are known to take a value
+    const valueFlags = ['--template'];
+
+    for (let i = 0; i < rawArgs.length; i++) {
+        const arg = rawArgs[i];
+        if (arg.startsWith('-')) {
+            flags.push(arg);
+            // If it's a flag that takes a value, consume the next argument too
+            if (
+                valueFlags.includes(arg) &&
+                i + 1 < rawArgs.length &&
+                !rawArgs[i + 1].startsWith('-')
+            ) {
+                flags.push(rawArgs[i + 1]);
+                i++;
+            }
+        } else {
+            positionals.push(arg);
+        }
+    }
+
+    return { flags, positionals };
 }

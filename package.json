@@ -75,10 +75,10 @@
         "project-zomboid-studio"
     ],
     "devDependencies": {
+        "@eslint/js": "^10.0.0",
         "@types/node": "^20.0.0",
         "@types/terminal-kit": "^2.5.1",
         "@vitest/coverage-v8": "^4.1.4",
-        "@eslint/js": "^10.0.0",
         "eslint": "^10.2.1",
         "eslint-config-prettier": "^10.1.8",
         "globals": "^15.9.0",

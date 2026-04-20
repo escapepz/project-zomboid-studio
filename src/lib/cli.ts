@@ -15,7 +15,7 @@ import { outdirCmd } from './commands/outdir';
 import { renameCmd } from './commands/rename';
 import { updateCmd } from './commands/update';
 import { watchCmd } from './commands/watch';
-import { arg, args, cmd, processArgs } from './args';
+import { arg, args, cmd, processArgs, splitArgs, parseArgType } from './args';
 import { clear, error, info, log, warn } from './logger';
 import { projectDir, migrateStoreDirIfNeeded } from './helper';
 import { migrateGlobalConfigIfNeeded } from './templateManager';
@@ -67,9 +67,16 @@ export async function runCLI(cmdName?: string, cmdArgs?: string[]) {
         log(`Project Zomboid Studio v${version} - @${branch} (${buildDate})\n`);
     }
 
+    let commandParams: any[] | undefined = cmdArgs;
+    if (!commandParams) {
+        const rawCmdArgs = processArgs().slice(1);
+        const { positionals } = splitArgs(rawCmdArgs);
+        commandParams = positionals.map((a) => parseArgType(a));
+    }
+
     const command = {
         name: cmdName ?? cmd(),
-        params: cmdArgs ?? args(),
+        params: commandParams,
     };
 
     log('Project Dir:  ' + projectDir());
