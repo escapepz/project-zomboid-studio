@@ -1,6 +1,7 @@
 import { join } from 'path';
 import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'fs';
 import { addHelp } from '../help';
+import { arg, processArgs } from '../args';
 import {
     generateModInfoText,
     generateWorkshopText,
@@ -11,12 +12,21 @@ import {
 import { info, log, warn } from '../logger';
 import { resolveTemplateDir, scaffoldProject } from '../templateManager';
 
+/**
+ * Check if a flag exists in command arguments
+ */
+function hasFlag(name: string): boolean {
+    return processArgs().some((a) => a === `--${name}`);
+}
+
 addHelp(
     'build',
     `Build your project and update your output directory with your project.
 
     Usages:
-        pzstudio build - Builds your project and updates the output directory.`,
+        pzstudio build - Builds only the main workshop output (Default).
+        pzstudio build --production - Builds only the main workshop output.
+        pzstudio build --development - Builds only the dev_branch workshop output.`,
 );
 
 async function buildWorkshop(
@@ -129,22 +139,38 @@ export async function buildCmd() {
     const projectPath = projectDir();
     const outDir = getOutDir();
 
-    // Build main workshop
-    log(`\nBuilding main workshop...`);
-    const mainOutPath = join(outDir, projectConfig.title);
-    await buildWorkshop(projectConfig, mainOutPath);
+    const isProduction = hasFlag('production');
+    const isDevelopment = hasFlag('development');
 
-    // Build dev_branch workshop
-    log(`\nBuilding dev_branch workshop...`);
-    const devOutPath = join(outDir, `${projectConfig.title} - dev_branch`);
-    await buildWorkshop(
-        projectConfig,
-        devOutPath,
-        '_dev',
-        'unlisted',
-        true,
-        ' - dev_branch',
-    );
+    // Conflict detection
+    if (isProduction && isDevelopment) {
+        throw new Error(
+            'Conflicting targets selected: Use either --production or --development, not both.',
+        );
+    }
+
+    const noFlags = !isProduction && !isDevelopment;
+
+    // Build main workshop (Default or explicit --production)
+    if (noFlags || isProduction) {
+        log(`\nBuilding main workshop...`);
+        const mainOutPath = join(outDir, projectConfig.title);
+        await buildWorkshop(projectConfig, mainOutPath);
+    }
+
+    // Build dev_branch workshop (Only if --development is specified)
+    if (isDevelopment) {
+        log(`\nBuilding dev_branch workshop...`);
+        const devOutPath = join(outDir, `${projectConfig.title} - dev_branch`);
+        await buildWorkshop(
+            projectConfig,
+            devOutPath,
+            '_dev',
+            'unlisted',
+            true,
+            ' - dev_branch',
+        );
+    }
 
     const endTime = performance.now();
     info(`Build complete in ${((endTime - startTime) / 1000).toFixed(2)}s!`);
