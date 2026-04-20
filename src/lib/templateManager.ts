@@ -582,7 +582,11 @@ export function scaffoldProject(
     destDir: string,
     useSymlinks: boolean = false,
     asJunction: boolean = false,
-    options: { excludeIgnoreFile?: boolean; ignoreDotFiles?: boolean } = {},
+    options: {
+        excludeIgnoreFile?: boolean;
+        ignoreDotFiles?: boolean;
+        ignoreItems?: string[];
+    } = {},
 ): void {
     if (useSymlinks && asJunction) {
         try {
@@ -611,6 +615,10 @@ export function scaffoldProject(
     const filter = createIgnoreFilter(templateDir, options);
 
     readdirSync(templateDir).forEach((file: string) => {
+        if (options.ignoreItems?.includes(file)) {
+            return;
+        }
+
         const srcPath = join(templateDir, file);
         const destPath = join(destDir, file);
 

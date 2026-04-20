@@ -101,7 +101,9 @@ export async function newCmd(projectTitle: string, modId?: string) {
     );
 
     log(`- Creating project '${projectTitle}' dir '${modId}' ...`);
-    scaffoldProject(templateProjectPath, projectPath, useSymlinks);
+    scaffoldProject(templateProjectPath, projectPath, useSymlinks, false, {
+        ignoreItems: ['.libraries'],
+    });
 
     // Copy mod template into the project mod folder
     log(`- Creating mod '${modId}'...`);
