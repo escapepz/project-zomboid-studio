@@ -78,11 +78,27 @@ export function addCmd(modName: string, modId?: string) {
     }
 
     // Copy mod template
-    scaffoldProject(templateModPath, join(projectPath, modId), useSymlinks);
+    scaffoldProject(
+        templateModPath,
+        join(projectPath, modId),
+        useSymlinks,
+        false,
+        {
+            excludeIgnoreFile: true,
+        },
+    );
 
     // Seed local cache if we resolved a remote template and no local one existed
     if (!usedLocalTemplate && !modTemplateUrl) {
-        scaffoldProject(templateModPath, localTemplatePath, useSymlinks);
+        scaffoldProject(
+            templateModPath,
+            localTemplatePath,
+            useSymlinks,
+            false,
+            {
+                excludeIgnoreFile: true,
+            },
+        );
     }
 
     // Update config

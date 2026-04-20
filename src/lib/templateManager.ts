@@ -31,7 +31,13 @@ export function createIgnoreFilter(
     sourceRoot: string,
     options: { excludeIgnoreFile?: boolean } = {},
 ): (src: string, dest: string) => boolean {
-    const builtInPatterns = ['.git/**', '.github/**', '**/.gitkeep'];
+    const builtInPatterns = [
+        '.git',
+        '.git/**',
+        '.gitmodules',
+        '**/.gitkeep',
+        '.github/**',
+    ];
 
     // Cache for compiled filter functions per directory
     const filterCache: Record<string, (relPath: string) => boolean | null> = {};
@@ -533,6 +539,7 @@ export function scaffoldProject(
     destDir: string,
     useSymlinks: boolean = false,
     asJunction: boolean = false,
+    options: { excludeIgnoreFile?: boolean } = {},
 ): void {
     if (useSymlinks && asJunction) {
         try {
@@ -558,7 +565,7 @@ export function scaffoldProject(
 
     log(`- Scaffolding into ${destDir}...`);
 
-    const filter = createIgnoreFilter(templateDir);
+    const filter = createIgnoreFilter(templateDir, options);
 
     readdirSync(templateDir).forEach((file: string) => {
         const srcPath = join(templateDir, file);

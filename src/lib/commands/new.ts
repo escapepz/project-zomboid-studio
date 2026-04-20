@@ -103,11 +103,7 @@ export async function newCmd(projectTitle: string, modId?: string) {
         forceUpdate,
     );
 
-    // Copy template (excluding shared folders that will be linked)
     log(`- Creating project '${projectTitle}' dir '${modId}' ...`);
-    const projectFilter = createIgnoreFilter(templateProjectPath);
-    const sharedFolders = ['.template-mod', '.template-language', '.libraries'];
-
     scaffoldProject(templateProjectPath, projectPath, useSymlinks);
 
     // Copy mod template into the project mod folder
@@ -140,12 +136,11 @@ export async function newCmd(projectTitle: string, modId?: string) {
 
     // Copy workshop template
     log(`- Creating workshop folder...`);
-    const workshopFilter = createIgnoreFilter(templateWorkshopPath);
     copyFolderSync(
         templateWorkshopPath,
         join(projectPath, 'workshop'),
         true,
-        workshopFilter,
+        createIgnoreFilter(templateWorkshopPath),
     );
 
     // Update config
