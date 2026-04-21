@@ -2,6 +2,9 @@
 
 All notable changes to the **Project Zomboid Studio** VSCode extension will be documented in this file.
 
+## [2.242170.0] - 2026-04-21
+
+
 ## [2.242131.3-alpha] - 2026-03-02
 
 ### Changed
