@@ -1,50 +1,32 @@
 {
-    "$schema": "pzstudio.schema.json",
+    "$schema": "http://json-schema.org/draft-07/schema#",
     "title": "JSON schema for Project Zomboid Studio project.json files",
     "type": "object",
     "properties": {
-        "title": {
-            "description": "The mod title.",
-            "type": "string"
-        },
-        "authors": {
-            "description": "The mod author(s). Use a string or an array of string.",
-            "type": ["string", "array"],
-            "items": {
-                "type": "string"
-            }
-        },
         "workshop": {
+            "description": "Workshop metadata for the project.",
             "type": "object",
             "properties": {
                 "id": {
-                    "description": "The steam workshop generated id, don't forget to copy/paste it here after uploading the first time.",
-                    "type": "integer"
+                    "$ref": "workshop.schema.json#/properties/id"
+                },
+                "title": {
+                    "$ref": "workshop.schema.json#/properties/title"
+                },
+                "description": {
+                    "$ref": "workshop.schema.json#/properties/description"
                 },
                 "visibility": {
-                    "$ref": "workshop.schema.json#/$defs/visibility"
+                    "$ref": "workshop.schema.json#/properties/visibility"
                 },
                 "tags": {
-                    "description": "The mod workshop tags.",
-                    "type": "array",
-                    "items": {
-                        "$ref": "workshop.schema.json#/$defs/tags"
-                    }
-                },
-                "excludes": {
-                    "description": "List of mod ids to exclude from the workshop.",
-                    "type": "array",
-                    "items": [
-                        {
-                            "type": "string"
-                        }
-                    ]
+                    "$ref": "workshop.schema.json#/properties/tags"
                 }
             },
-            "required": ["visibility", "tags"]
+            "required": ["title", "visibility", "tags"]
         },
         "mods": {
-            "description": "List of mods in this projects.",
+            "description": "List of mods in this project.",
             "patternProperties": {
                 "^.*$": {
                     "$ref": "#/$defs/mod"
@@ -52,66 +34,109 @@
             }
         },
         "useSymlinks": {
-            "description": "Whether to use symlinks (junctions on Windows) for .libraries folders to save disk space.",
+            "description": "Whether to use symlinks (junctions on Windows) for folders.",
             "type": "boolean",
             "default": false
         },
-        "required": ["title", "authors", "workshop", "mods"]
+        "outdir": {
+            "description": "The output directory for generated workshop files.",
+            "type": "string"
+        },
+        "templates": {
+            "description": "Workspace template overrides.",
+            "type": "object",
+            "properties": {
+                "project": {
+                    "$ref": "#/$defs/templateConfig"
+                },
+                "mod": {
+                    "$ref": "#/$defs/templateConfig"
+                },
+                "workshop": {
+                    "$ref": "#/$defs/templateConfig"
+                },
+                "language": {
+                    "$ref": "#/$defs/templateConfig"
+                }
+            },
+            "additionalProperties": false
+        },
+        "excludes": {
+            "description": "List of mod IDs to exclude from the workshop build.",
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        }
     },
+    "required": ["workshop", "mods"],
     "$defs": {
+        "templateConfig": {
+            "type": "object",
+            "properties": {
+                "url": {
+                    "description": "Repository URL or user/repo shorthand for the template.",
+                    "type": "string"
+                },
+                "ref": {
+                    "description": "Optional branch, tag, or ref to use for the template.",
+                    "type": "string"
+                }
+            },
+            "required": ["url"],
+            "additionalProperties": false
+        },
         "mod": {
             "description": "The mod unique id.",
             "type": "object",
             "properties": {
                 "name": {
-                    "description": "The mod visible name.",
-                    "type": "string"
+                    "$ref": "mod.info.schema.json#/properties/name"
                 },
                 "description": {
-                    "description": "The mod visible description.",
-                    "type": "string"
+                    "$ref": "mod.info.schema.json#/properties/description"
+                },
+                "author": {
+                    "$ref": "mod.info.schema.json#/properties/author"
+                },
+                "modversion": {
+                    "$ref": "mod.info.schema.json#/properties/modversion"
                 },
                 "poster": {
-                    "description": "The mod poster image(s).",
-                    "type": ["string", "array"],
-                    "items": [
-                        {
-                            "type": "string"
-                        }
-                    ]
+                    "$ref": "mod.info.schema.json#/properties/poster"
                 },
                 "icon": {
-                    "description": "The mod icon image.",
-                    "type": "string"
+                    "$ref": "mod.info.schema.json#/properties/icon"
                 },
                 "require": {
-                    "description": "The mod ids required by this mod.",
-                    "type": ["string", "array"],
-                    "items": [
-                        {
-                            "type": "string"
-                        }
-                    ]
+                    "$ref": "mod.info.schema.json#/properties/require"
+                },
+                "incompatible": {
+                    "$ref": "mod.info.schema.json#/properties/incompatible"
+                },
+                "loadModAfter": {
+                    "$ref": "mod.info.schema.json#/properties/loadModAfter"
+                },
+                "loadModBefore": {
+                    "$ref": "mod.info.schema.json#/properties/loadModBefore"
                 },
                 "pack": {
-                    "description": "",
-                    "type": "string"
+                    "$ref": "mod.info.schema.json#/properties/pack"
                 },
                 "tiledef": {
-                    "description": "",
-                    "type": "string"
+                    "$ref": "mod.info.schema.json#/properties/tiledef"
+                },
+                "category": {
+                    "$ref": "mod.info.schema.json#/properties/category"
                 },
                 "url": {
-                    "description": "",
-                    "type": "string"
+                    "$ref": "mod.info.schema.json#/properties/url"
                 },
                 "versionMin": {
-                    "description": "",
-                    "type": "string"
+                    "$ref": "mod.info.schema.json#/properties/versionMin"
                 },
                 "versionMax": {
-                    "description": "",
-                    "type": "string"
+                    "$ref": "mod.info.schema.json#/properties/versionMax"
                 },
                 "build": {
                     "description": "Custom build flags for this mod.",

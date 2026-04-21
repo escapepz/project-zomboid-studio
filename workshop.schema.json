@@ -41,47 +41,14 @@
             "description": "Workshop tags. Semicolon-separated in workshop.txt, additive on read (tags.addAll). Allowed values are loaded at runtime from media/WorkshopTags.txt via SteamWorkshopItem.getAllowedTags().",
             "type": "array",
             "items": {
-                "type": "string",
-                "minLength": 1
+                "$ref": "#/$defs/tags"
             },
             "default": []
         },
         "visibility": {
             "description": "Workshop item visibility. Maps to Steam API integers: public=0, friendsOnly=1, private=2, unlisted=3.",
-            "type": "string",
-            "enum": ["public", "friendsOnly", "private", "unlisted"],
+            "$ref": "#/$defs/visibility",
             "default": "public"
-        },
-        "changeNote": {
-            "description": "Change notes for workshop updates. Used during SubmitWorkshopItem() but NOT persisted in workshop.txt. Only used in the submit UI (Page5 changelog).",
-            "type": "string",
-            "default": ""
-        },
-        "preview": {
-            "description": "Preview image path (preview.png in the workshop folder). Not a workshop.txt field — it's a file convention. Must be PNG, square (256x256 or 512x512), max 1,024,000 bytes.",
-            "type": "object",
-            "properties": {
-                "file": {
-                    "description": "Path to the preview image file.",
-                    "type": "string",
-                    "default": "preview.png"
-                },
-                "format": {
-                    "description": "Must be PNG.",
-                    "type": "string",
-                    "const": "png"
-                },
-                "dimensions": {
-                    "description": "Must be square: 256x256 or 512x512.",
-                    "type": "integer",
-                    "enum": [256, 512]
-                },
-                "maxBytes": {
-                    "description": "Maximum file size in bytes.",
-                    "type": "integer",
-                    "const": 1024000
-                }
-            }
         }
     },
     "$defs": {
@@ -126,37 +93,6 @@
                 "WIP",
                 "Weapons"
             ]
-        },
-        "contentValidation": {
-            "description": "Validation rules for the Contents/ folder, enforced by validateContents().",
-            "type": "object",
-            "properties": {
-                "allowedFolders": {
-                    "description": "Only these top-level folders are allowed inside Contents/.",
-                    "type": "array",
-                    "items": {
-                        "type": "string",
-                        "enum": ["buildings", "creative", "mods"]
-                    }
-                },
-                "forbiddenFileTypes": {
-                    "description": "These file extensions are rejected by validateFileTypes().",
-                    "type": "array",
-                    "items": {
-                        "type": "string",
-                        "enum": [
-                            ".exe",
-                            ".dll",
-                            ".bat",
-                            ".app",
-                            ".dylib",
-                            ".sh",
-                            ".so",
-                            ".zip"
-                        ]
-                    }
-                }
-            }
         }
     }
 }
