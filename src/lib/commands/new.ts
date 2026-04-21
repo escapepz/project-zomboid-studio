@@ -10,7 +10,7 @@ import {
     updateExperimentalScripts,
     updateProjectConfig,
 } from '../helper';
-import { info, log, warn } from '../logger';
+import { info, log, warn, verbose } from '../logger';
 import { extractFlag, hasFlag } from '../cli';
 import {
     resolveTemplateDir,
@@ -68,16 +68,18 @@ export async function newCmd(projectTitle: string, modId?: string) {
         );
     }
 
-    // US2: Check for local .template-mod tier-0 guard
-    const localTemplatePath = join(projectPath, '.template-mod');
-    let templateModPath: string;
+    // US2: Check for local templates in current working directory (parent of new project)
+    const cwdTemplateModPath = join(process.cwd(), '.template-mod');
+    const cwdTemplateWorkshopPath = join(process.cwd(), '.template-workshop');
 
+    let templateModPath: string;
     if (
         !templateUrl &&
-        existsSync(localTemplatePath) &&
-        readdirSync(localTemplatePath).length > 0
+        existsSync(cwdTemplateModPath) &&
+        readdirSync(cwdTemplateModPath).length > 0
     ) {
-        templateModPath = localTemplatePath;
+        templateModPath = cwdTemplateModPath;
+        verbose(`Using local .template-mod from CWD`);
     } else {
         templateModPath = resolveTemplateDir(
             'mod',
@@ -87,14 +89,25 @@ export async function newCmd(projectTitle: string, modId?: string) {
         );
     }
 
+    let templateWorkshopPath: string;
+    if (
+        !templateUrl &&
+        existsSync(cwdTemplateWorkshopPath) &&
+        readdirSync(cwdTemplateWorkshopPath).length > 0
+    ) {
+        templateWorkshopPath = cwdTemplateWorkshopPath;
+        verbose(`Using local .template-workshop from CWD`);
+    } else {
+        templateWorkshopPath = resolveTemplateDir(
+            'workshop',
+            undefined,
+            isOffline,
+            forceUpdate,
+        );
+    }
+
     const templateLanguagePath = resolveTemplateDir(
         'language',
-        undefined,
-        isOffline,
-        forceUpdate,
-    );
-    const templateWorkshopPath = resolveTemplateDir(
-        'workshop',
         undefined,
         isOffline,
         forceUpdate,

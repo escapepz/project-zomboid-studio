@@ -15,8 +15,9 @@ import { outdirCmd } from './commands/outdir';
 import { renameCmd } from './commands/rename';
 import { updateCmd } from './commands/update';
 import { watchCmd } from './commands/watch';
+import { migrateCmd } from './commands/migrate';
 import { arg, args, cmd, processArgs, splitArgs, parseArgType } from './args';
-import { clear, error, info, log, warn } from './logger';
+import { clear, error, info, log, warn, verbose } from './logger';
 import { projectDir, migrateStoreDirIfNeeded } from './helper';
 import { migrateGlobalConfigIfNeeded } from './templateManager';
 
@@ -43,7 +44,27 @@ export function hasFlag(name: string): boolean {
     return processArgs().some((a) => a === `--${name}`);
 }
 
+import { setVerbose } from './logger';
+
 export async function runCLI(cmdName?: string, cmdArgs?: string[]) {
+    // Handle SIGINT for clean cleanup
+    process.on('SIGINT', () => {
+        log('\n');
+        warn('Process interrupted by user (SIGINT).');
+        process.exit(130);
+    });
+
+    // Initialize verbose mode early
+    if (hasFlag('verbose')) {
+        setVerbose(true);
+    }
+
+    // Handle root-level help and version (side-effect free)
+    if (hasFlag('version')) {
+        log(`v${version}`);
+        return;
+    }
+
     // Migrate legacy store and config on first CLI call
     migrateStoreDirIfNeeded();
     migrateGlobalConfigIfNeeded();
@@ -63,8 +84,15 @@ export async function runCLI(cmdName?: string, cmdArgs?: string[]) {
         // ignore
     }
 
-    if (!cmdName) {
+    const currentCmd = cmdName ?? cmd();
+
+    if (!currentCmd) {
         log(`Project Zomboid Studio v${version} - @${branch} (${buildDate})\n`);
+    }
+
+    if (hasFlag('help') && !currentCmd) {
+        await helpCmd();
+        return;
     }
 
     let commandParams: any[] | undefined = cmdArgs;
@@ -75,15 +103,16 @@ export async function runCLI(cmdName?: string, cmdArgs?: string[]) {
     }
 
     const command = {
-        name: cmdName ?? cmd(),
+        name: currentCmd,
         params: commandParams,
     };
 
-    log('Project Dir:  ' + projectDir());
+    verbose('Project Dir:  ' + projectDir());
 
-    info(
+    verbose(
         `Executing command [${command.name}] ${command.params.length ? `with params [${command.params.join(', ')}]` : ''}`,
     );
+
     try {
         switch (command.name) {
             case 'add':
@@ -142,6 +171,10 @@ export async function runCLI(cmdName?: string, cmdArgs?: string[]) {
                 await watchCmd();
                 break;
 
+            case 'migrate':
+                await migrateCmd();
+                break;
+
             case undefined:
                 await helpCmd();
                 break;
@@ -153,12 +186,14 @@ export async function runCLI(cmdName?: string, cmdArgs?: string[]) {
         if (
             command.name !== 'build' &&
             command.name !== 'clean' &&
-            command.name !== 'help'
+            command.name !== 'help' &&
+            command.name !== undefined
         ) {
             info(`Command [${command.name}] completed.`);
         }
     } catch (e) {
         error(e);
+        process.exit(1);
     }
 
     log('\n');

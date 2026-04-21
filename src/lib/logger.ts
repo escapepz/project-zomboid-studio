@@ -3,20 +3,47 @@ export interface ILogger {
     info(message: string): void;
     warn(message: string): void;
     error(message: string | Error): void;
+    verbose?(message: string): void;
     clear?(): void;
 }
 
 let externalLogger: ILogger | undefined;
+let verboseEnabled = false;
+
+/**
+ * Strips ANSI escape codes from a string.
+ */
+function stripAnsi(str: string): string {
+    return str.replace(
+        /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g,
+        '',
+    );
+}
+
+/**
+ * Checks if the output destination is a TTY.
+ */
+function isTTY(): boolean {
+    return process.stdout.isTTY;
+}
 
 function getTerminal() {
     try {
-        return require('terminal-kit').terminal;
+        const terminal = require('terminal-kit').terminal;
+        return terminal;
     } catch (e) {
+        const fallback = (msg: string) => {
+            console.log(isTTY() ? msg : stripAnsi(msg));
+        };
+        const fallbackError = (msg: string) => {
+            console.error(isTTY() ? msg : stripAnsi(msg));
+        };
         return {
-            white: console.log,
-            brightCyan: console.log,
-            yellow: console.log,
-            red: console.log,
+            white: fallback,
+            brightCyan: fallback,
+            yellow: fallback,
+            red: fallbackError,
+            gray: fallback,
         };
     }
 }
@@ -34,6 +61,14 @@ function getTimestamp() {
 
 export function setLogger(logger: ILogger | undefined) {
     externalLogger = logger;
+}
+
+export function setVerbose(enabled: boolean) {
+    verboseEnabled = enabled;
+}
+
+export function isVerbose(): boolean {
+    return verboseEnabled;
 }
 
 /**
@@ -56,7 +91,9 @@ export function log(message: any) {
         externalLogger.log(msg);
         return;
     }
-    getTerminal().white(`${msg}`, '\n');
+    const term = getTerminal();
+    const output = isTTY() ? msg : stripAnsi(msg);
+    term.white(output, '\n');
 }
 
 /**
@@ -69,7 +106,9 @@ export function info(message: any) {
         externalLogger.info(msg);
         return;
     }
-    getTerminal().brightCyan(`[${getTimestamp()}] [INFO] ${msg}`, '\n');
+    const term = getTerminal();
+    const output = `[${getTimestamp()}] [INFO] ${msg}`;
+    term.brightCyan(isTTY() ? output : stripAnsi(output), '\n');
 }
 
 /**
@@ -82,7 +121,9 @@ export function warn(message: any) {
         externalLogger.warn(msg);
         return;
     }
-    getTerminal().yellow(`[${getTimestamp()}] [WARN] ${msg}`, '\n');
+    const term = getTerminal();
+    const output = `[${getTimestamp()}] [WARN] ${msg}`;
+    term.yellow(isTTY() ? output : stripAnsi(output), '\n');
 }
 
 /**
@@ -96,5 +137,27 @@ export function error(error: any) {
         externalLogger.error(error);
         return;
     }
-    getTerminal().red(`[${getTimestamp()}] [ERROR] ${msg}`, '\n');
+    const term = getTerminal();
+    const output = `[${getTimestamp()}] [ERROR] ${msg}`;
+    term.red(isTTY() ? output : stripAnsi(output), '\n');
+}
+
+/**
+ * Logs a diagnostic message if verbose mode is enabled.
+ * @param message
+ */
+export function verbose(message: any) {
+    if (!verboseEnabled) return;
+    const msg = typeof message === 'string' ? message : JSON.stringify(message);
+    if (externalLogger && externalLogger.verbose) {
+        externalLogger.verbose(msg);
+        return;
+    }
+    const term = getTerminal();
+    const output = `[${getTimestamp()}] [DEBUG] ${msg}`;
+    if (term.gray) {
+        term.gray(isTTY() ? output : stripAnsi(output), '\n');
+    } else {
+        term.white(isTTY() ? output : stripAnsi(output), '\n');
+    }
 }

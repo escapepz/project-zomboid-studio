@@ -12,7 +12,7 @@ import {
     writeFileSync,
 } from 'fs';
 import { IProjectConfig } from './project';
-import { error, log, warn } from './logger';
+import { error, log, warn, verbose } from './logger';
 import { readGlobalConfig, writeGlobalConfig } from './templateManager';
 
 /**
@@ -21,16 +21,17 @@ import { readGlobalConfig, writeGlobalConfig } from './templateManager';
  * @returns {boolean} The resolved useSymlinks flag
  */
 export function resolveUseSymlinks(): boolean {
-    const projectConfig = readProjectConfig();
-    if (projectConfig && projectConfig.useSymlinks !== undefined) {
-        return projectConfig.useSymlinks;
+    const project = readProjectConfig();
+    if (project && project.useSymlinks !== undefined) {
+        return project.useSymlinks;
     }
 
-    const globalConfig = readGlobalConfig();
-    if (globalConfig && globalConfig.useSymlinks !== undefined) {
-        return globalConfig.useSymlinks;
+    const config = readGlobalConfig();
+    if (config && config.useSymlinks !== undefined) {
+        return config.useSymlinks;
     }
 
+    verbose(`Defaulting useSymlinks to: false`);
     return false; // Default
 }
 
@@ -62,17 +63,99 @@ export function workingDir() {
         : join(dirname(__dirname), 'lib');
 }
 
+import {
+    ValidationContext,
+    validateProject,
+    validateConfig,
+} from './validation';
+import { migration } from './migration';
+
 /**
- * Returns the current project config
+ * Returns the current project config.
+ * Uses atomic read (readFileSync) to avoid require cache issues.
+ * @param path Optional path to the project config
+ * @param validate Whether to validate the config (default: true)
  * @returns {IProjectConfig} The current project config
  */
-export function readProjectConfig(path?: string): IProjectConfig | undefined {
+export function readProjectConfig(
+    path?: string,
+    validate: boolean = true,
+): IProjectConfig | undefined {
     try {
-        const module = path ?? join(projectDir(), 'project.json');
-        delete require.cache[require.resolve(module)];
-        return require(module);
+        const configPath = path ?? join(projectDir(), 'project.json');
+        if (!existsSync(configPath)) return undefined;
+
+        const content = readFileSync(configPath, 'utf8');
+        const config = JSON.parse(content);
+
+        if (validate) {
+            const context = new ValidationContext(basename(configPath));
+            validateProject(config, context);
+            if (context.hasErrors()) {
+                error(
+                    `Validation failed for ${basename(configPath)}:\n${context.formatErrors()}`,
+                );
+                process.exit(1);
+            }
+
+            // Check for legacy shape and warn
+            const migrationCheck = migration.checkProject(config);
+            if (migrationCheck.needsMigration) {
+                warn(
+                    `[LEGACY] ${basename(configPath)} is using a legacy shape: ${migrationCheck.reason}`,
+                );
+                warn(
+                    `Please run 'pzstudio migrate' to upgrade your project file.`,
+                );
+            }
+        }
+
+        return config;
     } catch (err) {
-        return;
+        return undefined;
+    }
+}
+
+/**
+ * Performs an atomic write to a JSON file, preserving unknown fields.
+ * @param filePath Path to the file
+ * @param updated Updated configuration object
+ */
+export function atomicWriteJson(filePath: string, updated: any) {
+    let finalContent = updated;
+
+    // Preserve unknown fields if file exists
+    if (existsSync(filePath)) {
+        try {
+            const existing = JSON.parse(readFileSync(filePath, 'utf8'));
+            finalContent = { ...existing, ...updated };
+        } catch (e) {
+            // If existing is corrupt, we overwrite with updated
+        }
+    }
+
+    const content = JSON.stringify(finalContent, null, 4);
+    const tempPath = `${filePath}.tmp`;
+
+    try {
+        writeFileSync(tempPath, content, 'utf8');
+        rmSync(filePath, { force: true });
+        spawnSync(
+            'powershell',
+            [
+                '-Command',
+                `Move-Item -Path "${tempPath}" -Destination "${filePath}" -Force`,
+            ],
+            { shell: true },
+        );
+        // Fallback for non-powershell or if Move-Item fails (though we are on Windows)
+        if (existsSync(tempPath)) {
+            writeFileSync(filePath, content, 'utf8');
+            rmSync(tempPath, { force: true });
+        }
+    } catch (e) {
+        // Fallback to direct write if atomic fails
+        writeFileSync(filePath, content, 'utf8');
     }
 }
 
@@ -85,13 +168,11 @@ export function updateProjectConfig(
     path: string,
     updatedConfig: IProjectConfig,
 ) {
-    if (readProjectConfig(path) === undefined) {
-        throw new Error('The given path is not a valid project config!');
+    if (!existsSync(path)) {
+        throw new Error('The given path does not exist!');
     }
 
-    writeFileSync(path, JSON.stringify(updatedConfig, null, 4), {
-        encoding: 'utf-8',
-    });
+    atomicWriteJson(path, updatedConfig);
 }
 
 /**
@@ -182,7 +263,9 @@ export function getOutDir() {
         }
     }
 
-    return join(homedir(), 'Zomboid', 'Workshop');
+    const defaultPath = join(homedir(), 'Zomboid', 'Workshop');
+    verbose(`Defaulting output directory to: ${defaultPath}`);
+    return defaultPath;
 }
 
 /**
@@ -261,10 +344,18 @@ export function generateModInfoText(
             );
         else if (typeof config.mods[modId].poster === 'string')
             lines.push(`poster=${config.mods[modId].poster}`);
-        else lines.push(`poster=poster.png`);
+        else {
+            verbose(`Mod '${modId}' defaulting poster to: poster.png`);
+            lines.push(`poster=poster.png`);
+        }
 
         // icon
-        lines.push(`icon=${config.mods[modId].icon ?? 'icon.png'}`);
+        if (config.mods[modId].icon) {
+            lines.push(`icon=${config.mods[modId].icon}`);
+        } else {
+            verbose(`Mod '${modId}' defaulting icon to: icon.png`);
+            lines.push(`icon=icon.png`);
+        }
 
         // url
         if (config.mods[modId].url) lines.push(`url=${config.mods[modId].url}`);
@@ -274,6 +365,14 @@ export function generateModInfoText(
             lines.push(`versionMin=${config.mods[modId].versionMin}`);
         if (config.mods[modId].versionMax)
             lines.push(`versionMax=${config.mods[modId].versionMax}`);
+
+        // pack
+        if (config.mods[modId].pack)
+            lines.push(`pack=${config.mods[modId].pack}`);
+
+        // tiledef
+        if (config.mods[modId].tiledef)
+            lines.push(`tiledef=${config.mods[modId].tiledef}`);
 
         // require
         if (typeof config.mods[modId].require === 'string')

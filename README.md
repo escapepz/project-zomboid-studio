@@ -36,6 +36,12 @@ This is a CLI tool for creating and maintaining Lua mods for Project Zomboid wit
     - Dev branch workshop always sets visibility to `unlisted` regardless of project.json settings
     - Dev branch workshop title appends ` - dev_branch` suffix: `title={projectTitle} - dev_branch`
     - Dev branch workshop.txt has no `id=` field (excluded automatically)
+- **Robust I/O Validation & Migration (NEW)**:
+    - Implemented runtime validation for `project.json` and `config.json` with descriptive Where-What-Why error reporting.
+    - Added `pzstudio migrate` command to safely upgrade legacy configuration files while preserving unknown fields.
+    - Expanded `IModConfig` with support for `pack`, `tiledef`, `url`, `versionMin`, and `versionMax`.
+    - Added `--verbose` mode for detailed diagnostic logging across all commands.
+    - Stubbed experimental `watch` command as "Not implemented yet!" to avoid instability.
 - Updated documentation to reference original project repository
 
 ### 4. Quality Workflows

@@ -9,7 +9,7 @@ import {
     projectDir,
     readProjectConfig,
 } from '../helper';
-import { info, log, warn } from '../logger';
+import { error, info, log, warn, verbose } from '../logger';
 import { resolveTemplateDir, scaffoldProject } from '../templateManager';
 
 /**
@@ -26,7 +26,8 @@ addHelp(
     Usages:
         pzstudio build - Builds only the main workshop output (Default).
         pzstudio build --production - Builds only the main workshop output.
-        pzstudio build --development - Builds only the dev_branch workshop output.`,
+        pzstudio build --development - Builds only the dev_branch workshop output.
+        pzstudio build --verbose - Enable diagnostic output.`,
 );
 
 async function buildWorkshop(
@@ -38,7 +39,9 @@ async function buildWorkshop(
     titleSuffix?: string,
 ) {
     const projectPath = projectDir();
+    verbose(`Resolving workshop template...`);
     const templateWorkshopPath = resolveTemplateDir('workshop');
+    verbose(`Workshop template path: ${templateWorkshopPath}`);
 
     // Remove the output directory
     rmSync(outPath, { recursive: true, force: true });
@@ -61,6 +64,8 @@ async function buildWorkshop(
         // Copy the mod
         const outModsPath = join(outPath, 'Contents', 'mods', prefixedModId);
         log(`- Copying mod '${modId}'...`);
+        verbose(`Mod source: ${join(projectPath, modId)}`);
+        verbose(`Mod destination: ${outModsPath}`);
         const modSrcPath = join(projectPath, modId);
         scaffoldProject(modSrcPath, outModsPath, false, false, {
             excludeIgnoreFile: true,
@@ -138,9 +143,14 @@ export async function buildCmd() {
 
     const projectPath = projectDir();
     const outDir = getOutDir();
+    verbose(`Project root: ${projectPath}`);
+    verbose(`Output root: ${outDir}`);
 
     const isProduction = hasFlag('production');
     const isDevelopment = hasFlag('development');
+    verbose(
+        `Targets: production=${isProduction}, development=${isDevelopment}`,
+    );
 
     // Conflict detection
     if (isProduction && isDevelopment) {

@@ -26,7 +26,8 @@ addHelp(
     --template <url> - Use a custom template URL for the mod template.
     --offline        - Bypass network updates and use local cache or legacy templates.
     --force-update   - Force refresh of cached templates from remote.
-    --symlinks       - Use directory junctions for template folders (if supported).`,
+    --symlinks       - Use directory junctions for template folders (if supported).
+    --verbose        - Enable diagnostic output.`,
 );
 
 export function addCmd(modName: string, modId?: string) {

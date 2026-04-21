@@ -15,7 +15,8 @@ addHelp(
     `Delete a mod from your project.
 
     Usages:
-        pzstudio delete <modId> - Delete a mod from your project.`,
+        pzstudio delete <modId> - Delete a mod from your project.
+        pzstudio delete <modId> --verbose - Enable diagnostic output.`,
 );
 
 export function deleteCmd(modId: string) {

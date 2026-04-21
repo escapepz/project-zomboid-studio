@@ -33,3 +33,112 @@ export function createMockFile(filePath: string, content: string): void {
     }
     fs.writeFileSync(filePath, content, 'utf8');
 }
+
+export const FIXTURES = {
+    PROJECT: {
+        MINIMAL: JSON.stringify(
+            {
+                title: 'Minimal Project',
+                authors: 'Author',
+                workshop: {
+                    visibility: 'public',
+                    tags: ['Building'],
+                },
+                mods: {
+                    testmod: {
+                        name: 'Test Mod',
+                        description: 'Description',
+                    },
+                },
+            },
+            null,
+            2,
+        ),
+        LEGACY: JSON.stringify(
+            {
+                title: 'Legacy Project',
+                authors: ['Author 1'],
+                workshop: {
+                    visibility: 'private',
+                    tags: ['Interface'],
+                    // missing excludes
+                },
+                mods: {
+                    legacymod: {
+                        name: 'Legacy Mod',
+                        description: 'Legacy Description',
+                        // missing build.modInfo
+                    },
+                },
+            },
+            null,
+            2,
+        ),
+        MALFORMED: '{ "title": "Malformed", "authors": [ }',
+        INVALID_TYPES: JSON.stringify(
+            {
+                title: 123, // should be string
+                authors: { name: 'Author' }, // should be string or string[]
+                workshop: 'public', // should be object
+                mods: [], // should be object
+            },
+            null,
+            2,
+        ),
+    },
+    CONFIG: {
+        MINIMAL: '{}',
+        LEGACY: JSON.stringify(
+            {
+                outdir: './output',
+                // missing useSymlinks
+            },
+            null,
+            2,
+        ),
+        MALFORMED: 'not json',
+    },
+    MOD_INFO: {
+        LEGACY: `name=Legacy Mod
+id=legacymod
+description=Legacy Description
+poster=poster.png`,
+    },
+    ROUND_TRIP: {
+        PROJECT: JSON.stringify(
+            {
+                title: 'Round Trip Project',
+                authors: ['Author 1'],
+                workshop: {
+                    id: 12345,
+                    visibility: 'public',
+                    tags: ['Building'],
+                    excludes: ['mod2'],
+                },
+                mods: {
+                    mod1: {
+                        name: 'Mod 1',
+                        description: 'Desc 1',
+                        poster: 'poster.png',
+                        icon: 'icon.png',
+                        build: {
+                            modInfo: 'auto',
+                        },
+                    },
+                },
+                unknownField: 'preserve me',
+            },
+            null,
+            2,
+        ),
+        CONFIG: JSON.stringify(
+            {
+                outdir: './workshop',
+                useSymlinks: true,
+                unknownGlobalField: 'keep this too',
+            },
+            null,
+            2,
+        ),
+    },
+};

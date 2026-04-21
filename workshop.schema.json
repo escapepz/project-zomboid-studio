@@ -1,0 +1,162 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "workshop.txt",
+    "description": "Project Zomboid Steam Workshop item metadata. Parsed line-by-line as key=value from workshop.txt by SteamWorkshopItem.",
+    "type": "object",
+    "required": ["title", "description", "visibility"],
+    "properties": {
+        "version": {
+            "description": "File format version. Always 1. Written by writeWorkshopTxt() but skipped on read.",
+            "type": "integer",
+            "const": 1,
+            "default": 1
+        },
+        "id": {
+            "description": "Steam Workshop published file ID. A numeric string representing an unsigned 64-bit integer (0 to 18446744073709551615). Validated via SteamUtils.isValidSteamID(). Null/absent until the item is first created on Steam.",
+            "type": "string",
+            "pattern": "^[0-9]+$"
+        },
+        "title": {
+            "description": "Workshop item title. Single-line, overwrites if repeated. Note: if title is \"Mod Template\", visibility is forced to private on submit.",
+            "type": "string",
+            "default": ""
+        },
+        "description": {
+            "description": "Workshop item description. Multi-line in workshop.txt — lines are concatenated with newline separator. On submit, the game appends \"Workshop ID: <id>\" and \"Mod ID: <modId>\" lines automatically.",
+            "oneOf": [
+                {
+                    "type": "string"
+                },
+                {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Each element becomes a description= line, joined with newlines."
+                }
+            ],
+            "default": ""
+        },
+        "tags": {
+            "description": "Workshop tags. Semicolon-separated in workshop.txt, additive on read (tags.addAll). Allowed values are loaded at runtime from media/WorkshopTags.txt via SteamWorkshopItem.getAllowedTags().",
+            "type": "array",
+            "items": {
+                "type": "string",
+                "minLength": 1
+            },
+            "default": []
+        },
+        "visibility": {
+            "description": "Workshop item visibility. Maps to Steam API integers: public=0, friendsOnly=1, private=2, unlisted=3.",
+            "type": "string",
+            "enum": ["public", "friendsOnly", "private", "unlisted"],
+            "default": "public"
+        },
+        "changeNote": {
+            "description": "Change notes for workshop updates. Used during SubmitWorkshopItem() but NOT persisted in workshop.txt. Only used in the submit UI (Page5 changelog).",
+            "type": "string",
+            "default": ""
+        },
+        "preview": {
+            "description": "Preview image path (preview.png in the workshop folder). Not a workshop.txt field — it's a file convention. Must be PNG, square (256x256 or 512x512), max 1,024,000 bytes.",
+            "type": "object",
+            "properties": {
+                "file": {
+                    "description": "Path to the preview image file.",
+                    "type": "string",
+                    "default": "preview.png"
+                },
+                "format": {
+                    "description": "Must be PNG.",
+                    "type": "string",
+                    "const": "png"
+                },
+                "dimensions": {
+                    "description": "Must be square: 256x256 or 512x512.",
+                    "type": "integer",
+                    "enum": [256, 512]
+                },
+                "maxBytes": {
+                    "description": "Maximum file size in bytes.",
+                    "type": "integer",
+                    "const": 1024000
+                }
+            }
+        }
+    },
+    "$defs": {
+        "visibility": {
+            "description": "Workshop item visibility.",
+            "type": "string",
+            "enum": ["public", "friendsOnly", "private", "unlisted"]
+        },
+        "tags": {
+            "description": "Workshop tags.",
+            "type": "string",
+            "enum": [
+                "Build 40",
+                "Build 41",
+                "Build 42",
+                "Animals",
+                "Audio",
+                "Balance",
+                "Building",
+                "Clothing/Armor",
+                "Farming",
+                "Food",
+                "Framework",
+                "Hardmode",
+                "Interface",
+                "Items",
+                "Language/Translation",
+                "Literature",
+                "Map",
+                "Military",
+                "Misc",
+                "Models",
+                "Multiplayer",
+                "Pop Culture",
+                "Realistic",
+                "Silly/Fun",
+                "Skills",
+                "Textures",
+                "Traits",
+                "Vehicles",
+                "QoL",
+                "WIP",
+                "Weapons"
+            ]
+        },
+        "contentValidation": {
+            "description": "Validation rules for the Contents/ folder, enforced by validateContents().",
+            "type": "object",
+            "properties": {
+                "allowedFolders": {
+                    "description": "Only these top-level folders are allowed inside Contents/.",
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "enum": ["buildings", "creative", "mods"]
+                    }
+                },
+                "forbiddenFileTypes": {
+                    "description": "These file extensions are rejected by validateFileTypes().",
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "enum": [
+                            ".exe",
+                            ".dll",
+                            ".bat",
+                            ".app",
+                            ".dylib",
+                            ".sh",
+                            ".so",
+                            ".zip"
+                        ]
+                    }
+                }
+            }
+        }
+    }
+}

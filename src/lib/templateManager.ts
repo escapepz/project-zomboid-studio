@@ -12,7 +12,7 @@ import {
     cpSync,
     symlinkSync,
 } from 'fs';
-import { log, warn } from './logger';
+import { log, warn, verbose } from './logger';
 
 /**
  * Creates a filter for fs.cpSync derived from .pzstudioignore or hardcoded defaults.
@@ -382,11 +382,15 @@ export function refreshCachedTemplate(dir: string, ref?: string): boolean {
     return true;
 }
 
+import { ValidationContext, validateConfig } from './validation';
+import { migration } from './migration';
+
 /**
  * Reads the global pzstudio config from ~/.pzstudio/config.json
  */
-export function readGlobalConfig(): GlobalConfig {
+export function readGlobalConfig(validate: boolean = true): GlobalConfig {
     const configPath = getConfigPath();
+    verbose(`Reading global config from: ${configPath}`);
     const defaultConfig: GlobalConfig = { templates: {} };
     if (!existsSync(configPath)) {
         return defaultConfig;
@@ -394,6 +398,30 @@ export function readGlobalConfig(): GlobalConfig {
     try {
         const content = readFileSync(configPath, 'utf-8');
         const config = JSON.parse(content);
+
+        if (validate) {
+            const context = new ValidationContext(basename(configPath));
+            validateConfig(config, context);
+            if (context.hasErrors()) {
+                warn(
+                    `Validation failed for global config ${basename(configPath)}:\n${context.formatErrors()}`,
+                );
+                warn('Continuing with in-memory defaults.');
+                return defaultConfig;
+            }
+
+            // Check for legacy shape and warn
+            const migrationCheck = migration.checkConfig(config);
+            if (migrationCheck.needsMigration) {
+                warn(
+                    `[LEGACY] Global config ${basename(configPath)} is using a legacy shape: ${migrationCheck.reason}`,
+                );
+                warn(
+                    `Please run 'pzstudio migrate' to upgrade your config file.`,
+                );
+            }
+        }
+
         return {
             ...defaultConfig,
             ...config,
@@ -505,6 +533,8 @@ export function resolveTemplateDir(
 
     const cacheDir = getCachePathFromUrl(templateConfig.url);
     const legacyDir = getEmbeddedTemplateDir(category);
+    verbose(`Resolved cacheDir: ${cacheDir}`);
+    verbose(`Resolved legacyDir: ${legacyDir}`);
 
     // If offline, try cache first, then legacy for defaults
     if (isOffline) {

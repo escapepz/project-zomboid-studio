@@ -17,3 +17,11 @@ export function addHelp(command: string, help: string) {
 export function getHelp(command: string) {
     return helps[command];
 }
+
+/**
+ * Get all available commands that have help registered.
+ * @returns An array of command names.
+ */
+export function getAvailableCommands(): string[] {
+    return Object.keys(helps);
+}

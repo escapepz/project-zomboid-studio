@@ -8,9 +8,12 @@ export type WorkshopTags =
     | 'Build 40'
     | 'Build 41'
     | 'Build 42'
+    | 'Animals'
+    | 'Audio'
     | 'Balance'
     | 'Building'
     | 'Clothing/Armor'
+    | 'Farming'
     | 'Food'
     | 'Framework'
     | 'Hardmode'
@@ -26,12 +29,15 @@ export type WorkshopTags =
     | 'Pop Culture'
     | 'Realistic'
     | 'Silly/Fun'
+    | 'Skills'
     | 'Textures'
     | 'Traits'
     | 'Vehicles'
+    | 'QoL'
+    | 'WIP'
     | 'Weapons';
 
-export interface IWorshopConfig {
+export interface IWorkshopConfig {
     id?: number;
     visibility: WorkshopVisibility;
     tags: WorkshopTags[];
@@ -69,7 +75,7 @@ export interface IModConfig {
 export interface IProjectConfig {
     title: string;
     authors: string | string[];
-    workshop: IWorshopConfig;
+    workshop: IWorkshopConfig;
     mods: { [modId: string]: IModConfig };
     useSymlinks?: boolean;
 }
