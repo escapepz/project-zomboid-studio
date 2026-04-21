@@ -422,7 +422,7 @@ export function readGlobalConfig(validate: boolean = true): GlobalConfig {
             }
         }
 
-        return {
+        const mergedConfig = {
             ...defaultConfig,
             ...config,
             templates: {
@@ -430,6 +430,14 @@ export function readGlobalConfig(validate: boolean = true): GlobalConfig {
                 ...(config.templates || {}),
             },
         };
+
+        // Apply global defaults
+        if (mergedConfig.useSymlinks === undefined) {
+            verbose(`Global config: Defaulting useSymlinks to false`);
+            mergedConfig.useSymlinks = false;
+        }
+
+        return mergedConfig;
     } catch {
         return defaultConfig;
     }

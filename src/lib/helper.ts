@@ -110,10 +110,47 @@ export function readProjectConfig(
             }
         }
 
-        return config;
+        return applyProjectDefaults(config);
     } catch (err) {
         return undefined;
     }
+}
+
+/**
+ * Applies safe defaults to a project config.
+ * @param config The original project config
+ * @returns The config with defaults applied
+ */
+export function applyProjectDefaults(config: any): IProjectConfig {
+    if (!config) return config;
+
+    // Default workshop settings
+    if (!config.workshop) config.workshop = {};
+    if (config.workshop.excludes === undefined) {
+        verbose(`Defaulting workshop.excludes to empty list`);
+        config.workshop.excludes = [];
+    }
+
+    // Default mods settings
+    if (config.mods) {
+        for (const modId in config.mods) {
+            const mod = config.mods[modId];
+            if (mod.poster === undefined) {
+                verbose(`Mod '${modId}' defaulting poster to: poster.png`);
+                mod.poster = 'poster.png';
+            }
+            if (mod.icon === undefined) {
+                verbose(`Mod '${modId}' defaulting icon to: icon.png`);
+                mod.icon = 'icon.png';
+            }
+            if (!mod.build) mod.build = {};
+            if (mod.build.modInfo === undefined) {
+                mod.build.modInfo = 'skip';
+            }
+        }
+    }
+
+    return config as IProjectConfig;
 }
 
 /**
@@ -344,17 +381,10 @@ export function generateModInfoText(
             );
         else if (typeof config.mods[modId].poster === 'string')
             lines.push(`poster=${config.mods[modId].poster}`);
-        else {
-            verbose(`Mod '${modId}' defaulting poster to: poster.png`);
-            lines.push(`poster=poster.png`);
-        }
 
         // icon
         if (config.mods[modId].icon) {
             lines.push(`icon=${config.mods[modId].icon}`);
-        } else {
-            verbose(`Mod '${modId}' defaulting icon to: icon.png`);
-            lines.push(`icon=icon.png`);
         }
 
         // url

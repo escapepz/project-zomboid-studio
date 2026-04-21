@@ -4,7 +4,7 @@ import { readProjectConfig, updateProjectConfig, projectDir } from '../helper';
 import { migration } from '../migration';
 import { readGlobalConfig, writeGlobalConfig } from '../templateManager';
 import { existsSync } from 'fs';
-import { basename } from 'path';
+import { basename, join } from 'path';
 
 addHelp(
     'migrate',
@@ -39,7 +39,8 @@ export async function migrateCmd() {
         if (projectCheck.needsMigration) {
             info(`- Migrating project.json: ${projectCheck.reason}`);
             const upgradedProject = migration.upgradeProject(project);
-            updateProjectConfig('project.json', upgradedProject);
+            const projectPath = join(projectDir(), 'project.json');
+            updateProjectConfig(projectPath, upgradedProject);
             info('  → project.json upgraded successfully.');
         } else {
             log('- project.json is already up to date.');

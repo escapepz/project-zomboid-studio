@@ -1,37 +1,21 @@
-﻿# AGENTS.md - Project Zomboid Studio
+# AGENTS.md
 
-## Build & Commands
-
-- **Build**: `pnpm run build` - Compiles TypeScript to JavaScript in dist/
-- **Clean**: `pnpm run clean` - Removes dist/ directory
-- **Watch**: `pnpm run watch` - Watches for TypeScript changes and recompiles
-- **Test**: `pnpm run test` - Runs Vitest unit tests (80+ tests)
+## Commands
+- **Build:** `pnpm build`
+- **Lint:** `pnpm lint` (fix: `pnpm lint:fix`)
+- **Format:** `pnpm format` (check: `pnpm format:check`)
+- **Test all:** `pnpm test`
+- **Single test:** `pnpm exec vitest run tests/unit/someFile.test.ts`
+- **Test watch:** `pnpm test:watch`
 
 ## Architecture
+TypeScript CLI tool (`pzstudio`) for Project Zomboid Lua mod scaffolding. CommonJS module, entry point `src/index.ts`, public API at `src/api.ts`. Commands live in `src/lib/commands/` (add, build, clean, delete, new, watch, etc.). A VS Code extension lives in `packages/vscode-extension/`. Tests use Vitest in `tests/unit/`, setup in `tests/setup/vitest.setup.ts`.
 
-- **Language**: TypeScript (target: ESNext, module: CommonJS, strict mode enabled)
-- **Project Type**: CLI tool for creating/managing Project Zomboid Lua mods
-- **Entry**: `src/index.ts` → `src/lib/cli.ts` dispatches to command handlers
-- **Structure**: `src/lib/` contains CLI infrastructure (args, logger, helpers) + `src/lib/commands/` for command implementations
-- **Core Modules**:
-    - `src/lib/validation.ts`: Runtime schema validation for project and config files.
-    - `src/lib/migration.ts`: Safely upgrades legacy file formats.
-    - `src/lib/templateManager.ts`: Resolves and caches project templates from GitHub.
-- **Dependencies**: terminal-kit (UI), chokidar (file watching), download (file downloads), del-cli (file deletion), vitest (testing)
-- **Output**: CommonJS module exported to dist/, binary executable at `./dist/index.js`
-
-## Code Style Guidelines
-
-- **Imports**: ES6 imports, tsconfig has esModuleInterop enabled, json modules resolvable
-- **Naming**: camelCase for functions/variables, PascalCase for types, command handlers suffixed with `Cmd`
-- **Types**: Strict mode enabled (noImplicitAny, strictFunctionTypes), some features disabled (strictNullChecks: false)
-- **Error Handling**: 
-    - Use `ValidationContext` for bulk reporting of input errors.
-    - Use `logger.error()` for terminal failures, `logger.verbose()` for diagnostics.
-    - Propagate errors to main CLI loop for non-zero exit handling.
-- **Async**: Use async/await for command handlers
-- **Conventions**: 
-    - One command per file in `src/lib/commands/`.
-    - Commands must register their help text via `addHelp()`.
-    - `watchCmd` is currently stubbed as "Not implemented yet!".
-- **Line Length**: Follow TypeScript best practices
+## Code Style
+- **TypeScript strict mode** (but `strictNullChecks: false`). Target `esnext`, module `CommonJS`.
+- **Prettier:** 4-space indent, single quotes, no tabs.
+- **ESLint:** `@typescript-eslint/no-explicit-any` is off; unused vars warn with `^_` ignore pattern; `no-require-imports` off.
+- **Naming:** Commands are single lowercase files (e.g., `build.ts`). Helpers/utilities in `src/lib/`.
+- **Imports:** Use `require()`-style (CommonJS). `esModuleInterop` and `allowSyntheticDefaultImports` enabled.
+- **Dependencies:** Runtime deps are minimal (chokidar, terminal-kit). Use pnpm exclusively.
+- **Error handling:** Custom errors in `src/lib/errors/`. Validation logic in `src/lib/validation.ts` and `src/lib/expect.ts`.
