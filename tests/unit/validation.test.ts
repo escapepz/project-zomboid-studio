@@ -21,8 +21,8 @@ describe('Validation', () => {
             );
         });
 
-        it('should report error for missing title', () => {
-            validateProject({}, context);
+        it('should report error for missing workshop.title', () => {
+            validateProject({ workshop: {} }, context);
             expect(context.hasErrors()).toBe(true);
             const errors = context.getErrors();
             expect(errors.some((e) => e.location.endsWith('title'))).toBe(true);
@@ -30,9 +30,8 @@ describe('Validation', () => {
 
         it('should report error for invalid visibility', () => {
             const config = {
-                title: 'Test',
-                authors: 'Author',
                 workshop: {
+                    title: 'Test',
                     visibility: 'invalid',
                     tags: [],
                 },
@@ -49,9 +48,8 @@ describe('Validation', () => {
 
         it('should pass for valid minimal project', () => {
             const config = {
-                title: 'Test',
-                authors: 'Author',
                 workshop: {
+                    title: 'Test',
                     visibility: 'public',
                     tags: ['Building'],
                 },
@@ -68,9 +66,8 @@ describe('Validation', () => {
 
         it('should report error for invalid workshop id', () => {
             const config = {
-                title: 'Test',
-                authors: 'Author',
                 workshop: {
+                    title: 'Test',
                     id: 'not-a-number',
                     visibility: 'public',
                     tags: [],
@@ -88,9 +85,7 @@ describe('Validation', () => {
 
         it('should report error for invalid mod poster', () => {
             const config = {
-                title: 'Test',
-                authors: 'Author',
-                workshop: { visibility: 'public', tags: [] },
+                workshop: { title: 'Test', visibility: 'public', tags: [] },
                 mods: {
                     mod1: {
                         name: 'Mod 1',
@@ -108,11 +103,10 @@ describe('Validation', () => {
             ).toBe(true);
         });
 
-        it('should pass for valid project with authors array', () => {
+        it('should pass for valid project with minimal settings', () => {
             const config = {
-                title: 'Test',
-                authors: ['Author 1', 'Author 2'],
                 workshop: {
+                    title: 'Test',
                     visibility: 'public',
                     tags: ['Building'],
                 },

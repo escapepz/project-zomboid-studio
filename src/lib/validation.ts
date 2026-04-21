@@ -66,30 +66,29 @@ export function validateProject(config: any, context: ValidationContext): void {
         return;
     }
 
-    if (!guards.isString(config.title)) {
+    // Legacy/Unsupported root fields
+    if ('title' in config) {
         context.addError(
             'title',
-            'Field "title" must be a string',
-            'Add a descriptive title for your project',
+            'Field "title" is no longer supported at the root',
+            'Move this to "workshop.title" in your project.json',
         );
     }
 
-    if (!guards.isString(config.authors) && !guards.isArray(config.authors)) {
+    if ('authors' in config) {
         context.addError(
             'authors',
-            'Field "authors" must be a string or an array of strings',
-            'Add at least one author to the project',
+            'Field "authors" is no longer supported at the root',
+            'Use mod-level authors or remove it',
         );
-    } else if (guards.isArray(config.authors)) {
-        config.authors.forEach((author: any, i: number) => {
-            if (!guards.isString(author)) {
-                context.addError(
-                    formatFieldPath('authors', i),
-                    'Author must be a string',
-                    'Ensure all authors in the list are strings',
-                );
-            }
-        });
+    }
+
+    if ('id' in config) {
+        context.addError(
+            'id',
+            'Field "id" is no longer supported at the root',
+            'Move this to "workshop.id" in your project.json',
+        );
     }
 
     if (!guards.isObject(config.workshop)) {
@@ -100,6 +99,15 @@ export function validateProject(config: any, context: ValidationContext): void {
         );
     } else {
         const w = config.workshop;
+
+        if (!guards.isString(w.title)) {
+            context.addError(
+                'workshop.title',
+                'Field "title" must be a string',
+                'Add a descriptive title for your project',
+            );
+        }
+
         if (w.id !== undefined && !guards.isNumber(w.id)) {
             context.addError(
                 'workshop.id',
@@ -138,11 +146,11 @@ export function validateProject(config: any, context: ValidationContext): void {
             });
         }
 
-        if (w.excludes !== undefined && !guards.isArray(w.excludes)) {
+        if ('excludes' in w) {
             context.addError(
                 'workshop.excludes',
-                'Field "excludes" must be an array of strings',
-                'Specify mod IDs to exclude from the workshop build',
+                'Field "excludes" is no longer supported under "workshop"',
+                'Move "excludes" to the root of your project.json',
             );
         }
     }
@@ -182,6 +190,25 @@ export function validateProject(config: any, context: ValidationContext): void {
                 );
             }
 
+            if (mod.author !== undefined && !guards.isString(mod.author)) {
+                context.addError(
+                    formatFieldPath('mods', modId, 'author'),
+                    'Field "author" must be a string',
+                    'Specify mod author',
+                );
+            }
+
+            if (
+                mod.modversion !== undefined &&
+                !guards.isString(mod.modversion)
+            ) {
+                context.addError(
+                    formatFieldPath('mods', modId, 'modversion'),
+                    'Field "modversion" must be a string',
+                    'Specify mod version',
+                );
+            }
+
             if (
                 mod.poster !== undefined &&
                 !guards.isString(mod.poster) &&
@@ -202,14 +229,6 @@ export function validateProject(config: any, context: ValidationContext): void {
                 );
             }
 
-            if (mod.url !== undefined && !guards.isString(mod.url)) {
-                context.addError(
-                    formatFieldPath('mods', modId, 'url'),
-                    'Field "url" must be a string',
-                    'Specify a valid URL',
-                );
-            }
-
             if (
                 mod.require !== undefined &&
                 !guards.isString(mod.require) &&
@@ -219,6 +238,74 @@ export function validateProject(config: any, context: ValidationContext): void {
                     formatFieldPath('mods', modId, 'require'),
                     'Field "require" must be a string or array of strings',
                     'List mod dependencies by their IDs',
+                );
+            }
+
+            if (
+                mod.incompatible !== undefined &&
+                !guards.isString(mod.incompatible) &&
+                !guards.isArray(mod.incompatible)
+            ) {
+                context.addError(
+                    formatFieldPath('mods', modId, 'incompatible'),
+                    'Field "incompatible" must be a string or array of strings',
+                    'List incompatible mod IDs',
+                );
+            }
+
+            if (
+                mod.loadModAfter !== undefined &&
+                !guards.isString(mod.loadModAfter) &&
+                !guards.isArray(mod.loadModAfter)
+            ) {
+                context.addError(
+                    formatFieldPath('mods', modId, 'loadModAfter'),
+                    'Field "loadModAfter" must be a string or array of strings',
+                    'List mods to load before this one',
+                );
+            }
+
+            if (
+                mod.loadModBefore !== undefined &&
+                !guards.isString(mod.loadModBefore) &&
+                !guards.isArray(mod.loadModBefore)
+            ) {
+                context.addError(
+                    formatFieldPath('mods', modId, 'loadModBefore'),
+                    'Field "loadModBefore" must be a string or array of strings',
+                    'List mods to load after this one',
+                );
+            }
+
+            if (mod.pack !== undefined && !guards.isString(mod.pack)) {
+                context.addError(
+                    formatFieldPath('mods', modId, 'pack'),
+                    'Field "pack" must be a string',
+                    'Specify a .pack file to include with this mod',
+                );
+            }
+
+            if (mod.tiledef !== undefined && !guards.isString(mod.tiledef)) {
+                context.addError(
+                    formatFieldPath('mods', modId, 'tiledef'),
+                    'Field "tiledef" must be a string',
+                    'Specify a tile definition (e.g., "mytiles 123")',
+                );
+            }
+
+            if (mod.category !== undefined && !guards.isString(mod.category)) {
+                context.addError(
+                    formatFieldPath('mods', modId, 'category'),
+                    'Field "category" must be a string',
+                    'Specify mod category',
+                );
+            }
+
+            if (mod.url !== undefined && !guards.isString(mod.url)) {
+                context.addError(
+                    formatFieldPath('mods', modId, 'url'),
+                    'Field "url" must be a string',
+                    'Specify a valid URL',
                 );
             }
 
@@ -265,29 +352,12 @@ export function validateProject(config: any, context: ValidationContext): void {
         }
     }
 
-    if (
-        config.useSymlinks !== undefined &&
-        !guards.isBoolean(config.useSymlinks)
-    ) {
+    if (config.excludes !== undefined && !guards.isArray(config.excludes)) {
         context.addError(
-            'useSymlinks',
-            'Field "useSymlinks" must be a boolean',
-            'Enable or disable symlinks for this project',
+            'excludes',
+            'Field "excludes" must be an array of strings',
+            'Specify mod IDs to exclude from the workshop build',
         );
-    }
-}
-
-/**
- * Validates a config.json configuration.
- */
-export function validateConfig(config: any, context: ValidationContext): void {
-    if (!guards.isObject(config)) {
-        context.addError(
-            '',
-            'Root must be a plain object',
-            'Fix the config.json structure',
-        );
-        return;
     }
 
     if (config.outdir !== undefined && !guards.isString(config.outdir)) {
@@ -319,6 +389,100 @@ export function validateConfig(config: any, context: ValidationContext): void {
                         formatFieldPath('templates', key, 'url'),
                         'Field "url" must be a string',
                         'Provide a repository URL or user/repo shorthand',
+                    );
+                }
+
+                if (t.ref !== undefined && !guards.isString(t.ref)) {
+                    context.addError(
+                        formatFieldPath('templates', key, 'ref'),
+                        'Field "ref" must be a string',
+                        'Provide a branch, tag, or commit reference',
+                    );
+                }
+            }
+        }
+    }
+
+    if (
+        config.useSymlinks !== undefined &&
+        !guards.isBoolean(config.useSymlinks)
+    ) {
+        context.addError(
+            'useSymlinks',
+            'Field "useSymlinks" must be a boolean',
+            'Enable or disable symlinks for this project',
+        );
+    }
+}
+
+/**
+ * Validates a config.json configuration.
+ */
+export function validateConfig(config: any, context: ValidationContext): void {
+    if (!guards.isObject(config)) {
+        context.addError(
+            '',
+            'Root must be a plain object',
+            'Fix the config.json structure',
+        );
+        return;
+    }
+
+    const unsupportedProjectKeys = [
+        'workshop',
+        'mods',
+        'excludes',
+        'title',
+        'authors',
+        'id',
+    ];
+    for (const key of unsupportedProjectKeys) {
+        if (key in config) {
+            context.addError(
+                key,
+                `Field "${key}" is not supported in config.json`,
+                'Move this setting to your workspace project.json',
+            );
+        }
+    }
+
+    if (config.outdir !== undefined && !guards.isString(config.outdir)) {
+        context.addError(
+            'outdir',
+            'Field "outdir" must be a string',
+            'Specify a valid directory path for output',
+        );
+    }
+
+    if (config.templates !== undefined) {
+        if (!guards.isObject(config.templates)) {
+            context.addError(
+                'templates',
+                'Field "templates" must be an object',
+                'Check your custom templates configuration',
+            );
+        } else {
+            for (const key in config.templates) {
+                const t = config.templates[key];
+                if (!guards.isObject(t)) {
+                    context.addError(
+                        formatFieldPath('templates', key),
+                        'Template must be an object',
+                        'Specify url and optional ref',
+                    );
+                } else if (!guards.isString(t.url)) {
+                    context.addError(
+                        formatFieldPath('templates', key, 'url'),
+                        'Field "url" must be a string',
+                        'Provide a repository URL or user/repo shorthand',
+                    );
+                }
+
+                if (t.ref !== undefined && !guards.isString(t.ref)) {
+                    context.addError(
+                        formatFieldPath('templates', key, 'ref'),
+                        'Field "ref" must be a string',
+                        'Provide a branch, tag, or commit reference',
                     );
                 }
             }

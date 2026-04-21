@@ -5,9 +5,8 @@ import { arg, processArgs } from '../args';
 import {
     generateModInfoText,
     generateWorkshopText,
-    getOutDir,
     projectDir,
-    readProjectConfig,
+    resolveProjectConfig,
 } from '../helper';
 import { error, info, log, warn, verbose } from '../logger';
 import { resolveTemplateDir, scaffoldProject } from '../templateManager';
@@ -58,7 +57,7 @@ async function buildWorkshop(
 
     // Copy the mods
     for (const modId of Object.keys(projectConfig.mods).filter(
-        (modId: string) => !projectConfig.workshop.excludes.includes(modId),
+        (modId: string) => !projectConfig.excludes.includes(modId),
     )) {
         const prefixedModId = modIdPrefix ? `${modId}${modIdPrefix}` : modId;
         // Copy the mod
@@ -130,7 +129,7 @@ async function buildWorkshop(
 }
 
 export async function buildCmd() {
-    const projectConfig = readProjectConfig();
+    const projectConfig = resolveProjectConfig();
 
     // Check if we are in a project directory
     if (!projectConfig) {
@@ -142,7 +141,7 @@ export async function buildCmd() {
     const startTime = performance.now();
 
     const projectPath = projectDir();
-    const outDir = getOutDir();
+    const outDir = projectConfig.outdir!;
     verbose(`Project root: ${projectPath}`);
     verbose(`Output root: ${outDir}`);
 
@@ -164,14 +163,17 @@ export async function buildCmd() {
     // Build main workshop (Default or explicit --production)
     if (noFlags || isProduction) {
         log(`\nBuilding main workshop...`);
-        const mainOutPath = join(outDir, projectConfig.title);
+        const mainOutPath = join(outDir, projectConfig.workshop.title);
         await buildWorkshop(projectConfig, mainOutPath);
     }
 
     // Build dev_branch workshop (Only if --development is specified)
     if (isDevelopment) {
         log(`\nBuilding dev_branch workshop...`);
-        const devOutPath = join(outDir, `${projectConfig.title} - dev_branch`);
+        const devOutPath = join(
+            outDir,
+            `${projectConfig.workshop.title} - dev_branch`,
+        );
         await buildWorkshop(
             projectConfig,
             devOutPath,

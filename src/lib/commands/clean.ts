@@ -1,7 +1,7 @@
 import { join } from 'path';
 import { existsSync, rmSync } from 'fs';
 import { addHelp } from '../help';
-import { getOutDir, readProjectConfig } from '../helper';
+import { resolveProjectConfig } from '../helper';
 import { log } from '../logger';
 
 addHelp(
@@ -13,7 +13,7 @@ addHelp(
 );
 
 export function cleanCmd() {
-    const projectConfig = readProjectConfig();
+    const projectConfig = resolveProjectConfig();
 
     // Check if we are in a project directory
     if (!projectConfig) {
@@ -25,7 +25,7 @@ export function cleanCmd() {
     const startTime = performance.now();
 
     // Clean the output directory
-    const outPath = join(getOutDir(), projectConfig.title);
+    const outPath = join(projectConfig.outdir!, projectConfig.workshop.title);
     if (existsSync(outPath)) {
         log(`Cleaning output directory at '${outPath}'...`);
         rmSync(outPath, { recursive: true, force: true });

@@ -39,19 +39,26 @@ export type WorkshopTags =
 
 export interface IWorkshopConfig {
     id?: number;
+    title: string;
+    description?: string;
     visibility: WorkshopVisibility;
     tags: WorkshopTags[];
-    excludes?: string[];
 }
 
 export interface IModConfig {
     name: string;
     description: string;
+    author?: string;
+    modversion?: string;
     poster?: string | string[];
     icon?: string;
     require?: string | string[];
+    incompatible?: string | string[];
+    loadModAfter?: string | string[];
+    loadModBefore?: string | string[];
     pack?: string;
     tiledef?: string;
+    category?: string;
     url?: string;
     versionMin?: string;
     versionMax?: string;
@@ -72,10 +79,21 @@ export interface IModConfig {
     };
 }
 
+export interface ITemplateConfig {
+    url: string;
+    ref?: string;
+}
+
 export interface IProjectConfig {
-    title: string;
-    authors: string | string[];
     workshop: IWorkshopConfig;
     mods: { [modId: string]: IModConfig };
     useSymlinks?: boolean;
+    outdir?: string;
+    templates?: {
+        project?: ITemplateConfig;
+        mod?: ITemplateConfig;
+        workshop?: ITemplateConfig;
+        language?: ITemplateConfig;
+    };
+    excludes?: string[];
 }

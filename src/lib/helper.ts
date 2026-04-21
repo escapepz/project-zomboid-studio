@@ -18,21 +18,42 @@ import { readGlobalConfig, writeGlobalConfig } from './templateManager';
 /**
  * Resolves the useSymlinks configuration flag following the hierarchy:
  * project.json > config.json > default (false)
+ * @param project Optional project config to use
+ * @param config Optional global config to use
  * @returns {boolean} The resolved useSymlinks flag
  */
-export function resolveUseSymlinks(): boolean {
-    const project = readProjectConfig();
+export function resolveUseSymlinks(
+    project?: IProjectConfig,
+    config?: GlobalConfig,
+): boolean {
     if (project && project.useSymlinks !== undefined) {
         return project.useSymlinks;
     }
 
-    const config = readGlobalConfig();
-    if (config && config.useSymlinks !== undefined) {
-        return config.useSymlinks;
-    }
+    const global = config ?? readGlobalConfig(false);
+    return global.useSymlinks;
+}
 
-    verbose(`Defaulting useSymlinks to: false`);
-    return false; // Default
+/**
+ * Resolves the full project configuration by merging workspace and global settings.
+ * Workspace (project.json) settings always take precedence.
+ * @returns {IProjectConfig | undefined} The resolved configuration, or undefined if no project.json exists.
+ */
+export function resolveProjectConfig(): IProjectConfig | undefined {
+    const project = readProjectConfig();
+    if (!project) return undefined;
+
+    const global = readGlobalConfig(false);
+
+    return {
+        ...project,
+        outdir: getOutDir(project, global),
+        useSymlinks: resolveUseSymlinks(project, global),
+        templates: {
+            ...global.templates,
+            ...project.templates,
+        },
+    };
 }
 
 let externalProjectDir: string | undefined;
@@ -86,9 +107,18 @@ export function readProjectConfig(
         if (!existsSync(configPath)) return undefined;
 
         const content = readFileSync(configPath, 'utf8');
-        const config = JSON.parse(content);
+        let config = JSON.parse(content);
 
         if (validate) {
+            // Apply migration FIRST so we validate the modern shape
+            const migrationCheck = migration.checkProject(config);
+            if (migrationCheck.needsMigration) {
+                warn(
+                    `[MIGRATION] ${basename(configPath)} needs migration: ${migrationCheck.reason}`,
+                );
+                config = migration.upgradeProject(config);
+            }
+
             const context = new ValidationContext(basename(configPath));
             validateProject(config, context);
             if (context.hasErrors()) {
@@ -96,17 +126,6 @@ export function readProjectConfig(
                     `Validation failed for ${basename(configPath)}:\n${context.formatErrors()}`,
                 );
                 process.exit(1);
-            }
-
-            // Check for legacy shape and warn
-            const migrationCheck = migration.checkProject(config);
-            if (migrationCheck.needsMigration) {
-                warn(
-                    `[LEGACY] ${basename(configPath)} is using a legacy shape: ${migrationCheck.reason}`,
-                );
-                warn(
-                    `Please run 'pzstudio migrate' to upgrade your project file.`,
-                );
             }
         }
 
@@ -126,9 +145,9 @@ export function applyProjectDefaults(config: any): IProjectConfig {
 
     // Default workshop settings
     if (!config.workshop) config.workshop = {};
-    if (config.workshop.excludes === undefined) {
-        verbose(`Defaulting workshop.excludes to empty list`);
-        config.workshop.excludes = [];
+    if (config.excludes === undefined) {
+        verbose(`Defaulting excludes to empty list`);
+        config.excludes = [];
     }
 
     // Default mods settings
@@ -279,27 +298,25 @@ export function getStoreDir() {
 }
 
 /**
- * Returns the output directory
+ * Returns the output directory following the hierarchy:
+ * project.json > config.json > .pzstudio.bak > default
+ * @param project Optional project config to use
+ * @param config Optional global config to use
  * @returns {string} The output directory
  */
-export function getOutDir() {
-    const storeDir = getStoreDir();
-    // 1. Try config.json
-    const config = readGlobalConfig();
-    if (config.outdir) {
-        return resolve(config.outdir);
+export function getOutDir(project?: IProjectConfig, config?: GlobalConfig) {
+    // 1. Try project config
+    if (project && project.outdir) {
+        return resolve(projectDir(), project.outdir);
     }
 
-    const backupPath = join(storeDir, '.pzstudio.bak');
-    // 2. Fall back to .pzstudio.bak
-    if (existsSync(backupPath)) {
-        try {
-            return resolve(readFileSync(backupPath, 'utf8').trim());
-        } catch (e) {
-            // Fall through to default
-        }
+    // 2. Try global config (which includes fallbacks for missing files)
+    const global = config ?? readGlobalConfig(false);
+    if (global.outdir) {
+        return resolve(global.outdir);
     }
 
+    // This should technically never be reached because readGlobalConfig has a final fallback
     const defaultPath = join(homedir(), 'Zomboid', 'Workshop');
     verbose(`Defaulting output directory to: ${defaultPath}`);
     return defaultPath;
@@ -324,7 +341,8 @@ export function generateWorkshopText(
     lines.push(`version=1`);
     if (!excludeId && config.workshop.id)
         lines.push(`id=${config.workshop.id}`);
-    if (config.title) lines.push(`title=${config.title}${titleSuffix ?? ''}`);
+    if (config.workshop.title)
+        lines.push(`title=${config.workshop.title}${titleSuffix ?? ''}`);
     if (config.workshop.tags)
         lines.push(`tags=${config.workshop.tags.join(';')}`);
     if (overrideVisibility || config.workshop.visibility)

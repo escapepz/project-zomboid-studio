@@ -5,7 +5,7 @@ import { addHelp } from '../help';
 import { error, info, log } from '../logger';
 import {
     projectDir,
-    readProjectConfig,
+    resolveProjectConfig,
     updateExperimentalScripts,
     updateProjectConfig,
 } from '../helper';
@@ -20,7 +20,7 @@ addHelp(
 );
 
 export function deleteCmd(modId: string) {
-    const projectConfig = readProjectConfig();
+    const projectConfig = resolveProjectConfig();
 
     // Check if we are in a project directory
     if (!projectConfig) {
@@ -48,8 +48,9 @@ export function deleteCmd(modId: string) {
     log(`Deleting mod '${modId}' from project.json...`);
     if (projectConfig.mods[modId]) {
         delete projectConfig.mods[modId];
-        projectConfig.workshop.excludes =
-            projectConfig.workshop.excludes.filter((e: string) => e !== modId);
+        projectConfig.excludes = projectConfig.excludes.filter(
+            (e: string) => e !== modId,
+        );
         updateProjectConfig(projectConfigPath, projectConfig);
         info(`Mod '${modId}' deleted from project.json!`);
     } else {

@@ -6,6 +6,7 @@ import {
     formatTitleToId,
     projectDir,
     readProjectConfig,
+    resolveProjectConfig,
     resolveUseSymlinks,
     updateExperimentalScripts,
     updateProjectConfig,
@@ -37,6 +38,15 @@ export async function newCmd(projectTitle: string, modId?: string) {
     const templateUrl = extractFlag('template');
     const isOffline = hasFlag('offline');
     const forceUpdate = hasFlag('force-update');
+
+    // Check if we are in a project directory
+    const existingProject = resolveProjectConfig();
+    if (existingProject) {
+        throw new Error(
+            'You cannot execute this command within a project directory!',
+        );
+    }
+
     const useSymlinks = hasFlag('symlinks') || resolveUseSymlinks();
 
     const templateProjectPath = resolveTemplateDir(
@@ -45,13 +55,6 @@ export async function newCmd(projectTitle: string, modId?: string) {
         isOffline,
         forceUpdate,
     );
-
-    // Check if we are in a project directory
-    if (readProjectConfig()) {
-        throw new Error(
-            'You cannot execute this command within a project directory!',
-        );
-    }
 
     // Validate params
     expect('param [projectTitle]', projectTitle, 'string');
@@ -158,7 +161,7 @@ export async function newCmd(projectTitle: string, modId?: string) {
     log(`- Updating project config...`);
     const newProjectConfigPath = join(projectPath, 'project.json');
     const newProjectConfig = readProjectConfig(newProjectConfigPath);
-    newProjectConfig.title = projectTitle;
+    newProjectConfig.workshop.title = projectTitle;
     newProjectConfig.mods[modId] = {
         name: projectTitle,
         description: '',

@@ -9,6 +9,7 @@ import path from 'path';
 vi.mock('../../src/lib/helper', () => ({
     projectDir: vi.fn(() => 'D:/project'),
     readProjectConfig: vi.fn(),
+    resolveProjectConfig: vi.fn(),
     formatTitleToId: vi.fn((t) => t?.toLowerCase()),
     resolveUseSymlinks: vi.fn(() => false),
     updateProjectConfig: vi.fn(),
@@ -37,7 +38,7 @@ describe('Local Template Cache (US2)', () => {
     });
 
     it('should use local .template-mod if present in addCmd', async () => {
-        vi.mocked(helper.readProjectConfig).mockReturnValue({
+        vi.mocked(helper.resolveProjectConfig).mockReturnValue({
             mods: {},
         } as any);
         vi.mocked(fs.existsSync).mockImplementation((p: any) =>
@@ -65,10 +66,11 @@ describe('Local Template Cache (US2)', () => {
     });
 
     it('should use CWD templates in newCmd', async () => {
-        vi.mocked(helper.readProjectConfig).mockImplementation((path) => {
-            if (!path) return undefined; // Check if in project
-            return { mods: {} } as any; // Read new project.json
-        });
+        vi.mocked(helper.resolveProjectConfig).mockReturnValue(undefined);
+        vi.mocked(helper.readProjectConfig).mockReturnValue({
+            workshop: { title: 'old' },
+            mods: {},
+        } as any);
         vi.mocked(templateManager.resolveTemplateDir).mockReturnValue(
             'D:/mock-template-project',
         );

@@ -5,8 +5,7 @@ import { addHelp } from '../help';
 import {
     formatTitleToId,
     projectDir,
-    readProjectConfig,
-    resolveUseSymlinks,
+    resolveProjectConfig,
     updateExperimentalScripts,
     updateProjectConfig,
 } from '../helper';
@@ -32,7 +31,7 @@ addHelp(
 
 export function addCmd(modName: string, modId?: string) {
     const projectPath = projectDir();
-    const projectConfig = readProjectConfig();
+    const projectConfig = resolveProjectConfig();
     // Check if we are in a project directory
     if (!projectConfig) {
         throw new Error(
@@ -43,7 +42,8 @@ export function addCmd(modName: string, modId?: string) {
     const modTemplateUrl = extractFlag('template');
     const isOffline = hasFlag('offline');
     const forceUpdate = hasFlag('force-update');
-    const useSymlinks = hasFlag('symlinks') || resolveUseSymlinks();
+    const useSymlinks =
+        hasFlag('symlinks') || (projectConfig.useSymlinks ?? false);
 
     // US2: Check for local .template-mod tier-0 guard
     const localTemplatePath = join(projectPath, '.template-mod');

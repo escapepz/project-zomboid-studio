@@ -72,9 +72,7 @@ describe('Helper Library', () => {
             vi.mocked(fs.existsSync).mockReturnValue(true);
             vi.mocked(fs.readFileSync).mockReturnValue(
                 JSON.stringify({
-                    title: 'Test',
-                    authors: 'Author',
-                    workshop: { visibility: 'public', tags: [] },
+                    workshop: { title: 'Test', visibility: 'public', tags: [] },
                     mods: { mod1: { name: 'Mod 1', description: 'Desc' } },
                     // missing build.modInfo in mod1
                 }),
@@ -83,7 +81,7 @@ describe('Helper Library', () => {
             const config = readProjectConfig();
             expect(config).toBeDefined();
             expect(logger.warn).toHaveBeenCalledWith(
-                expect.stringContaining('[LEGACY]'),
+                expect.stringContaining('[MIGRATION]'),
             );
         });
     });
@@ -141,8 +139,8 @@ describe('Helper Library', () => {
 
     describe('generateWorkshopText', () => {
         const mockConfig: IProjectConfig = {
-            title: 'Test Project',
             workshop: {
+                title: 'Test Project',
                 id: '123456789',
                 tags: ['Mod', 'Script'],
                 visibility: 'public',

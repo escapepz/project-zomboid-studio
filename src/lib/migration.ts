@@ -19,9 +19,14 @@ export const migration = {
     checkProject: (config: any): MigrationResult => {
         const issues: string[] = [];
 
-        // Legacy: missing workshop.excludes
-        if (config.workshop && config.workshop.excludes === undefined) {
-            issues.push('missing "workshop.excludes"');
+        // Legacy: deprecated root fields
+        if ('title' in config) issues.push('root "title" is deprecated');
+        if ('authors' in config) issues.push('root "authors" is deprecated');
+        if ('id' in config) issues.push('root "id" is deprecated');
+
+        // Legacy: workshop.excludes has moved to root excludes
+        if (config.workshop && 'excludes' in config.workshop) {
+            issues.push('"workshop.excludes" has moved to root');
         }
 
         // Legacy: missing build.modInfo in mods
@@ -59,8 +64,32 @@ export const migration = {
         const upgraded = JSON.parse(JSON.stringify(config));
 
         if (!upgraded.workshop) upgraded.workshop = {};
-        if (upgraded.workshop.excludes === undefined) {
-            upgraded.workshop.excludes = [];
+
+        // Migrate root id to workshop.id
+        if ('id' in upgraded && upgraded.workshop.id === undefined) {
+            upgraded.workshop.id = upgraded.id;
+        }
+        delete upgraded.id;
+
+        // Migrate root title to workshop.title
+        if ('title' in upgraded && upgraded.workshop.title === undefined) {
+            upgraded.workshop.title = upgraded.title;
+        }
+        delete upgraded.title;
+
+        // Migrate root authors (not kept in workshop, but we remove it)
+        delete upgraded.authors;
+
+        // Migrate workshop.excludes to root excludes
+        if (upgraded.workshop.excludes !== undefined) {
+            if (upgraded.excludes === undefined) {
+                upgraded.excludes = upgraded.workshop.excludes;
+            }
+            delete upgraded.workshop.excludes;
+        }
+
+        if (upgraded.excludes === undefined) {
+            upgraded.excludes = [];
         }
 
         if (upgraded.mods) {

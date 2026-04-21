@@ -13,6 +13,7 @@ import {
     symlinkSync,
 } from 'fs';
 import { log, warn, verbose } from './logger';
+import { readProjectConfig, resolveProjectConfig } from './helper';
 
 /**
  * Creates a filter for fs.cpSync derived from .pzstudioignore or hardcoded defaults.
@@ -390,16 +391,46 @@ import { migration } from './migration';
  */
 export function readGlobalConfig(validate: boolean = true): GlobalConfig {
     const configPath = getConfigPath();
+    const configDir = getConfigDir();
     verbose(`Reading global config from: ${configPath}`);
-    const defaultConfig: GlobalConfig = { templates: {} };
+
+    // Default values for global config
+    const defaultConfig: GlobalConfig = {
+        templates: { ...DEFAULT_TEMPLATES },
+        useSymlinks: false,
+        outdir: undefined,
+    };
+
+    // Fallback for outdir: .pzstudio.bak > default
+    const backupPath = join(configDir, '.pzstudio.bak');
+    if (existsSync(backupPath)) {
+        try {
+            defaultConfig.outdir = readFileSync(backupPath, 'utf-8').trim();
+        } catch {
+            // Fall through
+        }
+    }
+    if (!defaultConfig.outdir) {
+        defaultConfig.outdir = join(homedir(), 'Zomboid', 'Workshop');
+    }
+
     if (!existsSync(configPath)) {
         return defaultConfig;
     }
     try {
         const content = readFileSync(configPath, 'utf-8');
-        const config = JSON.parse(content);
+        let config = JSON.parse(content);
 
         if (validate) {
+            // Apply migration FIRST so we validate the modern shape
+            const migrationCheck = migration.checkConfig(config);
+            if (migrationCheck.needsMigration) {
+                verbose(
+                    `[MIGRATION] Global config ${basename(configPath)} needs migration: ${migrationCheck.reason}`,
+                );
+                config = migration.upgradeConfig(config);
+            }
+
             const context = new ValidationContext(basename(configPath));
             validateConfig(config, context);
             if (context.hasErrors()) {
@@ -409,19 +440,9 @@ export function readGlobalConfig(validate: boolean = true): GlobalConfig {
                 warn('Continuing with in-memory defaults.');
                 return defaultConfig;
             }
-
-            // Check for legacy shape and warn
-            const migrationCheck = migration.checkConfig(config);
-            if (migrationCheck.needsMigration) {
-                warn(
-                    `[LEGACY] Global config ${basename(configPath)} is using a legacy shape: ${migrationCheck.reason}`,
-                );
-                warn(
-                    `Please run 'pzstudio migrate' to upgrade your config file.`,
-                );
-            }
         }
 
+        // Merge defaults with file content
         const mergedConfig = {
             ...defaultConfig,
             ...config,
@@ -430,12 +451,6 @@ export function readGlobalConfig(validate: boolean = true): GlobalConfig {
                 ...(config.templates || {}),
             },
         };
-
-        // Apply global defaults
-        if (mergedConfig.useSymlinks === undefined) {
-            verbose(`Global config: Defaulting useSymlinks to false`);
-            mergedConfig.useSymlinks = false;
-        }
 
         return mergedConfig;
     } catch {
@@ -528,10 +543,20 @@ export function resolveTemplateDir(
 ): string {
     const override = overrideUrl ? parseTemplateUrl(overrideUrl) : undefined;
 
-    const templateConfig = override
-        ? override
-        : (readGlobalConfig().templates[category] ??
-          DEFAULT_TEMPLATES[category]);
+    let templateConfig = override;
+
+    if (!templateConfig) {
+        // Try resolved project config first (which merges workspace + global)
+        const project = resolveProjectConfig();
+        if (project && project.templates && project.templates[category]) {
+            templateConfig = project.templates[category];
+        }
+    }
+
+    if (!templateConfig) {
+        // If not in a project, or resolved config didn't have it, try global config directly
+        templateConfig = readGlobalConfig(false).templates[category];
+    }
 
     if (!templateConfig) {
         throw new Error(

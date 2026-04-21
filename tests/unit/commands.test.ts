@@ -46,7 +46,7 @@ describe('Commands', () => {
 
     describe('buildCmd', () => {
         it('should throw error if not in project directory', async () => {
-            vi.mocked(helper.readProjectConfig).mockReturnValue(undefined);
+            vi.mocked(helper.resolveProjectConfig).mockReturnValue(undefined);
             await expect(buildCmd()).rejects.toThrow(
                 'You must execute this command within a project directory!',
             );
@@ -55,7 +55,7 @@ describe('Commands', () => {
 
     describe('addCmd', () => {
         it('should throw error if not in project directory', async () => {
-            vi.mocked(helper.readProjectConfig).mockReturnValue(undefined);
+            vi.mocked(helper.resolveProjectConfig).mockReturnValue(undefined);
             await expect(async () => addCmd('test')).rejects.toThrow(
                 'You must execute this command within a project directory!',
             );
@@ -65,12 +65,11 @@ describe('Commands', () => {
     describe('cleanCmd', () => {
         it('should call helper.getOutDir and clean it', async () => {
             vi.mocked(fs.existsSync).mockReturnValue(true);
-            vi.mocked(helper.readProjectConfig).mockReturnValue({
-                title: 'TestProject',
+            vi.mocked(helper.resolveProjectConfig).mockReturnValue({
+                workshop: { title: 'TestProject' },
+                outdir: './out',
             } as any);
-            vi.mocked(helper.getOutDir).mockReturnValue('./out');
             await cleanCmd();
-            expect(helper.getOutDir).toHaveBeenCalled();
             expect(logger.log).toHaveBeenCalledWith(
                 expect.stringContaining('Cleaning'),
             );
@@ -79,7 +78,7 @@ describe('Commands', () => {
 
     describe('deleteCmd', () => {
         it('should throw error if not in project directory', async () => {
-            vi.mocked(helper.readProjectConfig).mockReturnValue(undefined);
+            vi.mocked(helper.resolveProjectConfig).mockReturnValue(undefined);
             await expect(async () => deleteCmd('modid')).rejects.toThrow(
                 'You must execute this command within a project directory!',
             );
