@@ -11,7 +11,7 @@ import {
     updateExperimentalScripts,
     updateProjectConfig,
 } from '../helper';
-import { info, log, warn, verbose } from '../logger';
+import { info, log, verbose } from '../logger';
 import { extractFlag, hasFlag } from '../cli';
 import {
     resolveTemplateDir,

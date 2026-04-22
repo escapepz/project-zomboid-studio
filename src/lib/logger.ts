@@ -32,7 +32,7 @@ function getTerminal() {
     try {
         const terminal = require('terminal-kit').terminal;
         return terminal;
-    } catch (e) {
+    } catch (_e) {
         const fallback = (msg: string) => {
             console.log(isTTY() ? msg : stripAnsi(msg));
         };

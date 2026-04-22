@@ -3,7 +3,6 @@ import { spawnSync } from 'child_process';
 import { basename, dirname, join, resolve } from 'path';
 import {
     existsSync,
-    lstatSync,
     mkdirSync,
     readFileSync,
     readdirSync,
@@ -13,7 +12,11 @@ import {
 } from 'fs';
 import { IProjectConfig } from './project';
 import { error, log, warn, verbose } from './logger';
-import { readGlobalConfig, writeGlobalConfig } from './templateManager';
+import {
+    GlobalConfig,
+    readGlobalConfig,
+    writeGlobalConfig,
+} from './templateManager';
 
 /**
  * Resolves the useSymlinks configuration flag following the hierarchy:
@@ -84,11 +87,7 @@ export function workingDir() {
         : join(dirname(__dirname), 'lib');
 }
 
-import {
-    ValidationContext,
-    validateProject,
-    validateConfig,
-} from './validation';
+import { ValidationContext, validateProject } from './validation';
 import { migration } from './migration';
 
 /**
@@ -130,7 +129,7 @@ export function readProjectConfig(
         }
 
         return applyProjectDefaults(config);
-    } catch (err) {
+    } catch (_err) {
         return undefined;
     }
 }
@@ -189,7 +188,7 @@ export function atomicWriteJson(
         try {
             const existing = JSON.parse(readFileSync(filePath, 'utf8'));
             finalContent = { ...existing, ...updated };
-        } catch (e) {
+        } catch (_e) {
             // If existing is corrupt, we overwrite with updated
         }
     }
@@ -213,7 +212,7 @@ export function atomicWriteJson(
             writeFileSync(filePath, content, 'utf8');
             rmSync(tempPath, { force: true });
         }
-    } catch (e) {
+    } catch (_e) {
         // Fallback to direct write if atomic fails
         writeFileSync(filePath, content, 'utf8');
     }

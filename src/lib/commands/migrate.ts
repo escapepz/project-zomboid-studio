@@ -1,14 +1,10 @@
 import { addHelp } from '../help';
 import { info, log } from '../logger';
-import { readProjectConfig, updateProjectConfig, projectDir } from '../helper';
+import { updateProjectConfig, projectDir } from '../helper';
 import { migration } from '../migration';
-import {
-    readGlobalConfig,
-    writeGlobalConfig,
-    getConfigPath,
-} from '../templateManager';
+import { writeGlobalConfig, getConfigPath } from '../templateManager';
 import { existsSync, readFileSync } from 'fs';
-import { basename, join } from 'path';
+import { join } from 'path';
 
 addHelp(
     'migrate',

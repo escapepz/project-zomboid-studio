@@ -16,7 +16,7 @@ import { renameCmd } from './commands/rename';
 import { updateCmd } from './commands/update';
 import { watchCmd } from './commands/watch';
 import { migrateCmd } from './commands/migrate';
-import { arg, args, cmd, processArgs, splitArgs, parseArgType } from './args';
+import { cmd, processArgs, splitArgs, parseArgType } from './args';
 import { clear, error, info, log, warn, verbose } from './logger';
 import { projectDir, migrateStoreDirIfNeeded } from './helper';
 import { migrateGlobalConfigIfNeeded } from './templateManager';

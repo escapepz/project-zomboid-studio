@@ -1,14 +1,14 @@
 import { join } from 'path';
 import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'fs';
 import { addHelp } from '../help';
-import { arg, processArgs } from '../args';
+import { processArgs } from '../args';
 import {
     generateModInfoText,
     generateWorkshopText,
     projectDir,
     resolveProjectConfig,
 } from '../helper';
-import { error, info, log, warn, verbose } from '../logger';
+import { info, log, warn, verbose } from '../logger';
 import { resolveTemplateDir, scaffoldProject } from '../templateManager';
 
 /**

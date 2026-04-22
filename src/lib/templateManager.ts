@@ -13,7 +13,7 @@ import {
     symlinkSync,
 } from 'fs';
 import { log, warn, verbose } from './logger';
-import { readProjectConfig, resolveProjectConfig } from './helper';
+import { resolveProjectConfig } from './helper';
 
 /**
  * Creates a filter for fs.cpSync derived from .pzstudioignore or hardcoded defaults.
@@ -494,7 +494,7 @@ export function migrateGlobalConfigIfNeeded(): void {
                 );
             }
         }
-    } catch (e) {
+    } catch (_e) {
         // Silently fail if config is corrupt, readGlobalConfig will handle it
     }
 }
