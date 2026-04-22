@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { version } from '../../package.json';
 import { createE2EWorkspace, E2ETestWorkspace } from '../helpers/e2e-fixtures';
-import { beforeEach, afterEach } from 'vitest';
+import { setVerbose } from '../../src/lib/logger';
 
 describe('CLI Global Behavior (E2E)', () => {
     let workspace: E2ETestWorkspace;
@@ -36,5 +36,24 @@ describe('CLI Global Behavior (E2E)', () => {
         const result = await workspace.run('unknown-command');
         workspace.assertFailure(result, 1);
         workspace.assertStderr(result, 'Unknown command [unknown-command]');
+    });
+
+    it('should emit verbose/diagnostic output when --verbose flag is given', async () => {
+        // Use build in an empty directory — it will fail, but verbose messages
+        // are emitted before the project-check throws, so we can still assert them.
+        const result = await workspace.run('build', ['--verbose']);
+
+        // Regardless of exit code the verbose messages go to stdout via the mock logger
+        const hasVerbose = result.stdout.some(
+            (line) =>
+                line.includes('Project Dir:') ||
+                line.includes('Executing command') ||
+                line.includes('production=') ||
+                line.includes('Targets:'),
+        );
+        expect(hasVerbose).toBe(true);
+
+        // Cleanup verbose state so it does not bleed into subsequent tests
+        setVerbose(false);
     });
 });

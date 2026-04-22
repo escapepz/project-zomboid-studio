@@ -30,6 +30,11 @@ export function helpCmd(command?: string) {
     if (!command) {
         log(fullHelp);
     } else {
-        log(getHelp(command));
+        const helpText = getHelp(command);
+        if (helpText) {
+            log(helpText);
+        } else {
+            throw new Error(`Unknown command [${command}]`);
+        }
     }
 }

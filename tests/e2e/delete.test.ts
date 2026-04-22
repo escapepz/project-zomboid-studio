@@ -118,4 +118,54 @@ describe('delete command e2e', () => {
 
         expect(workspace.exists(modId)).toBe(false);
     });
+
+    it('should fail with an error when no modId argument is provided', async () => {
+        workspace.write(
+            'project.json',
+            JSON.stringify({
+                workshop: { title: 'P', visibility: 'public', tags: [] },
+                mods: {},
+                excludes: [],
+            }),
+        );
+
+        // delete called with zero positional args → undefined modId
+        const result = await workspace.run('delete', []);
+        workspace.assertFailure(result, 1);
+        workspace.assertStderr(
+            result,
+            "Expected param [modId] to be 'string', but got 'undefined'",
+        );
+    });
+
+    it('should emit verbose diagnostics on delete success path', async () => {
+        const modId = 'verbose_mod';
+        workspace.write(
+            'project.json',
+            JSON.stringify({
+                workshop: { title: 'P', visibility: 'public', tags: [] },
+                mods: {
+                    [modId]: { name: 'Verbose Mod', description: 'D' },
+                },
+                excludes: [],
+            }),
+        );
+        workspace.write(`${modId}/mod.info`, `id=${modId}`);
+
+        const result = await workspace.run('delete', [modId, '--verbose']);
+        workspace.assertSuccess(result);
+
+        // Verify verbose output
+        const hasVerbose = result.stdout.some(
+            (line) =>
+                line.includes('Executing command [delete]') ||
+                line.includes('Project Dir:'),
+        );
+        expect(hasVerbose).toBe(true);
+
+        // Verify deletion still occurred
+        expect(workspace.exists(modId)).toBe(false);
+        const config = workspace.readJson('project.json');
+        expect(config.mods[modId]).toBeUndefined();
+    });
 });

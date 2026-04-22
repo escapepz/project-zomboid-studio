@@ -132,4 +132,45 @@ describe('rename command e2e', () => {
         workspace.assertFailure(result);
         workspace.assertStderr(result, 'already exists');
     });
+
+    it('should fail when oldModId argument is missing', async () => {
+        workspace.write(
+            'project.json',
+            JSON.stringify({
+                workshop: { title: 'P', visibility: 'public', tags: [] },
+                mods: {},
+                excludes: [],
+            }),
+        );
+
+        // rename called with no positional args → undefined oldModId
+        const result = await workspace.run('rename', []);
+        workspace.assertFailure(result, 1);
+        workspace.assertStderr(
+            result,
+            "Expected param [oldModId] to be 'string', but got 'undefined'",
+        );
+    });
+
+    it('should fail when newModId argument is missing', async () => {
+        workspace.write(
+            'project.json',
+            JSON.stringify({
+                workshop: { title: 'P', visibility: 'public', tags: [] },
+                mods: {
+                    existing_mod: { name: 'E', description: 'D' },
+                },
+                excludes: [],
+            }),
+        );
+        workspace.write('existing_mod/mod.info', 'id=existing_mod');
+
+        // rename called with only one positional arg → undefined newModId
+        const result = await workspace.run('rename', ['existing_mod']);
+        workspace.assertFailure(result, 1);
+        workspace.assertStderr(
+            result,
+            "Expected param [newModId] to be 'string', but got 'undefined'",
+        );
+    });
 });

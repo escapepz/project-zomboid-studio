@@ -30,7 +30,11 @@ export function extractFlag(name: string): string | undefined {
     const allArgs = processArgs();
     const flagIndex = allArgs.findIndex((a) => a === `--${name}`);
     if (flagIndex !== -1 && flagIndex + 1 < allArgs.length) {
-        return allArgs[flagIndex + 1];
+        const val = allArgs[flagIndex + 1];
+        if (val.startsWith('--')) {
+            return undefined;
+        }
+        return val;
     }
     return undefined;
 }

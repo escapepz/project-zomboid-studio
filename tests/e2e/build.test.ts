@@ -116,4 +116,105 @@ describe('build command e2e', () => {
             true,
         );
     });
+
+    it('should fail cleanly when outdir is invalid or missing', async () => {
+        workspace.write(
+            'project.json',
+            JSON.stringify({
+                outdir: '/root/some/invalid/path/that/does/not/exist/999',
+                workshop: {
+                    title: 'Invalid OutDir',
+                    visibility: 'public',
+                    tags: [],
+                },
+                mods: { mod: { name: 'M', description: 'D' } },
+            }),
+        );
+        workspace.write(path.join('mod', 'poster.png'), 'fake image');
+
+        const buildResult = await workspace.run('build');
+        workspace.assertFailure(buildResult);
+        expect(buildResult.stderr.join('\n')).toMatch(/does not exist|error/i);
+    });
+
+    it('should clean up stale output files before building', async () => {
+        const projectTitle = 'Stale Output';
+        const modId = 'stale_mod';
+        const customOutDirName = 'stale_output';
+        const customOutDirPath = path.join(workspace.dir, customOutDirName);
+
+        workspace.write(
+            'project.json',
+            JSON.stringify({
+                outdir: './' + customOutDirName,
+                workshop: {
+                    title: projectTitle,
+                    visibility: 'public',
+                    tags: [],
+                },
+                mods: { [modId]: { name: 'M', description: 'D' } },
+            }),
+        );
+        workspace.write(path.join(modId, 'poster.png'), 'fake image');
+
+        // Create a stale file in the expected output directory
+        const outModPath = path.join(
+            customOutDirPath,
+            projectTitle,
+            'Contents',
+            'mods',
+            modId,
+        );
+        fs.mkdirSync(outModPath, { recursive: true });
+        fs.writeFileSync(
+            path.join(outModPath, 'stale_file.txt'),
+            'this should be removed',
+        );
+
+        const buildResult = await workspace.run('build');
+        workspace.assertSuccess(buildResult);
+
+        expect(fs.existsSync(path.join(outModPath, 'stale_file.txt'))).toBe(
+            false,
+        );
+        expect(fs.existsSync(path.join(outModPath, 'poster.png'))).toBe(true);
+    });
+
+    it('should not generate mod.info when build.modInfo is skip', async () => {
+        const projectTitle = 'Skip ModInfo';
+        const modId = 'skip_mod';
+
+        workspace.write(
+            'project.json',
+            JSON.stringify({
+                workshop: {
+                    title: projectTitle,
+                    visibility: 'public',
+                    tags: [],
+                },
+                mods: {
+                    [modId]: {
+                        name: 'Skip',
+                        description: 'Skip',
+                        build: { modInfo: 'skip' },
+                    },
+                },
+            }),
+        );
+        workspace.write(path.join(modId, 'poster.png'), 'fake');
+
+        const buildResult = await workspace.run('build');
+        workspace.assertSuccess(buildResult);
+
+        const outModPath = path.join(
+            workspace.fakeHome,
+            'Zomboid',
+            'Workshop',
+            projectTitle,
+            'Contents',
+            'mods',
+            modId,
+        );
+        expect(fs.existsSync(path.join(outModPath, 'mod.info'))).toBe(false);
+    });
 });

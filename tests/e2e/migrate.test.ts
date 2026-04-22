@@ -131,4 +131,106 @@ describe('migrate command e2e', () => {
         workspace.assertSuccess(result);
         workspace.assertStdout(result, 'project.json is already up to date');
     });
+
+    it('should fail cleanly when project.json contains malformed JSON', async () => {
+        workspace.write('project.json', '{ invalid json ]]]');
+
+        const result = await workspace.run('migrate');
+        workspace.assertFailure(result, 1);
+
+        // The error should mention a JSON parse issue
+        const hasJsonError = result.stderr.some(
+            (line) =>
+                line.includes('JSON') ||
+                line.includes('Unexpected token') ||
+                line.includes('parse'),
+        );
+        expect(hasJsonError).toBe(true);
+    });
+
+    it('should fail cleanly when config.json contains malformed JSON', async () => {
+        const configPath = path.join(
+            workspace.fakeHome,
+            '.pzstudio',
+            'config.json',
+        );
+        if (!fs.existsSync(path.dirname(configPath))) {
+            fs.mkdirSync(path.dirname(configPath), { recursive: true });
+        }
+        fs.writeFileSync(configPath, '{ not valid json !!!', 'utf8');
+
+        const result = await workspace.run('migrate');
+        workspace.assertFailure(result, 1);
+
+        const hasJsonError = result.stderr.some(
+            (line) =>
+                line.includes('JSON') ||
+                line.includes('Unexpected token') ||
+                line.includes('parse'),
+        );
+        expect(hasJsonError).toBe(true);
+    });
+
+    it('should fail cleanly when project.json is an empty file', async () => {
+        workspace.write('project.json', '');
+
+        const result = await workspace.run('migrate');
+        workspace.assertFailure(result, 1);
+
+        const hasError = result.stderr.some(
+            (line) =>
+                line.includes('JSON') ||
+                line.includes('Unexpected') ||
+                line.includes('parse'),
+        );
+        expect(hasError).toBe(true);
+    });
+
+    it('should fail cleanly when config.json is truncated JSON', async () => {
+        const configPath = path.join(
+            workspace.fakeHome,
+            '.pzstudio',
+            'config.json',
+        );
+        fs.mkdirSync(path.dirname(configPath), { recursive: true });
+        fs.writeFileSync(configPath, '{"outdir": "some/pa', 'utf8');
+
+        const result = await workspace.run('migrate');
+        workspace.assertFailure(result, 1);
+
+        const hasError = result.stderr.some(
+            (line) =>
+                line.includes('JSON') ||
+                line.includes('Unexpected') ||
+                line.includes('parse') ||
+                line.includes('end of JSON'),
+        );
+        expect(hasError).toBe(true);
+    });
+
+    it('should fail cleanly when both config.json and project.json are corrupt', async () => {
+        // Corrupt config.json
+        const configPath = path.join(
+            workspace.fakeHome,
+            '.pzstudio',
+            'config.json',
+        );
+        fs.mkdirSync(path.dirname(configPath), { recursive: true });
+        fs.writeFileSync(configPath, '<<<invalid>>>', 'utf8');
+
+        // Corrupt project.json
+        workspace.write('project.json', '[[[not an object]]]');
+
+        const result = await workspace.run('migrate');
+        workspace.assertFailure(result, 1);
+
+        // Should fail on the first corrupt file encountered (config.json is checked first)
+        const hasError = result.stderr.some(
+            (line) =>
+                line.includes('JSON') ||
+                line.includes('Unexpected') ||
+                line.includes('parse'),
+        );
+        expect(hasError).toBe(true);
+    });
 });

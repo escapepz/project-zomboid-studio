@@ -67,4 +67,84 @@ describe('outdir command e2e', () => {
         workspace.assertFailure(result);
         workspace.assertStderr(result, 'already set to this value');
     });
+
+    it('should normalize relative paths to absolute paths', async () => {
+        fs.mkdirSync(path.join(workspace.dir, 'relative_out'));
+        const result = await workspace.run('outdir', ['./relative_out']);
+        workspace.assertSuccess(result);
+
+        const configPath = path.join(
+            workspace.fakeHome,
+            '.pzstudio',
+            'config.json',
+        );
+        const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        expect(path.isAbsolute(config.outdir)).toBe(true);
+        expect(config.outdir).toBe(path.resolve(workspace.dir, 'relative_out'));
+    });
+
+    it('should recover from a malformed config.json', async () => {
+        const outDir = path.join(workspace.dir, 'out');
+        fs.mkdirSync(outDir, { recursive: true });
+
+        const configPath = path.join(
+            workspace.fakeHome,
+            '.pzstudio',
+            'config.json',
+        );
+        fs.mkdirSync(path.dirname(configPath), { recursive: true });
+        fs.writeFileSync(configPath, '{ malformed json ]');
+
+        const result = await workspace.run('outdir', [outDir]);
+        workspace.assertSuccess(result);
+
+        const newConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        expect(newConfig.outdir).toBe(outDir);
+    });
+});
+
+describe('outdir — path edge cases (E2E)', () => {
+    let workspace: E2ETestWorkspace;
+
+    beforeEach(() => {
+        workspace = createE2EWorkspace();
+    });
+
+    afterEach(() => {
+        workspace.cleanup();
+    });
+
+    it('should handle paths with spaces', async () => {
+        const dirWithSpaces = path.join(workspace.dir, 'my output dir');
+        fs.mkdirSync(dirWithSpaces, { recursive: true });
+
+        const result = await workspace.run('outdir', [dirWithSpaces]);
+        workspace.assertSuccess(result);
+
+        const configPath = path.join(
+            workspace.fakeHome,
+            '.pzstudio',
+            'config.json',
+        );
+        const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        expect(config.outdir).toBe(dirWithSpaces);
+    });
+
+    it('should normalize paths with trailing separators', async () => {
+        const baseDir = path.join(workspace.dir, 'trail_out');
+        fs.mkdirSync(baseDir, { recursive: true });
+
+        const trailingPath = baseDir + path.sep;
+        const result = await workspace.run('outdir', [trailingPath]);
+        workspace.assertSuccess(result);
+
+        const configPath = path.join(
+            workspace.fakeHome,
+            '.pzstudio',
+            'config.json',
+        );
+        const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        // The stored path should be normalized (no trailing separator)
+        expect(path.isAbsolute(config.outdir)).toBe(true);
+    });
 });
