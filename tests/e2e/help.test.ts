@@ -32,20 +32,10 @@ describe('help command (E2E)', () => {
         workspace.assertStdout(result, 'pzstudio help <command>');
     });
 
-    it('should return undefined for an unknown command (no entry in help registry)', async () => {
-        // getHelp('nonexistent-command') returns undefined.
-        // helpCmd passes it to log(), which pushes the raw undefined value into
-        // the mock stdout array (JSON.stringify(undefined) === undefined in JS).
+    it('should fail for an unknown command (no entry in help registry)', async () => {
         const result = await workspace.run('help', ['nonexistent-command']);
-        workspace.assertSuccess(result);
-
-        // At least one element in stdout must be undefined (or the string "undefined")
-        const outputContainsUndefined = result.stdout.some(
-            (line) =>
-                line === undefined ||
-                (typeof line === 'string' && line.includes('undefined')),
-        );
-        expect(outputContainsUndefined).toBe(true);
+        workspace.assertFailure(result);
+        workspace.assertStderr(result, 'Unknown command [nonexistent-command]');
     });
 });
 
@@ -103,30 +93,18 @@ describe('help — odd input shapes (E2E)', () => {
         workspace.cleanup();
     });
 
-    it('should return undefined output for a numeric string argument (no matching help entry)', async () => {
+    it('should fail for a numeric string argument (no matching help entry)', async () => {
         // '123' is a valid string arg but has no matching help entry
         const result = await workspace.run('help', ['123']);
-        workspace.assertSuccess(result);
-
-        const outputContainsUndefined = result.stdout.some(
-            (line) =>
-                line === undefined ||
-                (typeof line === 'string' && line.includes('undefined')),
-        );
-        expect(outputContainsUndefined).toBe(true);
+        workspace.assertFailure(result);
+        workspace.assertStderr(result, 'Unknown command [123]');
     });
 
-    it('should return undefined output for a boolean-like string argument', async () => {
+    it('should fail for a boolean-like string argument', async () => {
         // 'true' is a valid string arg but has no matching help entry
         const result = await workspace.run('help', ['true']);
-        workspace.assertSuccess(result);
-
-        const outputContainsUndefined = result.stdout.some(
-            (line) =>
-                line === undefined ||
-                (typeof line === 'string' && line.includes('undefined')),
-        );
-        expect(outputContainsUndefined).toBe(true);
+        workspace.assertFailure(result);
+        workspace.assertStderr(result, 'Unknown command [true]');
     });
 
     it('should succeed and show general help when called via --help flag with no command', async () => {
@@ -184,18 +162,10 @@ describe('help — registry behavior for unknown commands (E2E)', () => {
         workspace.cleanup();
     });
 
-    it('should produce undefined output for an unregistered command name', async () => {
+    it('should fail for an unregistered command name', async () => {
         const result = await workspace.run('help', ['nonexistent']);
-        workspace.assertSuccess(result);
-
-        // getHelp('nonexistent') returns undefined from the registry
-        // helpCmd logs it directly, so stdout contains the undefined value
-        const undefinedInOutput = result.stdout.some(
-            (line) =>
-                line === undefined ||
-                (typeof line === 'string' && line === 'undefined'),
-        );
-        expect(undefinedInOutput).toBe(true);
+        workspace.assertFailure(result);
+        workspace.assertStderr(result, 'Unknown command [nonexistent]');
     });
 
     it('should produce non-undefined output for every registered command', async () => {

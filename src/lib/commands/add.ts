@@ -9,7 +9,7 @@ import {
     updateExperimentalScripts,
     updateProjectConfig,
 } from '../helper';
-import { log } from '../logger';
+import { log, verbose } from '../logger';
 import { extractFlag, hasFlag } from '../cli';
 import { resolveTemplateDir, scaffoldProject } from '../templateManager';
 
@@ -61,13 +61,16 @@ export function addCmd(modName: string, modId?: string) {
     ) {
         templateModPath = localTemplatePath;
         usedLocalTemplate = true;
+        verbose(`Using local .template-mod from project root`);
     } else {
+        verbose(`Resolving remote/default mod template...`);
         templateModPath = resolveTemplateDir(
             'mod',
             modTemplateUrl,
             isOffline,
             forceUpdate,
         );
+        verbose(`Mod template path: ${templateModPath}`);
     }
 
     // Prepare mod id
@@ -79,6 +82,9 @@ export function addCmd(modName: string, modId?: string) {
     }
 
     // Copy mod template
+    verbose(
+        `Scaffolding mod from ${templateModPath} to ${join(projectPath, modId)}`,
+    );
     scaffoldProject(
         templateModPath,
         join(projectPath, modId),

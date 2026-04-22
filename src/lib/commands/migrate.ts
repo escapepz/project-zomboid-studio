@@ -1,5 +1,5 @@
 import { addHelp } from '../help';
-import { info, log } from '../logger';
+import { info, log, verbose } from '../logger';
 import { updateProjectConfig, projectDir } from '../helper';
 import { migration } from '../migration';
 import { writeGlobalConfig, getConfigPath } from '../templateManager';
@@ -37,17 +37,57 @@ export async function migrateCmd() {
 
     // 2. Migrate project.json (if it exists)
     const projectPath = join(projectDir(), 'project.json');
-    const project = existsSync(projectPath)
+    let project = existsSync(projectPath)
         ? JSON.parse(readFileSync(projectPath, 'utf8'))
         : undefined;
+
     if (project) {
+        let projectModified = false;
         const projectCheck = migration.checkProject(project);
         if (projectCheck.needsMigration) {
             info(`- Migrating project.json: ${projectCheck.reason}`);
-            const upgradedProject = migration.upgradeProject(project);
-            const projectPath = join(projectDir(), 'project.json');
-            updateProjectConfig(projectPath, upgradedProject, true);
-            info('  → project.json upgraded successfully.');
+            project = migration.upgradeProject(project);
+            projectModified = true;
+        }
+
+        // 3. Migrate mod.info files into project.json
+        const mods = project.mods || {};
+        for (const modId in mods) {
+            const modInfoPath = join(projectDir(), modId, 'mod.info');
+            if (existsSync(modInfoPath)) {
+                verbose(`Checking mod.info for mod '${modId}'...`);
+                const content = readFileSync(modInfoPath, 'utf8');
+                const parsedModInfo = migration.parseModInfo(content);
+
+                const modConfig = project.mods[modId];
+                let modModified = false;
+
+                // Sync fields from mod.info to project.json if missing or different
+                for (const key in parsedModInfo) {
+                    if (key === 'id') continue; // Don't sync ID as it's the key in project.json
+
+                    const value = (parsedModInfo as any)[key];
+                    if (modConfig[key] === undefined) {
+                        verbose(
+                            `  + Importing '${key}' from mod.info into project.json`,
+                        );
+                        modConfig[key] = value;
+                        modModified = true;
+                    }
+                }
+
+                if (modModified) {
+                    info(
+                        `- Synced data from ${modId}/mod.info into project.json`,
+                    );
+                    projectModified = true;
+                }
+            }
+        }
+
+        if (projectModified) {
+            updateProjectConfig(projectPath, project, true);
+            info('  → project.json upgraded and synced successfully.');
         } else {
             log('- project.json is already up to date.');
         }

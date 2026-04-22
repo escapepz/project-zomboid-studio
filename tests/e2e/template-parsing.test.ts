@@ -2,18 +2,15 @@ import path from 'path';
 import fs from 'fs';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { createE2EWorkspace, E2ETestWorkspace } from '../helpers/e2e-fixtures';
+import * as cp from 'child_process';
 
-/**
- * Tracks all git clone calls made by the CLI so tests can assert
- * which URLs and refs were used.
- */
+vi.mock('child_process');
+
 let cloneCalls: { args: string[]; dest: string }[] = [];
 
-vi.mock('child_process', async (importOriginal) => {
-    const original = await importOriginal<typeof import('child_process')>();
-    return {
-        ...original,
-        spawnSync: (command: string, args?: readonly string[], opts?: any) => {
+beforeEach(() => {
+    vi.spyOn(cp, 'spawnSync').mockImplementation(
+        (command: string, args?: readonly string[]) => {
             if (command === 'git') {
                 const argsList = (args ?? []) as string[];
                 if (argsList[0] === 'clone') {
@@ -27,16 +24,32 @@ vi.mock('child_process', async (importOriginal) => {
                     });
                     fs.writeFileSync(
                         path.join(dest, 'project.json'),
-                        JSON.stringify({ workshop: {} }),
+                        JSON.stringify({
+                            workshop: {
+                                title: 'Template Project',
+                                visibility: 'public',
+                                tags: ['template'],
+                            },
+                            mods: {
+                                mod: {
+                                    name: 'Template Mod',
+                                    description: 'Description',
+                                },
+                            },
+                        }),
                     );
                     return { status: 0 } as any;
                 }
                 // Refresh operations
                 return { status: 0 } as any;
             }
-            return original.spawnSync(command, args as any, opts);
+            return { status: 0 } as any;
         },
-    };
+    );
+});
+
+afterEach(() => {
+    vi.restoreAllMocks();
 });
 
 describe('--template URL parsing variants (E2E)', () => {

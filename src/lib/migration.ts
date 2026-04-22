@@ -1,4 +1,5 @@
-import { IProjectConfig } from './project';
+import { IProjectConfig, IModConfig } from './project';
+import { parseModInfoText } from './helper';
 
 /**
  * Result of a migration check.
@@ -172,5 +173,11 @@ export const migration = {
         return Array.from(map.entries())
             .map(([k, v]) => `${k}=${v}`)
             .join('\n');
+    },
+    /**
+     * Parses mod.info content into a partial IModConfig.
+     */
+    parseModInfo: (content: string): Partial<IModConfig> & { id?: string } => {
+        return parseModInfoText(content);
     },
 };

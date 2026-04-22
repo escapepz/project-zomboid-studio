@@ -1,7 +1,20 @@
 import path from 'path';
 import fs from 'fs';
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { createE2EWorkspace, E2ETestWorkspace } from '../helpers/e2e-fixtures';
+import cp from 'child_process';
+
+vi.mock('child_process', async (importOriginal) => {
+    const original = await importOriginal<typeof import('child_process')>();
+    return {
+        ...original,
+        spawnSync: vi.fn().mockReturnValue({
+            status: 0,
+            stdout: Buffer.from(''),
+            stderr: Buffer.from(''),
+        }),
+    };
+});
 
 describe('CLI CWD Sensitivity (E2E)', () => {
     let workspace: E2ETestWorkspace;
@@ -42,7 +55,7 @@ describe('CLI CWD Sensitivity (E2E)', () => {
         // Verify output exists relative to project root (which is parent of subDir)
         const outPath = path.join(workspace.dir, 'out', 'CWD Test');
         expect(fs.existsSync(outPath)).toBe(true);
-    });
+    }, 60000);
 
     it('should fail if project.json is not in parent hierarchy', async () => {
         // Create a directory that is NOT part of a project

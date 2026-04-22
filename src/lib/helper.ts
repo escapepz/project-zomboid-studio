@@ -10,7 +10,7 @@ import {
     statSync,
     writeFileSync,
 } from 'fs';
-import { IProjectConfig } from './project';
+import { IProjectConfig, IModConfig } from './project';
 import { error, log, warn, verbose } from './logger';
 import {
     GlobalConfig,
@@ -70,11 +70,31 @@ export function setProjectDir(dir: string | undefined) {
 }
 
 /**
+ * Searches for project.json in the current directory and its parents.
+ * @param startDir The directory to start searching from
+ * @returns The directory containing project.json, or process.cwd() if not found
+ */
+function findProjectRoot(startDir: string): string {
+    let currentDir = startDir;
+    while (true) {
+        if (existsSync(join(currentDir, 'project.json'))) {
+            return currentDir;
+        }
+        const parentDir = dirname(currentDir);
+        if (parentDir === currentDir) {
+            break; // Reached filesystem root
+        }
+        currentDir = parentDir;
+    }
+    return startDir; // Fallback to start dir if not found
+}
+
+/**
  * Returns the current project working directory
  * @returns {string} The current working directory
  */
 export function projectDir() {
-    return externalProjectDir ?? process.cwd();
+    return externalProjectDir ?? findProjectRoot(process.cwd());
 }
 
 /**
@@ -383,60 +403,206 @@ export function generateModInfoText(
     prefixedId?: string,
 ) {
     const lines: string[] = [];
+    const mod = config.mods[modId];
 
-    if (config.mods[modId]) {
-        // id
+    if (mod) {
+        // id (MUST BE FIRST or near top for PZ)
         lines.push(`id=${prefixedId ?? modId}`);
 
         // name
-        if (config.mods[modId].name)
-            lines.push(`name=${config.mods[modId].name}`);
+        if (mod.name) lines.push(`name=${mod.name}`);
 
         // description
-        if (config.mods[modId].description)
-            lines.push(`description=${config.mods[modId].description}`);
+        if (mod.description) lines.push(`description=${mod.description}`);
+
+        // author
+        if (mod.author) lines.push(`author=${mod.author}`);
+
+        // modversion
+        if (mod.modversion) lines.push(`modversion=${mod.modversion}`);
 
         // poster
-        if (typeof config.mods[modId].poster === 'object')
-            (config.mods[modId].poster as string[]).forEach((poster) =>
+        if (typeof mod.poster === 'object')
+            (mod.poster as string[]).forEach((poster) =>
                 lines.push(`poster=${poster}`),
             );
-        else if (typeof config.mods[modId].poster === 'string')
-            lines.push(`poster=${config.mods[modId].poster}`);
+        else if (typeof mod.poster === 'string')
+            lines.push(`poster=${mod.poster}`);
 
         // icon
-        if (config.mods[modId].icon) {
-            lines.push(`icon=${config.mods[modId].icon}`);
+        if (mod.icon) {
+            lines.push(`icon=${mod.icon}`);
         }
 
-        // url
-        if (config.mods[modId].url) lines.push(`url=${config.mods[modId].url}`);
+        // require
+        if (typeof mod.require === 'string')
+            lines.push(`require=${mod.require}`);
+        else if (typeof mod.require === 'object' && mod.require.length > 0)
+            lines.push(`require=${(mod.require as string[]).join(',')}`);
 
-        // version
-        if (config.mods[modId].versionMin)
-            lines.push(`versionMin=${config.mods[modId].versionMin}`);
-        if (config.mods[modId].versionMax)
-            lines.push(`versionMax=${config.mods[modId].versionMax}`);
+        // incompatible
+        if (typeof mod.incompatible === 'string')
+            lines.push(`incompatible=${mod.incompatible}`);
+        else if (
+            typeof mod.incompatible === 'object' &&
+            mod.incompatible.length > 0
+        )
+            lines.push(
+                `incompatible=${(mod.incompatible as string[]).join(',')}`,
+            );
+
+        // loadModAfter
+        if (typeof mod.loadModAfter === 'string')
+            lines.push(`loadModAfter=${mod.loadModAfter}`);
+        else if (
+            typeof mod.loadModAfter === 'object' &&
+            mod.loadModAfter.length > 0
+        )
+            lines.push(
+                `loadModAfter=${(mod.loadModAfter as string[]).join(',')}`,
+            );
+
+        // loadModBefore
+        if (typeof mod.loadModBefore === 'string')
+            lines.push(`loadModBefore=${mod.loadModBefore}`);
+        else if (
+            typeof mod.loadModBefore === 'object' &&
+            mod.loadModBefore.length > 0
+        )
+            lines.push(
+                `loadModBefore=${(mod.loadModBefore as string[]).join(',')}`,
+            );
 
         // pack
-        if (config.mods[modId].pack)
-            lines.push(`pack=${config.mods[modId].pack}`);
+        if (mod.pack) lines.push(`pack=${mod.pack}`);
 
         // tiledef
-        if (config.mods[modId].tiledef)
-            lines.push(`tiledef=${config.mods[modId].tiledef}`);
+        if (mod.tiledef) lines.push(`tiledef=${mod.tiledef}`);
 
-        // require
-        if (typeof config.mods[modId].require === 'string')
-            lines.push(`require=${config.mods[modId].require}`);
-        else if (typeof config.mods[modId].require === 'object')
-            lines.push(
-                `require=${(config.mods[modId].require as string[]).join(',')}`,
-            );
+        // category
+        if (mod.category) lines.push(`category=${mod.category}`);
+
+        // url
+        if (mod.url) lines.push(`url=${mod.url}`);
+
+        // version
+        if (mod.versionMin) lines.push(`versionMin=${mod.versionMin}`);
+        // version
+        if (mod.versionMax) lines.push(`versionMax=${mod.versionMax}`);
+
+        // Unknown / Forward-compatible fields
+        const knownFields = [
+            'id',
+            'name',
+            'description',
+            'author',
+            'modversion',
+            'poster',
+            'icon',
+            'require',
+            'incompatible',
+            'loadModAfter',
+            'loadModBefore',
+            'pack',
+            'tiledef',
+            'category',
+            'url',
+            'versionMin',
+            'versionMax',
+            'build',
+        ];
+        for (const key in mod) {
+            if (!knownFields.includes(key)) {
+                lines.push(`${key}=${(mod as any)[key]}`);
+            }
+        }
     }
 
     return lines.join('\n');
 }
+
+/**
+ * Parses mod.info text into a partial IModConfig.
+ * @param content The mod.info file content
+ * @returns {Partial<IModConfig>} The parsed mod config
+ */
+export function parseModInfoText(
+    content: string,
+): Partial<IModConfig> & { id?: string } {
+    const lines = content.split('\n');
+    const result: any = {
+        poster: [],
+        require: [],
+        incompatible: [],
+        loadModAfter: [],
+        loadModBefore: [],
+    };
+
+    for (let line of lines) {
+        line = line.trim();
+        if (!line || line.startsWith('//') || line.startsWith('#')) continue;
+
+        const eqIndex = line.indexOf('=');
+        if (eqIndex === -1) continue;
+
+        const key = line.substring(0, eqIndex).trim();
+        const value = line.substring(eqIndex + 1).trim();
+
+        switch (key) {
+            case 'id':
+            case 'name':
+            case 'description':
+            case 'author':
+            case 'modversion':
+            case 'icon':
+            case 'pack':
+            case 'tiledef':
+            case 'category':
+            case 'url':
+            case 'versionMin':
+            case 'versionMax':
+                result[key] = value;
+                break;
+            case 'poster':
+                result.poster.push(value);
+                break;
+            case 'require':
+                result.require.push(...value.split(',').map((s) => s.trim()));
+                break;
+            case 'incompatible':
+                result.incompatible.push(
+                    ...value.split(',').map((s) => s.trim()),
+                );
+                break;
+            case 'loadModAfter':
+                result.loadModAfter.push(
+                    ...value.split(',').map((s) => s.trim()),
+                );
+                break;
+            case 'loadModBefore':
+                result.loadModBefore.push(
+                    ...value.split(',').map((s) => s.trim()),
+                );
+                break;
+            default:
+                // Preserve unknown fields for forward compatibility
+                result[key] = value;
+                break;
+        }
+    }
+
+    // Clean up empty arrays
+    if (result.poster.length === 0) delete result.poster;
+    else if (result.poster.length === 1) result.poster = result.poster[0];
+
+    if (result.require.length === 0) delete result.require;
+    if (result.incompatible.length === 0) delete result.incompatible;
+    if (result.loadModAfter.length === 0) delete result.loadModAfter;
+    if (result.loadModBefore.length === 0) delete result.loadModBefore;
+
+    return result;
+}
+
 /**
  * Update experimental package scripts
  * @param action The action to perform ('addProject', 'addMod', 'removeMod')

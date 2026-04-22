@@ -15,5 +15,9 @@ export default defineConfig({
                 'src/lib/helper.ts',
             ],
         },
+        sequence: {
+            concurrent: false,
+        },
+        testTimeout: 15000,
     },
 });

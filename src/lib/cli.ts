@@ -52,78 +52,82 @@ import { setVerbose } from './logger';
 
 export async function runCLI(cmdName?: string, cmdArgs?: string[]) {
     // Handle SIGINT for clean cleanup
-    process.on('SIGINT', () => {
-        log('\n');
-        warn('Process interrupted by user (SIGINT).');
-        process.exit(130);
-    });
+    if (process.listenerCount('SIGINT') === 0) {
+        process.on('SIGINT', () => {
+            log('\n');
+            warn('Process interrupted by user (SIGINT).');
+            process.exit(130);
+        });
+    }
 
     // Initialize verbose mode early
     if (hasFlag('verbose')) {
         setVerbose(true);
     }
 
-    // Handle root-level help and version (side-effect free)
-    if (hasFlag('version')) {
-        log(`v${version}`);
-        return;
-    }
-
-    // Migrate legacy store and config on first CLI call
-    migrateStoreDirIfNeeded();
-    migrateGlobalConfigIfNeeded();
-
-    clear();
-    log('\n');
-
-    let buildDate = 'Unknown';
     try {
-        const buildInfoPath = join(__dirname, '../build.json');
-        if (existsSync(buildInfoPath)) {
-            buildDate =
-                JSON.parse(readFileSync(buildInfoPath, 'utf8')).buildDate ??
-                'Unknown';
+        // Handle root-level help and version (side-effect free)
+        if (hasFlag('version')) {
+            log(`v${version}`);
+            return;
         }
-    } catch (_e) {
-        // ignore
-    }
 
-    const currentCmd = cmdName ?? cmd();
+        // Migrate legacy store and config on first CLI call
+        migrateStoreDirIfNeeded();
+        migrateGlobalConfigIfNeeded();
 
-    if (!currentCmd) {
-        log(`Project Zomboid Studio v${version} - @${branch} (${buildDate})\n`);
-    }
+        clear();
+        log('\n');
 
-    if (hasFlag('help') && !currentCmd) {
-        await helpCmd();
-        return;
-    }
+        let buildDate = 'Unknown';
+        try {
+            const buildInfoPath = join(__dirname, '../build.json');
+            if (existsSync(buildInfoPath)) {
+                buildDate =
+                    JSON.parse(readFileSync(buildInfoPath, 'utf8')).buildDate ??
+                    'Unknown';
+            }
+        } catch (_e) {
+            // ignore
+        }
 
-    let commandParams: any[] | undefined = cmdArgs;
-    if (!commandParams) {
-        const rawCmdArgs = processArgs().slice(1);
-        const { positionals } = splitArgs(rawCmdArgs);
-        commandParams = positionals.map((a) => parseArgType(a));
-    }
+        const currentCmd = cmdName ?? cmd();
 
-    const command = {
-        name: currentCmd,
-        params: commandParams,
-    };
+        if (!currentCmd) {
+            log(
+                `Project Zomboid Studio v${version} - @${branch} (${buildDate})\n`,
+            );
+        }
 
-    verbose('Project Dir:  ' + projectDir());
+        if (hasFlag('help') && !currentCmd) {
+            await helpCmd();
+            return;
+        }
 
-    verbose(
-        `Executing command [${command.name}] ${command.params.length ? `with params [${command.params.join(', ')}]` : ''}`,
-    );
+        let commandParams: any[] | undefined = cmdArgs;
+        if (!commandParams) {
+            const rawCmdArgs = processArgs().slice(1);
+            const { positionals } = splitArgs(rawCmdArgs);
+            commandParams = positionals.map((a) => parseArgType(a));
+        }
 
-    // Handle --help for specific command BEFORE executing it (allows help even outside projects)
-    if (hasFlag('help') && command.name) {
-        await helpCmd(command.name);
-        return;
-    }
+        const command = {
+            name: currentCmd,
+            params: commandParams,
+        };
 
-    try {
+        verbose('Project Dir:  ' + projectDir());
+
+        verbose(
+            `Executing command [${command.name}] ${command.params.length ? `with params [${command.params.join(', ')}]` : ''}`,
+        );
+
+        // Handle --help for specific command BEFORE executing it (allows help even outside projects)
+        if (hasFlag('help') && command.name) {
+            await helpCmd(command.name);
+            return;
+        }
+
         switch (command.name) {
             case 'add':
                 await addCmd(

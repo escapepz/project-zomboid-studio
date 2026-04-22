@@ -8,7 +8,7 @@ import {
     readProjectConfig,
     updateProjectConfig,
 } from '../helper';
-import { log } from '../logger';
+import { log, verbose } from '../logger';
 import { scaffoldProject } from '../templateManager';
 
 addHelp(
@@ -48,15 +48,14 @@ export function renameCmd(oldModId: string, newModId: string) {
     }
 
     // Rename mod
-    if (existsSync(join(projectPath, oldModId))) {
+    const oldPath = join(projectPath, oldModId);
+    const newPath = join(projectPath, newModId);
+    if (existsSync(oldPath)) {
         log(`- Renaming mod '${oldModId}' to '${newModId}'...`);
-        scaffoldProject(
-            join(projectPath, oldModId),
-            join(projectPath, newModId),
-            false,
-            false,
-        );
-        rmSync(join(projectPath, oldModId), { force: true, recursive: true });
+        verbose(`Copying ${oldPath} to ${newPath}`);
+        scaffoldProject(oldPath, newPath, false, false);
+        verbose(`Removing old mod directory: ${oldPath}`);
+        rmSync(oldPath, { force: true, recursive: true });
     }
 
     // Update code

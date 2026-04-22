@@ -2,7 +2,7 @@ import { join } from 'path';
 import { existsSync, rmSync } from 'fs';
 import { expect } from '../expect';
 import { addHelp } from '../help';
-import { error, info, log } from '../logger';
+import { error, info, log, verbose } from '../logger';
 import {
     projectDir,
     resolveProjectConfig,
@@ -36,11 +36,14 @@ export function deleteCmd(modId: string) {
     const projectConfigPath = join(projectPath, 'project.json');
 
     // Delete mod directory
+    const modPath = join(projectPath, modId);
     log(`Deleting mod '${modId}' directory...`);
-    if (existsSync(join(projectPath, modId))) {
-        rmSync(join(projectPath, modId), { force: true, recursive: true });
+    if (existsSync(modPath)) {
+        verbose(`Removing mod directory: ${modPath}`);
+        rmSync(modPath, { force: true, recursive: true });
         info(`Mod '${modId}' directory deleted!`);
     } else {
+        verbose(`Mod directory not found at: ${modPath}`);
         error(`Mod '${modId}' directory not found!`);
     }
 

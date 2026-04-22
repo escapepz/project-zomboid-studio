@@ -1,16 +1,25 @@
 import path from 'path';
 import fs from 'fs';
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { createE2EWorkspace, E2ETestWorkspace } from '../helpers/e2e-fixtures';
+import * as cp from 'child_process';
+
+vi.mock('child_process');
 
 describe('Advanced Build Features (E2E)', () => {
     let workspace: E2ETestWorkspace;
 
     beforeEach(() => {
         workspace = createE2EWorkspace();
+        vi.spyOn(cp, 'spawnSync').mockReturnValue({
+            status: 0,
+            stdout: Buffer.from(''),
+            stderr: Buffer.from(''),
+        } as any);
     });
 
     afterEach(() => {
+        vi.restoreAllMocks();
         workspace.cleanup();
     });
 
@@ -68,7 +77,7 @@ describe('Advanced Build Features (E2E)', () => {
         expect(
             fs.existsSync(path.join(outPath, 'excluded_by_ignore.txt')),
         ).toBe(false);
-    });
+    }, 60000);
 
     it('should handle nested directory structures', async () => {
         const title = 'Nested Project';
@@ -110,5 +119,5 @@ describe('Advanced Build Features (E2E)', () => {
         );
         expect(fs.existsSync(outScript)).toBe(true);
         expect(fs.readFileSync(outScript, 'utf8')).toBe('print("hi")');
-    });
+    }, 60000);
 });

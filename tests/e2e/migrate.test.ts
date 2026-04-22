@@ -42,7 +42,7 @@ describe('migrate command e2e', () => {
             workspace.assertStdout(result, 'Migrating project.json');
             workspace.assertStdout(
                 result,
-                'project.json upgraded successfully',
+                'project.json upgraded and synced successfully',
             );
 
             // 3. Verify upgraded project.json

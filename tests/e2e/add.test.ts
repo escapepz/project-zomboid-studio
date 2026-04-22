@@ -1,17 +1,43 @@
 import path from 'path';
 import fs from 'fs';
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { createE2EWorkspace, E2ETestWorkspace } from '../helpers/e2e-fixtures';
+import * as cp from 'child_process';
+
+vi.mock('child_process');
 
 describe('add command e2e', () => {
     let workspace: E2ETestWorkspace;
 
     beforeEach(() => {
         workspace = createE2EWorkspace();
+        vi.spyOn(cp, 'spawnSync').mockImplementation((command, args) => {
+            if (command === 'git') {
+                const argsList = args as string[];
+                if (argsList[0] === 'clone') {
+                    const dest = argsList[argsList.length - 1];
+                    fs.mkdirSync(dest, { recursive: true });
+                    fs.mkdirSync(path.join(dest, '.git'), { recursive: true });
+                    // Create a dummy template structure if needed, or just leave it empty
+                    // so it falls back to legacy if it wants to find something specific.
+                    return {
+                        status: 0,
+                        stdout: Buffer.from(''),
+                        stderr: Buffer.from(''),
+                    } as any;
+                }
+            }
+            return {
+                status: 0,
+                stdout: Buffer.from(''),
+                stderr: Buffer.from(''),
+            } as any;
+        });
     });
 
     afterEach(() => {
         workspace.cleanup();
+        vi.clearAllMocks();
     });
 
     it('should add a new mod to an existing project', async () => {

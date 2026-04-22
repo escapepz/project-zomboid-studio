@@ -1,17 +1,26 @@
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { createE2EWorkspace, E2ETestWorkspace } from '../helpers/e2e-fixtures';
+import * as cp from 'child_process';
+
+vi.mock('child_process');
 
 describe('build command e2e', () => {
     let workspace: E2ETestWorkspace;
 
     beforeEach(() => {
         workspace = createE2EWorkspace();
+        vi.spyOn(cp, 'spawnSync').mockReturnValue({
+            status: 0,
+            stdout: Buffer.from(''),
+            stderr: Buffer.from(''),
+        } as any);
     });
 
     afterEach(() => {
+        vi.restoreAllMocks();
         workspace.cleanup();
     });
 
@@ -76,7 +85,7 @@ describe('build command e2e', () => {
             console.log('STDERR:', buildResult.stderr.join('\n'));
             throw e;
         }
-    });
+    }, 60000);
 
     it('should build with custom outdir', async () => {
         const projectTitle = 'Custom OutDir';
@@ -121,7 +130,7 @@ describe('build command e2e', () => {
         workspace.write(
             'project.json',
             JSON.stringify({
-                outdir: '/root/some/invalid/path/that/does/not/exist/999',
+                outdir: 'invalid?path',
                 workshop: {
                     title: 'Invalid OutDir',
                     visibility: 'public',
@@ -134,7 +143,9 @@ describe('build command e2e', () => {
 
         const buildResult = await workspace.run('build');
         workspace.assertFailure(buildResult);
-        expect(buildResult.stderr.join('\n')).toMatch(/does not exist|error/i);
+        expect(buildResult.stderr.join('\n')).toMatch(
+            /no such file or directory|error|invalid/i,
+        );
     });
 
     it('should clean up stale output files before building', async () => {

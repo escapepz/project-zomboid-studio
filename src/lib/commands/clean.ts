@@ -2,7 +2,7 @@ import { join } from 'path';
 import { existsSync, rmSync } from 'fs';
 import { addHelp } from '../help';
 import { resolveProjectConfig } from '../helper';
-import { log } from '../logger';
+import { log, verbose } from '../logger';
 
 addHelp(
     'clean',
@@ -26,9 +26,11 @@ export function cleanCmd() {
 
     // Clean the output directory
     const outPath = join(projectConfig.outdir!, projectConfig.workshop.title);
+    verbose(`Target output path for cleaning: ${outPath}`);
     if (existsSync(outPath)) {
         log(`Cleaning output directory at '${outPath}'...`);
         rmSync(outPath, { recursive: true, force: true });
+        verbose(`Cleaned: ${outPath}`);
     } else throw new Error(`Output directory at '${outPath}' does not exist!`);
 
     const endTime = performance.now();

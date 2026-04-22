@@ -54,7 +54,11 @@ export class E2ETestWorkspace {
      * @param args The arguments to pass
      * @returns The result of the execution
      */
-    public async run(cmd?: string, args: string[] = []): Promise<E2EResult> {
+    public async run(
+        cmd?: string,
+        args: string[] = [],
+        overrideCwd?: string,
+    ): Promise<E2EResult> {
         this.stdout = [];
         this.stderr = [];
         this.exitCode = 0;
@@ -87,8 +91,8 @@ export class E2ETestWorkspace {
         const originalArgv = process.argv;
         process.argv = ['node', 'pzstudio', ...(cmd ? [cmd] : []), ...args];
 
-        // Change CWD to temp dir
-        process.chdir(this.dir);
+        // Change CWD to temp dir or override
+        process.chdir(overrideCwd || this.dir);
 
         try {
             await runCLI(cmd, args);
