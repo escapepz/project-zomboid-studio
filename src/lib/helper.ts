@@ -177,11 +177,15 @@ export function applyProjectDefaults(config: any): IProjectConfig {
  * @param filePath Path to the file
  * @param updated Updated configuration object
  */
-export function atomicWriteJson(filePath: string, updated: any) {
+export function atomicWriteJson(
+    filePath: string,
+    updated: any,
+    overwrite: boolean = false,
+) {
     let finalContent = updated;
 
-    // Preserve unknown fields if file exists
-    if (existsSync(filePath)) {
+    // Preserve unknown fields if file exists and we are not overwriting
+    if (!overwrite && existsSync(filePath)) {
         try {
             const existing = JSON.parse(readFileSync(filePath, 'utf8'));
             finalContent = { ...existing, ...updated };
@@ -223,12 +227,13 @@ export function atomicWriteJson(filePath: string, updated: any) {
 export function updateProjectConfig(
     path: string,
     updatedConfig: IProjectConfig,
+    overwrite: boolean = false,
 ) {
     if (!existsSync(path)) {
         throw new Error('The given path does not exist!');
     }
 
-    atomicWriteJson(path, updatedConfig);
+    atomicWriteJson(path, updatedConfig, overwrite);
 }
 
 /**

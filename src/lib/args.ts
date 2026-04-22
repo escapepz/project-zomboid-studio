@@ -32,7 +32,7 @@ export function parseArgType(arg: any) {
  * @returns {string} The command passed to the program
  */
 export function cmd(argv: string[] = process.argv) {
-    return argv[2];
+    return argv.slice(2).find((a) => !a.startsWith('-'));
 }
 
 /**

@@ -2,8 +2,12 @@ import { addHelp } from '../help';
 import { info, log } from '../logger';
 import { readProjectConfig, updateProjectConfig, projectDir } from '../helper';
 import { migration } from '../migration';
-import { readGlobalConfig, writeGlobalConfig } from '../templateManager';
-import { existsSync } from 'fs';
+import {
+    readGlobalConfig,
+    writeGlobalConfig,
+    getConfigPath,
+} from '../templateManager';
+import { existsSync, readFileSync } from 'fs';
 import { basename, join } from 'path';
 
 addHelp(
@@ -21,7 +25,10 @@ export async function migrateCmd() {
     log('\nChecking for legacy file shapes...\n');
 
     // 1. Migrate config.json
-    const config = readGlobalConfig();
+    const configPath = getConfigPath();
+    const config = existsSync(configPath)
+        ? JSON.parse(readFileSync(configPath, 'utf8'))
+        : {};
     const configCheck = migration.checkConfig(config);
     if (configCheck.needsMigration) {
         info(`- Migrating config.json: ${configCheck.reason}`);
@@ -33,14 +40,17 @@ export async function migrateCmd() {
     }
 
     // 2. Migrate project.json (if it exists)
-    const project = readProjectConfig(undefined, false); // Read without validation-driven exit
+    const projectPath = join(projectDir(), 'project.json');
+    const project = existsSync(projectPath)
+        ? JSON.parse(readFileSync(projectPath, 'utf8'))
+        : undefined;
     if (project) {
         const projectCheck = migration.checkProject(project);
         if (projectCheck.needsMigration) {
             info(`- Migrating project.json: ${projectCheck.reason}`);
             const upgradedProject = migration.upgradeProject(project);
             const projectPath = join(projectDir(), 'project.json');
-            updateProjectConfig(projectPath, upgradedProject);
+            updateProjectConfig(projectPath, upgradedProject, true);
             info('  → project.json upgraded successfully.');
         } else {
             log('- project.json is already up to date.');

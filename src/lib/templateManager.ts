@@ -221,11 +221,11 @@ export function parseTemplateUrl(input: string): { url: string; ref?: string } {
     return { url, ref };
 }
 
-function getConfigDir(): string {
+export function getConfigDir(): string {
     return join(homedir(), '.pzstudio');
 }
 
-function getConfigPath(): string {
+export function getConfigPath(): string {
     return join(getConfigDir(), 'config.json');
 }
 

@@ -69,6 +69,7 @@ async function buildWorkshop(
         scaffoldProject(modSrcPath, outModsPath, false, false, {
             excludeIgnoreFile: true,
             ignoreDotFiles: true,
+            ignoreItems: projectConfig.excludes,
         });
 
         // Generate the mod.info

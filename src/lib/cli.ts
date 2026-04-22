@@ -113,6 +113,12 @@ export async function runCLI(cmdName?: string, cmdArgs?: string[]) {
         `Executing command [${command.name}] ${command.params.length ? `with params [${command.params.join(', ')}]` : ''}`,
     );
 
+    // Handle --help for specific command BEFORE executing it (allows help even outside projects)
+    if (hasFlag('help') && command.name) {
+        await helpCmd(command.name);
+        return;
+    }
+
     try {
         switch (command.name) {
             case 'add':

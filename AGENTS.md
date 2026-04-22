@@ -1,4 +1,4 @@
-# AGENTS.md
+﻿# AGENTS.md
 
 ## Commands
 - **Build:** `pnpm build`
@@ -7,6 +7,9 @@
 - **Test all:** `pnpm test`
 - **Single test:** `pnpm exec vitest run tests/unit/someFile.test.ts`
 - **Test watch:** `pnpm test:watch`
+
+On Windows 10:
+- **Run any pnpm command:** `powershell -ExecutionPolicy Bypass -Command "pnpm ..."`
 
 ## Architecture
 TypeScript CLI tool (`pzstudio`) for Project Zomboid Lua mod scaffolding. CommonJS module, entry point `src/index.ts`, public API at `src/api.ts`. Commands live in `src/lib/commands/` (add, build, clean, delete, new, watch, etc.). A VS Code extension lives in `packages/vscode-extension/`. Tests use Vitest in `tests/unit/`, setup in `tests/setup/vitest.setup.ts`.

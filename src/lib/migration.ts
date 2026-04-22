@@ -82,8 +82,19 @@ export const migration = {
 
         // Migrate workshop.excludes to root excludes
         if (upgraded.workshop.excludes !== undefined) {
-            if (upgraded.excludes === undefined) {
+            if (
+                upgraded.excludes === undefined ||
+                (Array.isArray(upgraded.excludes) &&
+                    upgraded.excludes.length === 0)
+            ) {
                 upgraded.excludes = upgraded.workshop.excludes;
+            } else if (Array.isArray(upgraded.excludes)) {
+                upgraded.excludes = Array.from(
+                    new Set([
+                        ...upgraded.excludes,
+                        ...upgraded.workshop.excludes,
+                    ]),
+                );
             }
             delete upgraded.workshop.excludes;
         }

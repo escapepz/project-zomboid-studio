@@ -35,6 +35,10 @@ addHelp(
 );
 
 export async function newCmd(projectTitle: string, modId?: string) {
+    // Validate params
+    expect('param [projectTitle]', projectTitle, 'string');
+    expect('param [modId]', modId, 'string|undefined');
+
     const templateUrl = extractFlag('template');
     const isOffline = hasFlag('offline');
     const forceUpdate = hasFlag('force-update');
@@ -55,10 +59,6 @@ export async function newCmd(projectTitle: string, modId?: string) {
         isOffline,
         forceUpdate,
     );
-
-    // Validate params
-    expect('param [projectTitle]', projectTitle, 'string');
-    expect('param [modId]', modId, 'string|undefined');
 
     // Prepare mod id
     modId = formatTitleToId(modId || projectTitle);

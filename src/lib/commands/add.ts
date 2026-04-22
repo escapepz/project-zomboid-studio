@@ -30,6 +30,10 @@ addHelp(
 );
 
 export function addCmd(modName: string, modId?: string) {
+    // Validate params
+    expect('param [modName]', modName, 'string');
+    expect('param [modId]', modId, 'string|undefined');
+
     const projectPath = projectDir();
     const projectConfig = resolveProjectConfig();
     // Check if we are in a project directory
@@ -65,10 +69,6 @@ export function addCmd(modName: string, modId?: string) {
             forceUpdate,
         );
     }
-
-    // Validate params
-    expect('param [modName]', modName, 'string');
-    expect('param [modId]', modId, 'string|undefined');
 
     // Prepare mod id
     modId = formatTitleToId(modId ?? modName);
