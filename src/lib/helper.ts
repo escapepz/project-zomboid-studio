@@ -654,6 +654,40 @@ export function parseModInfoText(
 }
 
 /**
+ * Returns the branch folders (direct subdirectories) of a mod.
+ * @param modId The mod id
+ * @returns {string[]} An array of absolute paths to branch folders
+ */
+export function getModBranchFolders(modId: string): string[] {
+    const modDir = join(projectDir(), modId);
+    if (!existsSync(modDir)) return [];
+
+    try {
+        return readdirSync(modDir)
+            .map((child) => join(modDir, child))
+            .filter((childPath) => statSync(childPath).isDirectory());
+    } catch (_e) {
+        return [];
+    }
+}
+
+/**
+ * Resolves the valid branch folders for a mod that should contain a mod.info file.
+ * Following Build 42 rules:
+ * 1. Only existing nested folders that contain a 'lua' directory.
+ * 2. Root-level mod.info is NOT a target for Build 42 generation.
+ * @param modId The mod id
+ * @returns {string[]} An array of absolute paths to valid branch folders
+ */
+export function resolveModInfoTargets(modId: string): string[] {
+    const branchFolders = getModBranchFolders(modId);
+    return branchFolders.filter((folder) => {
+        const luaPath = join(folder, 'lua');
+        return existsSync(luaPath) && statSync(luaPath).isDirectory();
+    });
+}
+
+/**
  * Update experimental package scripts
  * @param action The action to perform ('addProject', 'addMod', 'removeMod', 'renameMod')
  * @param projectDir The project directory
@@ -667,13 +701,15 @@ export function updateExperimentalScripts(
     newModId?: string,
 ) {
     try {
-        const scriptPath =
-            basename(__dirname) === 'dist'
-                ? resolve(__dirname, 'scripts/experimental-package-scripts.js')
-                : resolve(
-                      dirname(__dirname),
-                      '../scripts/experimental-package-scripts.js',
-                  );
+        const srcPath = resolve(
+            __dirname,
+            '../../scripts/experimental-package-scripts.js',
+        );
+        const distPath = resolve(
+            __dirname,
+            '../scripts/experimental-package-scripts.js',
+        );
+        const scriptPath = existsSync(srcPath) ? srcPath : distPath;
         if (!existsSync(scriptPath)) {
             return;
         }

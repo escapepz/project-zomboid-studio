@@ -28,15 +28,20 @@ This is a CLI tool for creating and maintaining Lua mods for Project Zomboid wit
 - Reworked scaffolding to rely on cached templates with explicit refresh via `--force-update` or `pzstudio update`
 - Removed the legacy `installLibraries()` fallback from intended scaffolding behavior in favor of template-driven project creation
 - Added `.pzstudioignore` filtering for scaffold and build flows, with built-in maintenance exclusions such as `**/.gitkeep`
-- Changed mod.info output path to version-specific directory: `{modId}/42.17.0/mod.info`
+- **Build 42 Layout Support (NEW)**:
+    - Added `pzstudio modinfo generate` command to author `mod.info` files directly in your source tree.
+    - Supports Build 42 nested layouts: generates into `common`, `42`, or version-specific branch folders containing `lua`.
+    - Automatically ignores root-level `mod.info` for projects using the new nested layout.
+    - Respects `build.modInfo` project configuration to skip or automate metadata generation.
+- Updated mod.info output path to respect branch-based layouts in both source and workshop builds.
 - Enhanced build command to create dual workshop outputs:
-    - **Main workshop**: `{projectTitle}` with standard mod IDs and configured visibility
-    - **Dev branch workshop**: `{projectTitle} - dev_branch` with `_dev` suffix on mod IDs
-    - Each mod in dev branch has prefix in path and id field: `Contents/mods/{modId}_dev/42.17.0/mod.info`
-    - Dev branch workshop always sets visibility to `unlisted` regardless of project.json settings
-    - Dev branch workshop title appends ` - dev_branch` suffix: `title={projectTitle} - dev_branch`
-    - Dev branch workshop.txt has no `id=` field (excluded automatically)
-- **Robust I/O Validation & Migration (NEW)**:
+    - **Main workshop**: `{projectTitle}` with standard mod IDs and configured visibility.
+    - **Dev branch workshop**: `{projectTitle} - dev_branch` with `_dev` suffix on mod IDs.
+    - Each mod in dev branch has its ID field prefixed in the generated metadata.
+    - Dev branch workshop always sets visibility to `unlisted` regardless of project.json settings.
+    - Dev branch workshop title appends ` - dev_branch` suffix: `title={projectTitle} - dev_branch`.
+    - Dev branch workshop.txt has no `id=` field (excluded automatically).
+- **Robust I/O Validation & Migration**:
     - Implemented runtime validation for `project.json` and `config.json` with descriptive Where-What-Why error reporting.
     - Added `pzstudio migrate` command to safely upgrade legacy configuration files while preserving unknown fields.
     - Expanded `IModConfig` with support for `pack`, `tiledef`, `url`, `versionMin`, and `versionMax`.

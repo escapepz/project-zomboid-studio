@@ -20,13 +20,16 @@ function hasFlag(name: string): boolean {
 
 addHelp(
     'build',
-    `Build your project and update your output directory with your project.
+    `Build your project and package it for the workshop.
+
+    NOTE: This command is for packaging only. To generate mod.info files in your source tree,
+    use 'pzstudio modinfo generate'.
 
     Usages:
-        pzstudio build - Builds only the main workshop output (Default).
-        pzstudio build --production - Builds only the main workshop output.
+        pzstudio build               - Builds only the main workshop output (Default).
+        pzstudio build --production  - Builds only the main workshop output.
         pzstudio build --development - Builds only the dev_branch workshop output.
-        pzstudio build --verbose - Enable diagnostic output.`,
+        pzstudio build --verbose     - Enable diagnostic output.`,
 );
 
 async function buildWorkshop(

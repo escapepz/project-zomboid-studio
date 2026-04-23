@@ -9,6 +9,7 @@ const fullHelp = `Available commands:
     delete         - Delete a mod from your project.
     help           - Displays help information.
     lang           - Add or copy a translation language.
+    modinfo        - Generate mod.info files for your mods.
     new            - Create a new project.
     outdir         - Set your output directory.
     rename         - Rename a mod from your project.

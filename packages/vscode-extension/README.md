@@ -32,7 +32,8 @@ Access these commands via the **Command Palette** (`Ctrl+Shift+P` / `Cmd+Shift+P
 | `PZStudio: New Language` | Add a new translation template to a mod.             |
 | `PZStudio: Rename Mod`   | Safely rename an existing mod.                       |
 | `PZStudio: Delete Mod`   | Remove a mod from the project.                       |
-| `PZStudio: Update`       | Sync libraries and documentation.                    |
+| `PZStudio: ModInfo Generate` | Generate mod.info files in your source tree. |
+| `PZStudio: Update`           | Sync libraries and documentation.            |
 
 ## 📂 Project Structure
 

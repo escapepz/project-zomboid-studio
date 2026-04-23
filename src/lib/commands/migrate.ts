@@ -1,10 +1,14 @@
 import { addHelp } from '../help';
 import { info, log, verbose } from '../logger';
-import { updateProjectConfig, projectDir } from '../helper';
+import {
+    updateProjectConfig,
+    projectDir,
+    resolveModInfoTargets,
+} from '../helper';
 import { migration } from '../migration';
 import { writeGlobalConfig, getConfigPath } from '../templateManager';
 import { existsSync, readFileSync } from 'fs';
-import { join } from 'path';
+import path, { join } from 'path';
 
 addHelp(
     'migrate',
@@ -58,9 +62,26 @@ export async function migrateCmd() {
         // 3. Migrate mod.info files into project.json
         const mods = project.mods || {};
         for (const modId in mods) {
-            const modInfoPath = join(projectDir(), modId, 'mod.info');
-            if (existsSync(modInfoPath)) {
-                verbose(`Checking mod.info for mod '${modId}'...`);
+            const rootModInfoPath = join(projectDir(), modId, 'mod.info');
+            const modInfoFiles: string[] = [];
+
+            if (existsSync(rootModInfoPath)) {
+                modInfoFiles.push(rootModInfoPath);
+            } else {
+                // Check Build 42 branch folders
+                const targets = resolveModInfoTargets(modId);
+                for (const targetDir of targets) {
+                    const branchModInfoPath = join(targetDir, 'mod.info');
+                    if (existsSync(branchModInfoPath)) {
+                        modInfoFiles.push(branchModInfoPath);
+                    }
+                }
+            }
+
+            for (const modInfoPath of modInfoFiles) {
+                verbose(
+                    `Checking mod.info for mod '${modId}' at '${modInfoPath}'...`,
+                );
                 const content = readFileSync(modInfoPath, 'utf8');
                 const parsedModInfo = migration.parseModInfo(content);
 
@@ -83,10 +104,14 @@ export async function migrateCmd() {
 
                 if (modModified) {
                     info(
-                        `- Synced data from ${modId}/mod.info into project.json`,
+                        `- Synced data from ${modId}/${modInfoFiles.length > 1 ? path.basename(path.dirname(modInfoPath)) + '/' : ''}mod.info into project.json`,
                     );
                     projectModified = true;
                 }
+
+                // If we found one and synced, we can skip other branch folders for the same mod
+                // since they are expected to be identical.
+                if (modModified) break;
             }
         }
 

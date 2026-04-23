@@ -16,6 +16,7 @@ import { renameCmd } from './commands/rename';
 import { updateCmd } from './commands/update';
 import { watchCmd } from './commands/watch';
 import { migrateCmd } from './commands/migrate';
+import { modinfoCmd } from './commands/modinfo';
 import { cmd, processArgs, splitArgs, parseArgType } from './args';
 import { clear, error, info, log, warn, verbose } from './logger';
 import { projectDir, migrateStoreDirIfNeeded } from './helper';
@@ -189,6 +190,13 @@ export async function runCLI(cmdName?: string, cmdArgs?: string[]) {
                 await migrateCmd();
                 break;
 
+            case 'modinfo':
+                await modinfoCmd(
+                    command.params[0] as string,
+                    command.params[1] as string,
+                );
+                break;
+
             case undefined:
                 await helpCmd();
                 break;
@@ -201,6 +209,7 @@ export async function runCLI(cmdName?: string, cmdArgs?: string[]) {
             command.name !== 'build' &&
             command.name !== 'clean' &&
             command.name !== 'help' &&
+            command.name !== 'modinfo' &&
             command.name !== undefined
         ) {
             info(`Command [${command.name}] completed.`);
