@@ -15,6 +15,71 @@
     "icon": "icon.png",
     "activationEvents": [],
     "contributes": {
+        "configuration": {
+            "title": "Project Zomboid Studio",
+            "properties": {
+                "pzstudio.templates.project.url": {
+                    "type": "string",
+                    "description": "Repository URL for the default project template (e.g. https://github.com/org/repo.git)",
+                    "scope": "resource",
+                    "default": "https://github.com/escapepz/pzstudio-template-project.git"
+                },
+                "pzstudio.templates.project.ref": {
+                    "type": "string",
+                    "description": "Git ref (branch, tag, or commit) for the project template",
+                    "scope": "resource",
+                    "default": "42.17.0"
+                },
+                "pzstudio.templates.mod.url": {
+                    "type": "string",
+                    "description": "Repository URL for the default mod template",
+                    "scope": "resource",
+                    "default": "https://github.com/escapepz/pzstudio-template-mod.git"
+                },
+                "pzstudio.templates.mod.ref": {
+                    "type": "string",
+                    "description": "Git ref (branch, tag, or commit) for the mod template",
+                    "scope": "resource",
+                    "default": "42.17.0"
+                },
+                "pzstudio.templates.workshop.url": {
+                    "type": "string",
+                    "description": "Repository URL for the default workshop template",
+                    "scope": "resource",
+                    "default": "https://github.com/escapepz/pzstudio-template-workshop.git"
+                },
+                "pzstudio.templates.workshop.ref": {
+                    "type": "string",
+                    "description": "Git ref (branch, tag, or commit) for the workshop template",
+                    "scope": "resource",
+                    "default": "42.0"
+                },
+                "pzstudio.templates.language.url": {
+                    "type": "string",
+                    "description": "Repository URL for the default language template",
+                    "scope": "resource",
+                    "default": "https://github.com/escapepz/pzstudio-template-language.git"
+                },
+                "pzstudio.templates.language.ref": {
+                    "type": "string",
+                    "description": "Git ref (branch, tag, or commit) for the language template",
+                    "scope": "resource",
+                    "default": "42.13.1"
+                },
+                "pzstudio.outdir": {
+                    "type": "string",
+                    "description": "Default build output directory",
+                    "scope": "resource",
+                    "default": ""
+                },
+                "pzstudio.useSymlinks": {
+                    "type": "boolean",
+                    "description": "Whether to use symlinks instead of copying during build",
+                    "scope": "resource",
+                    "default": true
+                }
+            }
+        },
         "commands": [
             {
                 "command": "pzstudio.new",

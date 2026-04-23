@@ -92,6 +92,12 @@ export interface GlobalConfig {
     useSymlinks?: boolean;
 }
 
+export interface IVsCodeSettings {
+    templates?: Partial<Record<TemplateCategory, ITemplateConfig>>;
+    outdir?: string;
+    useSymlinks?: boolean;
+}
+
 export interface IProjectConfig {
     workshop: IWorkshopConfig;
     mods: { [modId: string]: IModConfig };

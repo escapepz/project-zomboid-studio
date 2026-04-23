@@ -3,6 +3,9 @@ import {
     ValidationContext,
     validateProject,
     validateConfig,
+    validateOutdirField,
+    validateTemplatesField,
+    validateUseSymlinksField,
 } from '../../src/lib/validation';
 
 describe('Validation', () => {
@@ -278,6 +281,47 @@ describe('Validation', () => {
         it('should pass for empty config', () => {
             validateConfig({}, context);
             expect(context.hasErrors()).toBe(false);
+        });
+
+        it('should report error for invalid useSymlinks type', () => {
+            validateConfig({ useSymlinks: 'yes' }, context);
+            expect(context.hasErrors()).toBe(true);
+            expect(
+                context
+                    .getErrors()
+                    .some((e) => e.location.includes('useSymlinks')),
+            ).toBe(true);
+        });
+
+        it('should pass for valid useSymlinks boolean', () => {
+            validateConfig({ useSymlinks: true }, context);
+            expect(context.hasErrors()).toBe(false);
+        });
+    });
+
+    describe('validateOutdirField', () => {
+        it('should report error for non-string', () => {
+            validateOutdirField(123, context);
+            expect(context.hasErrors()).toBe(true);
+        });
+    });
+
+    describe('validateTemplatesField', () => {
+        it('should report error for non-object', () => {
+            validateTemplatesField('invalid', context);
+            expect(context.hasErrors()).toBe(true);
+        });
+
+        it('should report error for invalid url', () => {
+            validateTemplatesField({ mod: { url: 123 } }, context);
+            expect(context.hasErrors()).toBe(true);
+        });
+    });
+
+    describe('validateUseSymlinksField', () => {
+        it('should report error for non-boolean', () => {
+            validateUseSymlinksField('yes', context);
+            expect(context.hasErrors()).toBe(true);
         });
     });
 });

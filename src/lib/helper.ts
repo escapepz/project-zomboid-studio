@@ -10,13 +10,88 @@ import {
     statSync,
     writeFileSync,
 } from 'fs';
-import { IProjectConfig, IModConfig } from './project';
+import {
+    IProjectConfig,
+    IModConfig,
+    IVsCodeSettings,
+    TemplateCategory,
+    ITemplateConfig,
+} from './project';
 import { error, log, warn, verbose } from './logger';
 import {
     GlobalConfig,
     readGlobalConfig,
     writeGlobalConfig,
 } from './templateManager';
+
+let vscodeWorkspaceSettings: IVsCodeSettings | undefined;
+let vscodeUserSettings: IVsCodeSettings | undefined;
+
+export function setVsCodeSettings(
+    workspaceSettings?: IVsCodeSettings,
+    userSettings?: IVsCodeSettings,
+) {
+    vscodeWorkspaceSettings = workspaceSettings;
+    vscodeUserSettings = userSettings;
+}
+
+export function getVsCodeSettings(): IVsCodeSettings | undefined {
+    if (!vscodeWorkspaceSettings && !vscodeUserSettings) return undefined;
+
+    const wsTemplates = vscodeWorkspaceSettings?.templates || {};
+    const userTemplates = vscodeUserSettings?.templates || {};
+
+    const templates: Partial<Record<TemplateCategory, ITemplateConfig>> = {};
+    for (const cat of [
+        'project',
+        'mod',
+        'workshop',
+        'language',
+    ] as TemplateCategory[]) {
+        const val = wsTemplates[cat] ?? userTemplates[cat];
+        if (val) templates[cat] = val;
+    }
+
+    return {
+        templates: Object.keys(templates).length > 0 ? templates : undefined,
+        outdir: vscodeWorkspaceSettings?.outdir ?? vscodeUserSettings?.outdir,
+        useSymlinks:
+            vscodeWorkspaceSettings?.useSymlinks ??
+            vscodeUserSettings?.useSymlinks,
+    };
+}
+
+export function getResolvedTemplates(
+    globalConfig: GlobalConfig,
+): Partial<Record<TemplateCategory, ITemplateConfig>> | undefined {
+    const wsTemplates = vscodeWorkspaceSettings?.templates || {};
+    const userTemplates = vscodeUserSettings?.templates || {};
+    const globalTemplates = globalConfig.templates || {};
+
+    const merged: Partial<Record<TemplateCategory, ITemplateConfig>> = {};
+    for (const cat of [
+        'project',
+        'mod',
+        'workshop',
+        'language',
+    ] as TemplateCategory[]) {
+        const val =
+            wsTemplates[cat] ?? userTemplates[cat] ?? globalTemplates[cat];
+        if (val) merged[cat] = val;
+    }
+
+    return merged;
+}
+
+export function getResolvedUseSymlinks(
+    globalConfig: GlobalConfig,
+): boolean | undefined {
+    return (
+        vscodeWorkspaceSettings?.useSymlinks ??
+        vscodeUserSettings?.useSymlinks ??
+        globalConfig.useSymlinks
+    );
+}
 
 /**
  * Resolves the full project configuration by merging workspace and global settings.
@@ -318,7 +393,17 @@ export function getOutDir(project?: IProjectConfig, config?: GlobalConfig) {
         return resolve(projectDir(), project.outdir);
     }
 
-    // 2. Try global config (which includes fallbacks for missing files)
+    // 2. Try workspace settings
+    if (vscodeWorkspaceSettings?.outdir) {
+        return resolve(vscodeWorkspaceSettings.outdir);
+    }
+
+    // 3. Try user settings
+    if (vscodeUserSettings?.outdir) {
+        return resolve(vscodeUserSettings.outdir);
+    }
+
+    // 4. Try global config
     const global = config ?? readGlobalConfig(false);
     if (global.outdir) {
         return resolve(global.outdir);

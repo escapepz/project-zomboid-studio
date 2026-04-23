@@ -381,12 +381,8 @@ export function validateProject(config: any, context: ValidationContext): void {
         );
     }
 
-    if (config.outdir !== undefined && !guards.isString(config.outdir)) {
-        context.addError(
-            'outdir',
-            'Field "outdir" must be a string',
-            'Specify a valid directory path for output',
-        );
+    if (config.outdir !== undefined) {
+        validateOutdirField(config.outdir, context);
     }
 
     if (config.templates !== undefined) {
@@ -429,55 +425,84 @@ export function validateConfig(config: any, context: ValidationContext): void {
         }
     }
 
-    if (config.outdir !== undefined && !guards.isString(config.outdir)) {
+    if (config.outdir !== undefined) {
+        validateOutdirField(config.outdir, context);
+    }
+
+    if (config.templates !== undefined) {
+        validateTemplatesField(config.templates, context);
+    }
+
+    if (config.useSymlinks !== undefined) {
+        validateUseSymlinksField(config.useSymlinks, context);
+    }
+}
+
+export function validateOutdirField(
+    outdir: any,
+    context: ValidationContext,
+    pathPrefix: string = 'outdir',
+): void {
+    if (!guards.isString(outdir)) {
         context.addError(
-            'outdir',
+            pathPrefix,
             'Field "outdir" must be a string',
             'Specify a valid directory path for output',
         );
     }
+}
 
-    if (config.templates !== undefined) {
-        if (!guards.isObject(config.templates)) {
-            context.addError(
-                'templates',
-                'Field "templates" must be an object',
-                'Check your custom templates configuration',
-            );
-        } else {
-            for (const key in config.templates) {
-                const t = config.templates[key];
-                if (!guards.isObject(t)) {
-                    context.addError(
-                        formatFieldPath('templates', key),
-                        'Template must be an object',
-                        'Specify url and optional ref',
-                    );
-                } else if (!guards.isString(t.url)) {
-                    context.addError(
-                        formatFieldPath('templates', key, 'url'),
-                        'Field "url" must be a string',
-                        'Provide a repository URL or user/repo shorthand',
-                    );
-                }
+export function validateTemplatesField(
+    templates: any,
+    context: ValidationContext,
+    pathPrefix: string = 'templates',
+): void {
+    if (!guards.isObject(templates)) {
+        context.addError(
+            pathPrefix,
+            'Field "templates" must be an object',
+            'Check your custom templates configuration',
+        );
+    } else {
+        for (const key in templates) {
+            const t = templates[key];
+            if (!guards.isObject(t)) {
+                context.addError(
+                    formatFieldPath(pathPrefix, key),
+                    'Template must be an object',
+                    'Specify url and optional ref',
+                );
+            } else if (!guards.isString(t.url)) {
+                context.addError(
+                    formatFieldPath(pathPrefix, key, 'url'),
+                    'Field "url" must be a string',
+                    'Provide a repository URL or user/repo shorthand',
+                );
+            }
 
-                if (t.ref !== undefined && !guards.isString(t.ref)) {
-                    context.addError(
-                        formatFieldPath('templates', key, 'ref'),
-                        'Field "ref" must be a string',
-                        'Provide a branch, tag, or commit reference',
-                    );
-                }
+            if (
+                guards.isObject(t) &&
+                t.ref !== undefined &&
+                !guards.isString(t.ref)
+            ) {
+                context.addError(
+                    formatFieldPath(pathPrefix, key, 'ref'),
+                    'Field "ref" must be a string',
+                    'Provide a branch, tag, or commit reference',
+                );
             }
         }
     }
+}
 
-    if (
-        config.useSymlinks !== undefined &&
-        !guards.isBoolean(config.useSymlinks)
-    ) {
+export function validateUseSymlinksField(
+    useSymlinks: any,
+    context: ValidationContext,
+    pathPrefix: string = 'useSymlinks',
+): void {
+    if (!guards.isBoolean(useSymlinks)) {
         context.addError(
-            'useSymlinks',
+            pathPrefix,
             'Field "useSymlinks" must be a boolean',
             'Set to true or false for global symlink default',
         );

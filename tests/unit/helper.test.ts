@@ -14,6 +14,10 @@ import {
     applyProjectDefaults,
     getStoreDir,
     parseModInfoText,
+    setVsCodeSettings,
+    getVsCodeSettings,
+    getResolvedTemplates,
+    getResolvedUseSymlinks,
 } from '../../src/lib/helper';
 import { migration } from '../../src/lib/migration';
 import { IProjectConfig } from '../../src/lib/project';
@@ -182,6 +186,21 @@ describe('Helper Library', () => {
                 .mock.calls.find((c) => c[0].includes('.tmp'));
             const writtenContent = JSON.parse(writeCall![1] as string);
             expect(writtenContent.title).toBe('New');
+        });
+
+        it('should strip useSymlinks from project.json', () => {
+            const filePath = 'project.json';
+            const updated = { title: 'New', useSymlinks: false };
+
+            vi.mocked(fs.existsSync).mockReturnValue(true);
+            vi.mocked(fs.readFileSync).mockReturnValue('{}');
+
+            atomicWriteJson(filePath, updated as any);
+            const writeCall = vi
+                .mocked(fs.writeFileSync)
+                .mock.calls.find((c) => c[0].includes('.tmp'));
+            const writtenContent = JSON.parse(writeCall![1] as string);
+            expect(writtenContent.useSymlinks).toBeUndefined();
         });
     });
 
@@ -540,6 +559,119 @@ describe('Helper Library', () => {
             } as any);
             expect(result.toLowerCase()).toContain('zomboid');
             expect(result.toLowerCase()).toContain('workshop');
+        });
+    });
+
+    describe('VS Code Settings Override Tests', () => {
+        beforeEach(() => {
+            setVsCodeSettings(undefined, undefined);
+        });
+
+        it('should return merged vs code settings', () => {
+            setVsCodeSettings(
+                { outdir: 'ws' },
+                { outdir: 'us', useSymlinks: true },
+            );
+            expect(getVsCodeSettings()).toEqual({
+                outdir: 'ws',
+                useSymlinks: true,
+                templates: undefined,
+            });
+        });
+
+        it('should return merged vs code settings with fallback to user settings', () => {
+            setVsCodeSettings(
+                {},
+                {
+                    outdir: 'us',
+                    useSymlinks: true,
+                    templates: { mod: { url: 'user/mod' } },
+                },
+            );
+            expect(getVsCodeSettings()).toEqual({
+                outdir: 'us',
+                useSymlinks: true,
+                templates: { mod: { url: 'user/mod' } },
+            });
+        });
+
+        it('should resolve workspace outdir over user outdir', () => {
+            setVsCodeSettings(
+                { outdir: '/workspace/out' },
+                { outdir: '/user/out' },
+            );
+            expect(getOutDir()).toContain('out');
+        });
+
+        it('should resolve user outdir if workspace is undefined', () => {
+            setVsCodeSettings(undefined, { outdir: '/user/out' });
+            expect(getOutDir()).toContain('out');
+        });
+
+        it('should prioritize project.json outdir over VS Code settings', () => {
+            setVsCodeSettings({ outdir: '/workspace/out' }, undefined);
+            const project = { outdir: '/project/out' } as any;
+            expect(getOutDir(project)).toContain('out');
+        });
+
+        it('should fall back to global config if no VS Code settings are defined', () => {
+            vi.mocked(templateManager.readGlobalConfig).mockReturnValue({
+                templates: {},
+                useSymlinks: true,
+                outdir: '/global/out',
+            } as any);
+            expect(getOutDir()).toContain('out');
+        });
+
+        it('should resolve workspace templates over user templates', () => {
+            const wsTemplates = {
+                mod: { url: 'ws/url' },
+                project: { url: 'ws/project' },
+            };
+            const usTemplates = {
+                mod: { url: 'user/url' },
+                language: { url: 'user/lang' },
+            };
+            setVsCodeSettings(
+                { templates: wsTemplates },
+                { templates: usTemplates },
+            );
+            expect(getResolvedTemplates({} as any)).toEqual({
+                mod: { url: 'ws/url' },
+                project: { url: 'ws/project' },
+                language: { url: 'user/lang' },
+            });
+        });
+
+        it('should fall back to user templates if workspace templates are undefined', () => {
+            const usTemplates = { mod: { url: 'user/url' } };
+            setVsCodeSettings(undefined, { templates: usTemplates });
+            expect(getResolvedTemplates({} as any)).toEqual({
+                mod: { url: 'user/url' },
+            });
+        });
+
+        it('should fall back to global templates if no VS Code settings exist', () => {
+            const glTemplates = { mod: { url: 'global/url' } };
+            expect(
+                getResolvedTemplates({ templates: glTemplates } as any),
+            ).toEqual(glTemplates);
+        });
+
+        it('should resolve workspace useSymlinks over user useSymlinks', () => {
+            setVsCodeSettings({ useSymlinks: false }, { useSymlinks: true });
+            expect(getResolvedUseSymlinks({} as any)).toBe(false);
+        });
+
+        it('should fall back to user useSymlinks if workspace is undefined', () => {
+            setVsCodeSettings(undefined, { useSymlinks: false });
+            expect(getResolvedUseSymlinks({} as any)).toBe(false);
+        });
+
+        it('should fall back to global useSymlinks if no VS Code settings exist', () => {
+            expect(getResolvedUseSymlinks({ useSymlinks: true } as any)).toBe(
+                true,
+            );
         });
     });
 

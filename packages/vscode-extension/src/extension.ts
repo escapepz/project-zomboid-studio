@@ -1,5 +1,11 @@
 import * as vscode from 'vscode';
-import { setLogger, setProjectDir, runCLI, ILogger } from 'pzstudio-cli/api';
+import {
+    setLogger,
+    setProjectDir,
+    setVsCodeSettings,
+    runCLI,
+    ILogger,
+} from 'pzstudio-cli/api';
 
 function getTimestamp() {
     const now = new Date();
@@ -38,6 +44,52 @@ export function activate(context: vscode.ExtensionContext) {
         },
         clear: () => outputChannel.clear(),
     });
+
+    function updateVsCodeSettings() {
+        const config = vscode.workspace.getConfiguration('pzstudio');
+        const outdirInspect = config.inspect<string>('outdir');
+        const useSymlinksInspect = config.inspect<boolean>('useSymlinks');
+
+        const extractTemplates = (
+            valueKey: 'workspaceValue' | 'globalValue',
+        ) => {
+            const result: any = {};
+            for (const cat of ['project', 'mod', 'workshop', 'language']) {
+                const catConfig = vscode.workspace.getConfiguration(
+                    `pzstudio.templates.${cat}`,
+                );
+                const url = catConfig.inspect<string>('url')?.[valueKey];
+                const ref = catConfig.inspect<string>('ref')?.[valueKey];
+                if (url) {
+                    result[cat] = { url, ...(ref ? { ref } : {}) };
+                }
+            }
+            return Object.keys(result).length > 0 ? result : undefined;
+        };
+
+        setVsCodeSettings(
+            {
+                templates: extractTemplates('workspaceValue'),
+                outdir: outdirInspect?.workspaceValue,
+                useSymlinks: useSymlinksInspect?.workspaceValue,
+            },
+            {
+                templates: extractTemplates('globalValue'),
+                outdir: outdirInspect?.globalValue,
+                useSymlinks: useSymlinksInspect?.globalValue,
+            },
+        );
+    }
+
+    updateVsCodeSettings();
+
+    context.subscriptions.push(
+        vscode.workspace.onDidChangeConfiguration((e) => {
+            if (e.affectsConfiguration('pzstudio')) {
+                updateVsCodeSettings();
+            }
+        }),
+    );
 
     const executePZCommand = async (command: string, ...args: string[]) => {
         outputChannel.show();
@@ -153,4 +205,5 @@ export function activate(context: vscode.ExtensionContext) {
 export function deactivate() {
     setLogger(undefined);
     setProjectDir(undefined);
+    setVsCodeSettings(undefined, undefined);
 }

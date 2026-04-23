@@ -35,6 +35,29 @@ Access these commands via the **Command Palette** (`Ctrl+Shift+P` / `Cmd+Shift+P
 | `PZStudio: ModInfo Generate` | Generate mod.info files in your source tree. |
 | `PZStudio: Update`           | Sync libraries and documentation.            |
 
+## ⚙️ Configuration
+
+You can configure PZ Studio directly through VS Code settings (`settings.json`). These settings override the global `~/.pzstudio/config.json` but can be overridden by project-specific settings in your `project.json` where applicable.
+
+| Setting | Description |
+| :--- | :--- |
+| `pzstudio.outdir` | The directory where your built workshop files will be deployed (overrides global config, but overridden by `project.json`'s `outdir`). |
+| `pzstudio.useSymlinks` | Whether to use symlinks (junctions) when scaffolding templates (overrides global config). |
+| `pzstudio.templates.project.url` | Repository URL for the default project template (overrides global config). |
+| `pzstudio.templates.project.ref` | Git ref (branch, tag, or commit) for the project template. |
+| `pzstudio.templates.mod.url` | Repository URL for the default mod template (overrides global config). |
+| `pzstudio.templates.mod.ref` | Git ref (branch, tag, or commit) for the mod template. |
+| `pzstudio.templates.workshop.url` | Repository URL for the default workshop template (overrides global config). |
+| `pzstudio.templates.workshop.ref` | Git ref (branch, tag, or commit) for the workshop template. |
+| `pzstudio.templates.language.url` | Repository URL for the default language template (overrides global config). |
+| `pzstudio.templates.language.ref` | Git ref (branch, tag, or commit) for the language template. |
+
+**Precedence Order**:
+1. `project.json` (Project-specific, highest precedence)
+2. VS Code Workspace Settings (`.vscode/settings.json`)
+3. VS Code User Settings
+4. Global CLI Config (`~/.pzstudio/config.json`, lowest precedence)
+
 ## 📂 Project Structure
 
 A typical PZ Studio project looks like this:
