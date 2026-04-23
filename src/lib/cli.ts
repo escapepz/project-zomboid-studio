@@ -105,12 +105,9 @@ export async function runCLI(cmdName?: string, cmdArgs?: string[]) {
             return;
         }
 
-        let commandParams: any[] | undefined = cmdArgs;
-        if (!commandParams) {
-            const rawCmdArgs = processArgs().slice(1);
-            const { positionals } = splitArgs(rawCmdArgs);
-            commandParams = positionals.map((a) => parseArgType(a));
-        }
+        const rawCmdArgs = cmdArgs ?? processArgs().slice(1);
+        const { positionals } = splitArgs(rawCmdArgs);
+        const commandParams = positionals.map((a) => parseArgType(a));
 
         const command = {
             name: currentCmd,
@@ -150,7 +147,7 @@ export async function runCLI(cmdName?: string, cmdArgs?: string[]) {
                 break;
 
             case 'help':
-                await helpCmd(command.params[0] as string);
+                await helpCmd(positionals[0]);
                 break;
 
             case 'lang':

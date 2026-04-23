@@ -1,5 +1,5 @@
 import { addHelp } from '../help';
-import { info, log, warn } from '../logger';
+import { info, log, verbose, warn } from '../logger';
 import { resolveTemplateDir, TemplateCategory } from '../templateManager';
 
 addHelp(
@@ -9,7 +9,10 @@ addHelp(
     and resets the local cache to match the remote source.
 
     Usages:
-        pzstudio update - Refresh all global template caches from their remote sources.`,
+        pzstudio update - Refresh all global template caches from their remote sources.
+    
+    Flags:
+        --verbose        - Enable diagnostic output.`,
 );
 
 export async function updateCmd() {
@@ -26,7 +29,9 @@ export async function updateCmd() {
     for (const category of categories) {
         try {
             log(`- Updating '${category}' templates...`);
-            resolveTemplateDir(category, false, true);
+            verbose(`Requesting template resolution for category: ${category}`);
+            const path = resolveTemplateDir(category, false, true);
+            verbose(`Templates for '${category}' updated at: ${path}`);
             successCount++;
         } catch (e: any) {
             warn(`Failed to update ${category} template: ${e.message}`);

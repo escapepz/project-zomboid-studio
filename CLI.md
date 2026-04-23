@@ -1,79 +1,91 @@
 # pzstudio CLI Reference
 
-This document describes the `pzstudio` command-line interface based on the current implementation in `src/`.
+This document reflects the current implementation in `src/lib/cli.ts` and the command handlers in `src/lib/commands/`.
 
 ## Overview
 
-`pzstudio` is a TypeScript CLI for creating and maintaining Project Zomboid Lua mod projects.
+`pzstudio` is a TypeScript CLI for Project Zomboid mod scaffolding and project maintenance.
 
-It supports:
+Implemented commands:
 
-- project scaffolding
-- adding, deleting, renaming, and building mods
-- output directory configuration
-- template cache refresh
-- migration of legacy config formats
-- help and version output
+- `add`
+- `build`
+- `clean`
+- `delete`
+- `help`
+- `lang`
+- `migrate`
+- `modinfo`
+- `new`
+- `outdir`
+- `rename`
+- `update`
+- `watch`
 
 ## Global Behavior
 
 ### Entry point
 
 - Command: `pzstudio`
-- Main entry file: `src/index.ts`
-- The CLI is dispatched from `src/lib/cli.ts`
+- Main entry file: [`src/index.ts`](./src/index.ts)
+- CLI dispatcher: [`src/lib/cli.ts`](./src/lib/cli.ts)
 
-### Common flags
+### Global flags
+
+These flags are handled by the CLI parser:
 
 - `--help`
-  - Shows general help when used alone.
-  - Shows command-specific help when used with a command name.
+  - Shows general help with no command.
+  - Shows help for a specific command when used with a command name.
 - `--version`
   - Prints the package version and exits.
 - `--verbose`
-  - Enables diagnostic logging for commands that support verbose output.
+  - Enables verbose logging before the command runs.
 
-### Argument parsing rules
+### Argument parsing
 
-- The first non-flag token after `pzstudio` is treated as the command name.
-- Remaining tokens are treated as positional arguments.
-- Positional values are auto-parsed:
+- The first non-flag token is the command name (always treated as a raw string).
+- Remaining tokens are passed as positional arguments.
+- For most commands, positional values are type-coerced by the parser:
   - numeric strings become numbers
-  - `true` / `false` become booleans
-  - everything else stays a string
-- `--offline` and `--force-update` flags control template resolution.
-- `--symlinks` flag enables directory junctions for template folders.
-- **Template resolution**: The source of truth for template locations is the global `config.json` at `~/.pzstudio/config.json` (or hardcoded defaults). Certain commands support local overrides:
-  - `new` checks the current working directory for `.template-mod` and `.template-workshop`.
-  - `add` checks the project root for `.template-mod`.
-- **CLI Flags**: `--template` is **NOT supported** as a CLI flag. All template configuration must be done via the global `config.json` or by using the local override folders mentioned above.
+  - `true` and `false` become booleans
+  - everything else remains a string
+- Note: `help` lookups use raw string tokens to ensure numeric or boolean-like command names can be looked up.
 
-### Working directory rules
+### Command completion
 
-- Some commands must run inside an existing project directory.
-- `new` must run outside a project directory.
-- `build`, `clean`, `add`, `delete`, `rename`, and `migrate` require a project directory.
+- Most commands print `Command [<name>] completed.` when they finish successfully.
+- `build`, `clean`, `help`, and `modinfo` skip that generic completion message because they already produce their own output.
+
+## Common Project Rules
+
+- `new` must be run outside a project directory.
+- `add`, `build`, `clean`, `delete`, `rename`, `lang`, `modinfo`, and `watch` require an existing project directory.
+- `migrate` can run with or without a project; it always checks the global config and only processes `project.json` when one exists in the current directory.
+- `update` does not require a project directory.
+- `outdir` updates the global config stored under the CLI config path, not the project config.
 
 ## Command Summary
 
-| Command | Purpose | Requires project dir | Main outputs |
+| Command | Purpose | Requires project dir | Status |
 | --- | --- | --- | --- |
-| `add` | Add a mod to an existing project | Yes | New mod folder, updated `project.json` |
-| `build` | Build workshop output | Yes | Output directory under configured `outdir` |
-| `clean` | Remove built output | Yes | Deletes built workshop folder |
-| `delete` | Remove a mod from a project | Yes | Deletes mod folder and config entry |
-| `help` | Show help text | No | Console output only |
-| `lang` | Translation helper | Yes | Stub (Not implemented yet) |
-| `migrate` | Upgrade legacy config formats | No for global config, yes for project sync | Updates `config.json` and/or `project.json` |
-| `new` | Create a new project | No, must be outside a project | New project folder and scaffolding |
-| `outdir` | Set global output directory | No | Updates global `config.json` |
-| `rename` | Rename a mod | Yes | Renames mod folder, rewrites references, updates `project.json` |
-| `update` | Refresh template caches | No | Updates cached templates |
-| `watch` | Watch and sync output | Yes | Stub (Not implemented yet) |
+| `add` | Add a mod to an existing project | Yes | Implemented |
+| `build` | Build workshop output | Yes | Implemented |
+| `clean` | Remove build output | Yes | Implemented |
+| `delete` | Remove a mod from a project | Yes | Implemented |
+| `help` | Show help text | No | Implemented |
+| `lang` | Translation helper | Yes | Stub |
+| `migrate` | Upgrade legacy config and sync `mod.info` data | No | Implemented |
+| `modinfo` | Generate `mod.info` files | Yes | Implemented |
+| `new` | Create a new project | No, must be outside a project | Implemented |
+| `outdir` | Set global output directory | No | Implemented |
+| `rename` | Rename a mod | Yes | Implemented |
+| `update` | Refresh template caches | No | Implemented |
+| `watch` | Watch and sync output | Yes | Stub |
 
 ## `pzstudio help`
 
-Show general help or command help.
+Displays general help or command-specific help.
 
 ### Usage
 
@@ -84,15 +96,11 @@ pzstudio --help
 pzstudio <command> --help
 ```
 
-### Arguments
+### Behavior
 
-- `<command>` optional command name such as `build`, `new`, or `add`
-
-### Output
-
-- Without a command, prints the full command list.
-- With a command, prints the help text registered for that command.
-- Unknown commands raise `Unknown command [<command>]`.
+- With no command, prints the full command list.
+- With a known command, prints that command's registered help text.
+- With an unknown command, throws `Unknown command [<command>]`.
 
 ## `pzstudio new`
 
@@ -109,64 +117,52 @@ pzstudio new <projectTitle> <modId>
 
 - `<projectTitle>`
   - Required.
-  - Used as the display title for the project and workshop.
+  - Used for the workshop title and the default mod name.
 - `<modId>`
   - Optional.
-  - If omitted, it is generated from `projectTitle`.
-  - The generated ID is normalized into a filesystem-friendly lowercase style.
+  - If omitted, it is derived from `projectTitle` and normalized into a filesystem-friendly id.
 
 ### Flags
 
 - `--offline`
-  - Bypass network updates and use local cache or legacy templates.
+  - Skip remote refresh and use cached or legacy template data.
 - `--force-update`
-  - Force refresh of cached templates from remote sources.
+  - Force refresh of cached templates.
 - `--symlinks`
-  - Use directory junctions for template folders (if supported).
-- `--verbose`
-  - Print diagnostic output.
+  - Use directory junctions when scaffolding template folders, if supported.
 
 ### Preconditions
 
-- Must not be run inside an existing project directory.
+- Must not run inside an existing project directory.
 - Fails if the target project folder already exists.
 
-### Files created or updated
+### Behavior
 
-Inside the new project folder:
-
-- `project.json`
-- `<modId>/`
-- `.template-mod`
-- `.template-language`
-- `.libraries` if the template provides it
-- `workshop/`
-
-### Behavior details
-
-- Resolves templates based on these priority rules:
-  1.  **CWD Overrides**: Uses local `.template-mod` or `.template-workshop` folders in the current working directory (parent of the new project) if they exist and are non-empty.
-  2.  **Global Configuration**: Otherwise, resolves the template from the global `config.json` at `~/.pzstudio/config.json`.
-  3.  **Hardcoded Defaults**: If no global config entry exists, uses official PZStudio template repositories.
-- Copies or links the resolved templates into the new project:
-  - Project template into the project root.
-  - Mod template into `<project>/<modId>`.
-  - Workshop template into `<project>/workshop`.
-  - Shared template folders (like `.template-mod` and `.template-language`) into the project root.
-- Sets:
-  - `project.json.workshop.title = <projectTitle>`
-  - `project.json.mods[<modId>] = { name: <projectTitle>, description: '' }`
+- Resolves the project, mod, workshop, and language templates.
+- Prefers local overrides in the current working directory:
+  - `.template-mod`
+  - `.template-workshop`
+- Falls back to the global template configuration when local overrides are absent.
+- Creates:
+  - `project.json`
+  - `<modId>/`
+  - `workshop/`
+  - `.template-mod`
+  - `.template-language`
+  - `.libraries` when present in the project template
+- Sets `project.json.workshop.title` to the project title.
+- Adds the new mod entry to `project.json.mods`.
 - Runs experimental hooks:
   - `addProject`
   - `addMod`
 
 ### Output
 
-- Logs the project creation path on success.
+- Logs the created project path on success.
 
 ## `pzstudio add`
 
-Add a new mod to an existing project.
+Add a mod to an existing project.
 
 ### Usage
 
@@ -179,41 +175,34 @@ pzstudio add <modName> <modId>
 
 - `<modName>`
   - Required.
-  - Human-readable name stored in config.
+  - Stored as the mod name in `project.json`.
 - `<modId>`
   - Optional.
-  - If omitted, it is generated from `<modName>`.
+  - If omitted, it is derived from `modName`.
 
 ### Flags
 
 - `--offline`
-  - Bypass network updates and use local cache or legacy templates.
+  - Skip remote refresh and use cached or legacy template data.
 - `--force-update`
-  - Force refresh of cached templates from remote sources.
+  - Force refresh of cached templates.
 - `--symlinks`
-  - Use directory junctions for template folders (if supported).
+  - Use directory junctions when scaffolding template folders, if supported.
 - `--verbose`
-  - Print diagnostic output.
+  - Enable diagnostic output.
 
 ### Preconditions
 
-- Must be run inside a project directory.
-- Fails if the mod ID already exists in `project.json` or as a folder on disk.
+- Must run inside a project directory.
+- Fails if the mod id already exists in `project.json` or as a folder on disk.
 
-### Files created or updated
+### Behavior
 
-- `<project>/<modId>/`
-- `project.json`
-- `<project>/.template-mod` may be seeded if a remote template was used and no local template existed.
-
-### Behavior details
-
-- Resolves the mod template based on these priority rules:
-  1.  **Project-Local Override**: Uses the local `.template-mod` folder in the current project root if it exists and is non-empty.
-  2.  **Global Configuration**: Otherwise, resolves the mod template from the global `config.json`.
-  3.  **Hardcoded Defaults**: Falls back to the official PZStudio mod template.
-- Copies template files into the new mod folder.
-- Adds the mod to `project.json` with:
+- Prefers a project-local `.template-mod` folder when it exists and is non-empty.
+- Otherwise resolves the mod template from the global template configuration.
+- Scaffolds the mod folder under the project root.
+- Seeds `<project>/.template-mod` when a remote template was used and no local template existed.
+- Adds the mod entry to `project.json` with:
   - `name: <modName>`
   - `description: ''`
 - Runs experimental hook:
@@ -225,7 +214,7 @@ pzstudio add <modName> <modId>
 
 ## `pzstudio build`
 
-Build the workshop output for the project.
+Build the project into the configured output directory.
 
 ### Usage
 
@@ -239,78 +228,63 @@ pzstudio build --verbose
 ### Flags
 
 - `--production`
-  - Builds only the main workshop output.
+  - Builds the main workshop output.
 - `--development`
-  - Builds only the dev_branch workshop output.
+  - Builds the development `dev_branch` output.
 - `--verbose`
   - Enable diagnostic output.
 
 ### Preconditions
 
-- Must be run inside a project directory.
-- `project.json` must resolve successfully.
-- `project.json.outdir` (or global `config.json.outdir`) must be configured.
+- Must run inside a project directory.
+- `project.json` must be readable.
+- `project.json.outdir` must be configured.
 
-### Output layout
+### Behavior
 
-The build writes into the configured output directory:
+- With no target flags, builds the main workshop output.
+- `--production` also builds the main workshop output.
+- `--development` builds the `dev_branch` output.
+- The two target flags are mutually exclusive.
 
-- Main workshop output:
-  - `<outdir>/<workshop.title>/`
-- Dev branch workshop output:
-  - `<outdir>/<workshop.title> - dev_branch/`
+### Main output
 
-### Main build behavior
+- Output directory: `<outdir>/<workshop.title>/`
+- Copies the workshop template into the output root.
+- Copies each enabled mod into `Contents/mods/<modId>/`.
+- Generates `mod.info` according to `project.json.mods[modId].build.modInfo`.
+- Copies `workshop/preview.png` to the output root when present.
+- Generates `workshop.txt`.
 
-If no target flag is supplied, `build` produces the main workshop output.
+### Development output
 
-If `--production` is supplied, it also produces the main workshop output.
-
-Output contents:
-
-- workshop template copied into the output root
-- each project mod copied into `Contents/mods/<modId>/`
-- `mod.info` generated per mod unless disabled by config
-- `preview.png` copied from `<project>/workshop/preview.png` when present
-- `workshop.txt` generated in the output root
-
-### Development build behavior
-
-If `--development` is supplied, it produces a dev branch build with these differences:
-
-- mod IDs are suffixed with `_dev`
-- `mod.info` IDs use the `_dev` suffix
-- workshop visibility is forced to `unlisted`
-- workshop title gets ` - dev_branch`
-- `workshop.txt` omits the `id=` field
+- Output directory: `<outdir>/<workshop.title> - dev_branch/`
+- Mod ids are suffixed with `_dev`.
+- Generated `mod.info` ids use the `_dev` suffix.
+- `workshop.txt` omits the `id=` field.
+- Workshop visibility is forced to `unlisted`.
 
 ### `mod.info` generation
 
-Per mod, `build` checks `project.json.mods[modId].build.modInfo`:
+Per mod, the effective `build.modInfo` value is:
 
 - `skip`
-  - do not generate `mod.info`
+  - Do not generate `mod.info`.
 - `auto-if-missing`
-  - generate only if `mod.info` is absent
-- `auto`
-  - always generate `mod.info`
-- omitted
-  - treated as `skip`
+  - Generate only if `mod.info` does not already exist.
+- any other value
+  - Generates `mod.info`.
 
-If the field is omitted in `project.json`, the command prints a breaking-change warning because the default changed from `auto` to `skip`.
-
-### Conflicting flags
-
-- `--production` and `--development` cannot be used together.
+The build command currently treats an omitted `build.modInfo` as `skip`.
 
 ### Output
 
-- Prints per-file copy/generation logs.
-- Finishes with a build duration summary.
+- Prints copy and generation logs while building.
+- Ends with a build duration summary.
 
 ## `pzstudio clean`
 
-Delete the built workshop output for the main workshop target.
+Remove generated build output for the current project.
 
 ### Usage
 
@@ -320,17 +294,19 @@ pzstudio clean
 
 ### Preconditions
 
-- Must be run inside a project directory.
-- The target output directory must already exist.
+- Must run inside a project directory.
+- At least one build output directory must exist.
 
-### Files affected
+### Behavior
 
-- Deletes `<outdir>/<workshop.title>/`
+- Removes the main output directory.
+- Removes the development output directory if it exists.
+- Throws if neither output directory is found.
 
 ### Output
 
-- Prints a cleaning message and a completion time when successful.
-- Throws if the output folder does not exist.
+- Logs which output directories were removed.
+- Prints a completion time when successful.
 
 ## `pzstudio delete`
 
@@ -343,30 +319,22 @@ pzstudio delete <modId>
 pzstudio delete <modId> --verbose
 ```
 
-### Arguments
-
-- `<modId>`
-  - Required.
-
 ### Preconditions
 
-- Must be run inside a project directory.
+- Must run inside a project directory.
 
-### Files affected
+### Behavior
 
 - Deletes `<project>/<modId>/` if it exists.
-- Removes the mod entry from `project.json`.
-- Removes the mod ID from `project.json.excludes`.
-
-### Behavior details
-
-- If the mod folder is missing, it logs an error but still tries to update `project.json`.
+- Removes the mod from `project.json`.
+- Removes the mod id from `project.json.excludes`.
 - Runs experimental hook:
   - `removeMod`
 
 ### Output
 
 - Logs separate messages for folder deletion and config deletion.
+- Logs an error if the mod folder or config entry is missing.
 
 ## `pzstudio rename`
 
@@ -378,34 +346,24 @@ Rename a mod directory and update references inside the project.
 pzstudio rename <oldModId> <newModId>
 ```
 
-### Arguments
-
-- `<oldModId>`
-  - Existing mod ID.
-- `<newModId>`
-  - New mod ID.
-
 ### Preconditions
 
-- Must be run inside a project directory.
+- Must run inside a project directory.
 - `<oldModId>` must exist in `project.json`.
-- `<newModId>` must not already exist in `project.json` or as a folder.
+- `<newModId>` must not already exist in `project.json` or on disk.
 
-### Files affected
+### Behavior
 
-- Renames `<project>/<oldModId>` to `<project>/<newModId>`
-- Rewrites file contents under the renamed mod folder, replacing occurrences of `<oldModId>` with `<newModId>`
-- Updates `project.json`
-
-### Behavior details
-
-- Copies the old mod folder to the new ID, then deletes the old folder.
-- Searches all files under the new mod directory and replaces text occurrences of the old mod ID.
-- Updates the mod key in `project.json` from old ID to new ID.
+- Copies the old mod folder to the new id.
+- Deletes the old mod folder.
+- Rewrites file contents under the renamed mod folder, replacing occurrences of `<oldModId>` with `<newModId>`.
+- Updates `project.json`.
+- Runs experimental hook:
+  - `renameMod`
 
 ### Output
 
-- Logs each file it rewrites.
+- Logs every file it rewrites.
 
 ## `pzstudio outdir`
 
@@ -423,53 +381,57 @@ pzstudio outdir <newOutDir>
   - Required.
   - Relative paths are resolved to an absolute path.
 
+### Flags
+
+- `--verbose`
+  - Enable diagnostic output.
+
 ### Preconditions
 
 - The target directory must already exist.
 
-### Files affected
+### Behavior
 
-- Updates the global `config.json` used by the CLI at `~/.pzstudio/config.json`.
-
-### Behavior details
-
-- Rejects a no-op if the configured output directory already matches the new value.
+- Updates the global CLI config.
+- Throws if the configured output directory already matches the requested value.
 
 ### Output
 
-- Confirms the updated output directory path on success.
+- Confirms the updated path on success.
 
 ## `pzstudio update`
 
-Refresh the global template caches used by the CLI.
+Refresh the global template caches.
 
 ### Usage
 
 ```bash
 pzstudio update
+pzstudio update --verbose
 ```
 
-### Behavior details
+### Flags
 
-- Refreshes all template categories:
+- `--verbose`
+  - Enable diagnostic output.
+
+### Behavior
+
+- Refreshes these template categories:
   - `project`
   - `mod`
   - `workshop`
   - `language`
-- Pulls the latest changes from remote sources and resets the local cache to match.
-
-### Files affected
-
-- Template cache files managed by the CLI.
+- Forces a remote refresh for each category.
 
 ### Output
 
 - Reports per-category success or failure.
-- Prints a final summary indicating whether all caches refreshed successfully.
+- Prints a final summary of the refresh result.
 
 ## `pzstudio migrate`
 
-Upgrade legacy config files to the current shape and sync `mod.info` data into `project.json`.
+Upgrade legacy config files and sync `mod.info` data into `project.json`.
 
 ### Usage
 
@@ -477,30 +439,52 @@ Upgrade legacy config files to the current shape and sync `mod.info` data into `
 pzstudio migrate
 ```
 
-### Files affected
+### Behavior
 
-- Global `config.json`
-- Local `project.json`
-- Per-mod `mod.info` files are read, not rewritten.
-
-### Behavior details
-
-- Checks the global config file and upgrades it if needed.
-- Checks `project.json` and upgrades it if needed.
-- For each mod in `project.json`, if a matching `mod.info` exists:
-  - reads it
-  - imports fields into `project.json` when the field is missing there
-  - does not overwrite existing `project.json` values
-- Ignores the `id` field from `mod.info` during sync because the mod ID is already the key in `project.json`.
+- Checks the global config and upgrades it if needed.
+- Checks `project.json` in the current directory and upgrades it if needed.
+- For each mod, reads `mod.info` from the mod root or supported branch folders.
+- Imports missing fields from `mod.info` into `project.json`.
+- Does not overwrite existing `project.json` values.
+- Ignores the `id` field from `mod.info` because the mod id is already the key in `project.json`.
 
 ### Output
 
 - Reports whether each file was migrated or already up to date.
 - Ends with `Migration complete.`
 
+## `pzstudio modinfo`
+
+Generate `mod.info` files in the source tree.
+
+### Usage
+
+```bash
+pzstudio modinfo generate
+pzstudio modinfo generate <modId>
+pzstudio modinfo generate --verbose
+```
+
+### Flags
+
+- `--verbose`
+  - Enable diagnostic output.
+
+### Behavior
+
+- Only the `generate` action is implemented.
+- With no mod id, generates `mod.info` for all eligible mods.
+- With a mod id, generates `mod.info` only for that mod.
+- Skips mods whose `build.modInfo` value is `skip`.
+- Uses `resolveModInfoTargets()` to decide which mod folders are valid output targets.
+
+### Output
+
+- Logs generation or skip messages per mod.
+
 ## `pzstudio lang`
 
-Translation language helper. (Stub)
+Translation language helper.
 
 ### Usage
 
@@ -509,13 +493,13 @@ pzstudio lang <lang>
 pzstudio lang <lang> <toLang>
 ```
 
-### Current behavior
+### Status
 
-- Throws `Not implemented yet!`
+- Not implemented yet.
 
 ## `pzstudio watch`
 
-Watch the project and sync the output directory. (Stub)
+Watch the project and keep the output directory synced.
 
 ### Usage
 
@@ -523,9 +507,9 @@ Watch the project and sync the output directory. (Stub)
 pzstudio watch
 ```
 
-### Current behavior
+### Status
 
-- Throws `Not implemented yet!`
+- Not implemented yet.
 
 ## File Layout Cheatsheet
 
@@ -538,42 +522,28 @@ Typical project contents after `new`:
 - `<modId>/`
 - `.template-mod/`
 - `.template-language/`
-- `.libraries/` if provided by the template
+- `.libraries/` when provided by the template
 
-### Build output
-
-Main build:
+### Main build output
 
 - `<outdir>/<workshop.title>/`
   - `Contents/mods/<modId>/`
   - `mod.info`
   - `workshop.txt`
-  - `preview.png` when present in the source project
+  - `preview.png` when present
 
-Dev build:
+### Development build output
 
 - `<outdir>/<workshop.title> - dev_branch/`
   - `Contents/mods/<modId>_dev/`
   - `mod.info`
   - `workshop.txt`
-  - `preview.png` when present in the source project
+  - `preview.png` when present
 
-## Practical Usage Flow
+## Notes
 
-1. Set the output directory with `pzstudio outdir <path>`.
-2. Create a project with `pzstudio new <projectTitle>`.
-3. Add extra mods with `pzstudio add <modName>`.
-4. Make changes in the project folders.
-5. Build output with `pzstudio build`.
-6. Clean stale output with `pzstudio clean` when needed.
-7. Refresh templates with `pzstudio update` if you want the latest cached templates.
-
-## Notes and Caveats
-
-- `lang` and `watch` are listed in help, but both are stubs right now.
-- `build` has a breaking change around `build.modInfo`; missing values now behave like `skip`.
-- `new` can use local `.template-mod` and `.template-workshop` folders in the current working directory when present and non-empty.
-- `add` uses the local `.template-mod` folder in the project root if it exists; otherwise, it resolves from global config and seeds the local folder.
-- `migrate` is safe to run repeatedly; it only upgrades when it detects an older shape.
-- **Templates**: Project-level `templates` field in `project.json` is **NO LONGER supported** and will fail validation. Use global `config.json` at `~/.pzstudio/config.json` instead.
-
+- `build` treats an omitted `build.modInfo` as `skip`.
+- `new` can use local `.template-mod` and `.template-workshop` folders from the current working directory when they exist and are non-empty.
+- `add` uses a local `.template-mod` in the project root if present; otherwise it resolves a template and seeds the local folder.
+- `migrate` is safe to run repeatedly.
+- `lang` and `watch` are registered in help, but both currently throw `Not implemented yet!`.

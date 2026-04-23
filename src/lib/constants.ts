@@ -11,10 +11,10 @@ export const DEFAULT_TEMPLATES: Record<TemplateCategory, ITemplateConfig> = {
     },
     workshop: {
         url: 'https://github.com/escapepz/pzstudio-template-workshop.git',
-        ref: 'default',
+        ref: '42.0',
     },
     language: {
         url: 'https://github.com/escapepz/pzstudio-template-language.git',
-        ref: 'default',
+        ref: '42.13.1',
     },
 };
