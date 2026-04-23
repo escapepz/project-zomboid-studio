@@ -182,10 +182,13 @@ export function validateProject(config: any, context: ValidationContext): void {
                 );
             }
 
-            if (!guards.isString(mod.description)) {
+            if (
+                !guards.isString(mod.description) &&
+                !guards.isArray(mod.description)
+            ) {
                 context.addError(
                     formatFieldPath('mods', modId, 'description'),
-                    'Field "description" must be a string',
+                    'Field "description" must be a string or array of strings',
                     'Add a description for this mod',
                 );
             }
@@ -277,20 +280,38 @@ export function validateProject(config: any, context: ValidationContext): void {
                 );
             }
 
-            if (mod.pack !== undefined && !guards.isString(mod.pack)) {
-                context.addError(
-                    formatFieldPath('mods', modId, 'pack'),
-                    'Field "pack" must be a string',
-                    'Specify a .pack file to include with this mod',
-                );
+            if (mod.pack !== undefined) {
+                const packs = guards.isArray(mod.pack) ? mod.pack : [mod.pack];
+                packs.forEach((p: any, i: number) => {
+                    const packPath = guards.isArray(mod.pack)
+                        ? formatFieldPath('mods', modId, 'pack', i)
+                        : formatFieldPath('mods', modId, 'pack');
+                    if (!guards.isString(p)) {
+                        context.addError(
+                            packPath,
+                            'Pack entry must be a string',
+                            'Specify texture pack name (e.g., "npcshop" or "npcshop ui")',
+                        );
+                    }
+                });
             }
 
-            if (mod.tiledef !== undefined && !guards.isString(mod.tiledef)) {
-                context.addError(
-                    formatFieldPath('mods', modId, 'tiledef'),
-                    'Field "tiledef" must be a string',
-                    'Specify a tile definition (e.g., "mytiles 123")',
-                );
+            if (mod.tiledef !== undefined) {
+                const tiledefs = guards.isArray(mod.tiledef)
+                    ? mod.tiledef
+                    : [mod.tiledef];
+                tiledefs.forEach((t: any, i: number) => {
+                    const tiledefPath = guards.isArray(mod.tiledef)
+                        ? formatFieldPath('mods', modId, 'tiledef', i)
+                        : formatFieldPath('mods', modId, 'tiledef');
+                    if (!guards.isString(t)) {
+                        context.addError(
+                            tiledefPath,
+                            'Tiledef entry must be a string',
+                            'Specify tile definition name and number (e.g., "npcshop 1212")',
+                        );
+                    }
+                });
             }
 
             if (mod.category !== undefined && !guards.isString(mod.category)) {

@@ -1,4 +1,52 @@
-.pzstudioignore
-.libraries/.git
-.libraries/README.md
-.libraries/CONTRIBUTING.md
+# .pzstudioignore example
+#
+# This file controls what PZStudio skips when it scaffolds or builds content
+# from a template or project tree.
+#
+# Rules:
+# - One pattern per line.
+# - Blank lines are ignored.
+# - Lines starting with `#` are comments.
+# - Paths are matched relative to the directory that contains this file.
+# - Use `/` for folders. A trailing `/` is optional.
+#
+# Built-in exclusions already handled by PZStudio:
+# - `.gitkeep`
+# - `.git`
+# - `.github`
+# - `.gitmodules`
+#
+# Notes for this codebase:
+# - `pzstudio new` copies the project template, mod template, workshop template,
+#   and shared folders like `.libraries`.
+# - `pzstudio build` also ignores dotfiles in copied output, except
+#   `.pzstudioignore` itself.
+# - Nested `.pzstudioignore` files are supported. The closest file wins.
+
+# Keep local editor metadata out of generated output
+.vscode/
+.idea/
+.fleet/
+
+# Keep generated or packaged files out of templates and builds
+dist/
+build/
+out/
+coverage/
+*.log
+
+# Keep local cache and temporary files out of the scaffold
+.cache/
+.temp/
+tmp/
+
+# Ignore optional local-only mod resources
+screenshots/
+notes/
+
+# Example: ignore one file
+README-draft.md
+
+# Example: ignore a nested folder in a mod or shared folder
+assets/generated/
+

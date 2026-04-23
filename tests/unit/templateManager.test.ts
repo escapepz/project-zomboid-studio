@@ -5,6 +5,7 @@ import {
     createIgnoreFilter,
     readGlobalConfig,
     resolveTemplateDir,
+    getConfigPath,
 } from '../../src/lib/templateManager';
 import fs, { mkdtempSync, writeFileSync, mkdirSync, rmSync } from 'fs';
 import { join } from 'path';
@@ -217,6 +218,47 @@ describe('templateManager - config and resolution', () => {
             vi.spyOn(fs, 'existsSync').mockReturnValue(false);
             const config = readGlobalConfig();
             expect(config.templates).toBeDefined();
+            expect(config.useSymlinks).toBe(true);
+            expect(config.outdir).toBeDefined();
+        });
+
+        it('should normalize empty templates to defaults', () => {
+            vi.spyOn(fs, 'existsSync').mockReturnValue(true);
+            vi.spyOn(fs, 'readFileSync').mockReturnValue(
+                JSON.stringify({ templates: {} }),
+            );
+            const config = readGlobalConfig();
+            expect(config.templates.project).toBeDefined();
+            expect(config.templates.project?.url).toContain(
+                'pzstudio-template-project',
+            );
+        });
+
+        it('should normalize missing useSymlinks to true', () => {
+            vi.spyOn(fs, 'existsSync').mockReturnValue(true);
+            vi.spyOn(fs, 'readFileSync').mockReturnValue(
+                JSON.stringify({ templates: {} }),
+            );
+            const config = readGlobalConfig();
+            expect(config.useSymlinks).toBe(true);
+        });
+
+        it('should preserve existing user values', () => {
+            vi.spyOn(fs, 'existsSync').mockReturnValue(true);
+            vi.spyOn(fs, 'readFileSync').mockReturnValue(
+                JSON.stringify({
+                    templates: { project: { url: 'custom-url' } },
+                    useSymlinks: false,
+                    outdir: '/custom/out',
+                }),
+            );
+            const config = readGlobalConfig();
+            expect(config.templates.project?.url).toBe('custom-url');
+            expect(config.templates.mod?.url).toContain(
+                'pzstudio-template-mod',
+            ); // Filled default
+            expect(config.useSymlinks).toBe(false);
+            expect(config.outdir).toBe('/custom/out');
         });
     });
 
@@ -279,6 +321,60 @@ describe('templateManager - config and resolution', () => {
             // Verify global config URL was used
             expect(path).toContain('global-url');
             expect(path).not.toContain('project-url');
+        });
+    });
+
+    describe('migrateGlobalConfigIfNeeded', () => {
+        it('should migrate legacy config.json and materialize defaults', () => {
+            const configPath = getConfigPath();
+            vi.spyOn(fs, 'existsSync').mockImplementation((p) => {
+                if (typeof p !== 'string') return false;
+                return p.includes('config.json') || p.includes('.pzstudio');
+            });
+            // Use different values for different files to avoid collision
+            vi.spyOn(fs, 'readFileSync').mockImplementation((p) => {
+                if (String(p).includes('config.json'))
+                    return JSON.stringify({ templates: {} });
+                return 'backup-outdir';
+            });
+            const writeSpy = vi.spyOn(fs, 'writeFileSync');
+
+            templateManager.migrateGlobalConfigIfNeeded();
+
+            expect(writeSpy).toHaveBeenCalled();
+            const lastCall =
+                writeSpy.mock.calls[writeSpy.mock.calls.length - 1];
+            const written = JSON.parse(lastCall[1] as string);
+            expect(written.useSymlinks).toBe(true);
+            expect(written.templates.project).toBeDefined();
+            expect(written.outdir).toBe('backup-outdir');
+        });
+
+        it('should preserve existing values during migration', () => {
+            const configPath = getConfigPath();
+            vi.spyOn(fs, 'existsSync').mockImplementation((p) => {
+                if (typeof p !== 'string') return false;
+                return p.includes('config.json') || p.includes('.pzstudio');
+            });
+            vi.spyOn(fs, 'readFileSync').mockImplementation((p) => {
+                if (String(p).includes('config.json'))
+                    return JSON.stringify({
+                        templates: { project: { url: 'old' } },
+                        useSymlinks: false,
+                    });
+                return 'backup-outdir';
+            });
+            const writeSpy = vi.spyOn(fs, 'writeFileSync');
+
+            templateManager.migrateGlobalConfigIfNeeded();
+
+            expect(writeSpy).toHaveBeenCalled();
+            const lastCall =
+                writeSpy.mock.calls[writeSpy.mock.calls.length - 1];
+            const written = JSON.parse(lastCall[1] as string);
+            expect(written.useSymlinks).toBe(false);
+            expect(written.templates.project.url).toBe('old');
+            expect(written.templates.mod).toBeDefined(); // Filled default
         });
     });
 });

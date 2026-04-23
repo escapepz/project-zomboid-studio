@@ -409,7 +409,12 @@ export function generateModInfoText(
         if (mod.name) lines.push(`name=${mod.name}`);
 
         // description
-        if (mod.description) lines.push(`description=${mod.description}`);
+        if (mod.description) {
+            const descLines = Array.isArray(mod.description)
+                ? mod.description
+                : [mod.description];
+            descLines.forEach((d) => lines.push(`description=${d}`));
+        }
 
         // author
         if (mod.author) lines.push(`author=${mod.author}`);
@@ -470,10 +475,22 @@ export function generateModInfoText(
             );
 
         // pack
-        if (mod.pack) lines.push(`pack=${mod.pack}`);
+        if (mod.pack) {
+            const packs = Array.isArray(mod.pack) ? mod.pack : [mod.pack];
+            packs.forEach((p) => {
+                lines.push(`pack=${p}`);
+            });
+        }
 
         // tiledef
-        if (mod.tiledef) lines.push(`tiledef=${mod.tiledef}`);
+        if (mod.tiledef) {
+            const tiledefs = Array.isArray(mod.tiledef)
+                ? mod.tiledef
+                : [mod.tiledef];
+            tiledefs.forEach((t) => {
+                lines.push(`tiledef=${t}`);
+            });
+        }
 
         // category
         if (mod.category) lines.push(`category=${mod.category}`);
@@ -527,11 +544,14 @@ export function parseModInfoText(
 ): Partial<IModConfig> & { id?: string } {
     const lines = content.split('\n');
     const result: any = {
+        description: [],
         poster: [],
         require: [],
         incompatible: [],
         loadModAfter: [],
         loadModBefore: [],
+        pack: [],
+        tiledef: [],
     };
 
     for (let line of lines) {
@@ -546,19 +566,43 @@ export function parseModInfoText(
 
         switch (key) {
             case 'id':
+                result[key] = value;
+                break;
             case 'name':
-            case 'description':
+                result[key] = value;
+                break;
             case 'author':
+                result[key] = value;
+                break;
             case 'modversion':
+                result[key] = value;
+                break;
             case 'icon':
-            case 'pack':
-            case 'tiledef':
+                result[key] = value;
+                break;
             case 'category':
+                result[key] = value;
+                break;
             case 'url':
+                result[key] = value;
+                break;
             case 'versionMin':
+                result[key] = value;
+                break;
             case 'versionMax':
                 result[key] = value;
                 break;
+            case 'description':
+                result.description.push(value);
+                break;
+            case 'pack': {
+                result.pack.push(value);
+                break;
+            }
+            case 'tiledef': {
+                result.tiledef.push(value);
+                break;
+            }
             case 'poster':
                 result.poster.push(value);
                 break;
@@ -588,6 +632,10 @@ export function parseModInfoText(
     }
 
     // Clean up empty arrays
+    if (result.description.length === 0) delete result.description;
+    else if (result.description.length === 1)
+        result.description = result.description[0];
+
     if (result.poster.length === 0) delete result.poster;
     else if (result.poster.length === 1) result.poster = result.poster[0];
 
@@ -596,19 +644,27 @@ export function parseModInfoText(
     if (result.loadModAfter.length === 0) delete result.loadModAfter;
     if (result.loadModBefore.length === 0) delete result.loadModBefore;
 
+    if (result.pack.length === 0) delete result.pack;
+    else if (result.pack.length === 1) result.pack = result.pack[0];
+
+    if (result.tiledef.length === 0) delete result.tiledef;
+    else if (result.tiledef.length === 1) result.tiledef = result.tiledef[0];
+
     return result;
 }
 
 /**
  * Update experimental package scripts
- * @param action The action to perform ('addProject', 'addMod', 'removeMod')
+ * @param action The action to perform ('addProject', 'addMod', 'removeMod', 'renameMod')
  * @param projectDir The project directory
  * @param modId The mod id (optional)
+ * @param newModId The new mod id (required for 'renameMod')
  */
 export function updateExperimentalScripts(
-    action: 'addProject' | 'addMod' | 'removeMod',
+    action: 'addProject' | 'addMod' | 'removeMod' | 'renameMod',
     projectDir: string,
     modId?: string,
+    newModId?: string,
 ) {
     try {
         const scriptPath =
@@ -638,6 +694,10 @@ export function updateExperimentalScripts(
             case 'removeMod':
                 if (script.removeModScripts && modId)
                     script.removeModScripts(projectDir, modId);
+                break;
+            case 'renameMod':
+                if (script.renameModScripts && modId && newModId)
+                    script.renameModScripts(projectDir, modId, newModId);
                 break;
         }
     } catch (e) {

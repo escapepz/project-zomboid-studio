@@ -101,6 +101,8 @@ describe('Helper Coverage Gaps', () => {
             updateExperimentalScripts('addProject', '/dir');
             updateExperimentalScripts('addMod', '/dir', 'mod1');
             updateExperimentalScripts('removeMod', '/dir', 'mod1');
+            // renameMod with modId but no newModId — covers the falsy `&& newModId` branch (helper.ts:699)
+            updateExperimentalScripts('renameMod', '/dir', 'mod1', undefined);
         } finally {
             if (fsReal.existsSync(tempScriptPath)) {
                 fsReal.unlinkSync(tempScriptPath);
@@ -118,7 +120,8 @@ describe('Helper Coverage Gaps', () => {
             module.exports = {
                 addProjectScripts: (dir) => { global.test_addProjectDir = dir; },
                 addModScripts: (dir, id) => { global.test_addModDir = dir; global.test_addModId = id; },
-                removeModScripts: (dir, id) => { global.test_removeModDir = dir; global.test_removeModId = id; }
+                removeModScripts: (dir, id) => { global.test_removeModDir = dir; global.test_removeModId = id; },
+                renameModScripts: (dir, oldId, newId) => { global.test_renameModDir = dir; global.test_renameOldId = oldId; global.test_renameNewId = newId; }
             };
         `;
 
@@ -158,6 +161,11 @@ describe('Helper Coverage Gaps', () => {
             updateExperimentalScripts('removeMod', '/dir', 'mod1');
             expect((global as any).test_removeModDir).toBe('/dir');
             expect((global as any).test_removeModId).toBe('mod1');
+
+            updateExperimentalScripts('renameMod', '/dir', 'oldMod', 'newMod');
+            expect((global as any).test_renameModDir).toBe('/dir');
+            expect((global as any).test_renameOldId).toBe('oldMod');
+            expect((global as any).test_renameNewId).toBe('newMod');
         } finally {
             if (fsReal.existsSync(tempScriptPath)) {
                 fsReal.unlinkSync(tempScriptPath);
@@ -167,6 +175,9 @@ describe('Helper Coverage Gaps', () => {
             delete (global as any).test_addModId;
             delete (global as any).test_removeModDir;
             delete (global as any).test_removeModId;
+            delete (global as any).test_renameModDir;
+            delete (global as any).test_renameOldId;
+            delete (global as any).test_renameNewId;
         }
     });
 });

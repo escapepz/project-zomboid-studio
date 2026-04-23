@@ -141,6 +141,58 @@ describe('Validation', () => {
                     .find((e) => e.location.includes('templates'))?.problem,
             ).toContain('no longer supported');
         });
+
+        it('should report error for non-string pack entry', () => {
+            const config = {
+                workshop: { title: 'Test', visibility: 'public', tags: [] },
+                mods: {
+                    mod1: {
+                        name: 'Mod 1',
+                        description: 'Desc',
+                        pack: [{ name: 'legacy' }],
+                    },
+                },
+            };
+            validateProject(config, context);
+            expect(context.hasErrors()).toBe(true);
+            expect(
+                context.getErrors().some((e) => e.location.includes('pack')),
+            ).toBe(true);
+        });
+
+        it('should report error for non-string tiledef entry', () => {
+            const config = {
+                workshop: { title: 'Test', visibility: 'public', tags: [] },
+                mods: {
+                    mod1: {
+                        name: 'Mod 1',
+                        description: 'Desc',
+                        tiledef: [{ name: 'legacy', fileNumber: 123 }],
+                    },
+                },
+            };
+            validateProject(config, context);
+            expect(context.hasErrors()).toBe(true);
+            expect(
+                context.getErrors().some((e) => e.location.includes('tiledef')),
+            ).toBe(true);
+        });
+
+        it('should pass for valid string array pack and tiledef', () => {
+            const config = {
+                workshop: { title: 'Test', visibility: 'public', tags: [] },
+                mods: {
+                    mod1: {
+                        name: 'Mod 1',
+                        description: 'Desc',
+                        pack: ['pack1', 'pack2'],
+                        tiledef: ['tile1 123', 'tile2 456'],
+                    },
+                },
+            };
+            validateProject(config, context);
+            expect(context.hasErrors()).toBe(false);
+        });
     });
 
     describe('validateConfig', () => {

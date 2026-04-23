@@ -1,0 +1,73 @@
+{
+    // Human-readable metadata for the Steam Workshop entry.
+    "workshop": {
+        // Workshop title used for the output folder name and workshop.txt.
+        "title": "My Project",
+
+        // Optional numeric Steam Workshop item ID.
+        // Leave this out for new projects.
+        "id": 1234567890,
+
+        // Required. Use one of: public, friendsOnly, private, unlisted.
+        "visibility": "public",
+
+        // Required. Use Workshop tags that match your mod type.
+        "tags": ["QoL", "Framework"]
+    },
+
+    // Mod IDs are the folder names inside the project root.
+    // Each mod entry becomes a mod.info source when building.
+    "mods": {
+        "my_mod": {
+            "name": "My Mod",
+            "description": [
+                "Main gameplay mod",
+                "Built for schema-driven metadata sync"
+            ],
+
+            // Optional metadata written into mod.info when present.
+            "author": "Your Name",
+            "modversion": "1.0.0",
+            "category": "Items",
+            "url": "https://example.com/my-mod",
+            "versionMin": "42.0",
+            "versionMax": "42.17.0",
+
+            // Optional resources. These are common PZ file names.
+            "poster": "poster.png",
+            "icon": "icon.png",
+
+            // Schema-driven repeated fields.
+            "pack": ["npcshop", "playershop"],
+            "tiledef": ["npcshop 1212", "playershop 1313"],
+
+            // Optional dependencies and load-order hints.
+            "require": ["base"],
+            "incompatible": ["old_mod"],
+            "loadModAfter": ["other_mod"],
+            "loadModBefore": ["late_mod"],
+
+            // Build behavior for this mod.
+            // "skip" is the default when omitted.
+            "build": {
+                "modInfo": "auto-if-missing"
+            }
+        },
+
+        "utility_mod": {
+            "name": "Utility Mod",
+            "description": "Shared helper functions used by other mods"
+        }
+    },
+
+    // Mod IDs listed here are excluded from build output and delete/rename flows.
+    "excludes": ["utility_mod"],
+
+    // Optional project-local output directory.
+    // If omitted, PZStudio falls back to the global config or the default workshop folder.
+    "outdir": "./out",
+
+    // Optional project-local symlink preference.
+    // When true, `pzstudio new` and some scaffold steps may use junctions on Windows.
+    "useSymlinks": false
+}

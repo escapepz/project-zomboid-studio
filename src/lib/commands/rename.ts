@@ -6,6 +6,7 @@ import {
     getFilesRecursively,
     projectDir,
     readProjectConfig,
+    updateExperimentalScripts,
     updateProjectConfig,
 } from '../helper';
 import { log, verbose } from '../logger';
@@ -75,4 +76,7 @@ export function renameCmd(oldModId: string, newModId: string) {
     delete projectConfig.mods[oldModId];
     updateProjectConfig(join(projectPath, 'project.json'), projectConfig);
     log(`- Mod '${oldModId}' updated to '${newModId}' in project.json!`);
+
+    // Update experimental package scripts
+    updateExperimentalScripts('renameMod', projectPath, oldModId, newModId);
 }

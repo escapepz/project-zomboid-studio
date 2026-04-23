@@ -95,7 +95,7 @@ describe('migrate command e2e', () => {
 
             // 3. Verify upgraded config.json
             const upgraded = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-            expect(upgraded.useSymlinks).toBe(false);
+            expect(upgraded.useSymlinks).toBe(true);
             expect(upgraded.outdir).toBe('some/path');
         } catch (e) {
             console.log('STDOUT:', result.stdout.join('\n'));

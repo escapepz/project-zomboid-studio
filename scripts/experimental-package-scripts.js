@@ -78,8 +78,37 @@ function removeModScripts(projectDir, modId) {
     fs.writeFileSync(packagePath, JSON.stringify(pkg, null, 4) + '\n', 'utf8');
 }
 
+/**
+ * Rename experimental mod scripts in package.json
+ * @param {string} projectDir
+ * @param {string} oldModId
+ * @param {string} newModId
+ */
+function renameModScripts(projectDir, oldModId, newModId) {
+    const packagePath = path.join(projectDir, 'package.json');
+    if (!fs.existsSync(packagePath)) return;
+
+    const pkg = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
+    if (!pkg.scripts) return;
+
+    for (const name of Object.keys(MOD_SCRIPTS)) {
+        const oldScriptName = name.replaceAll('{modId}', oldModId);
+        if (!(oldScriptName in pkg.scripts)) continue;
+
+        const newScriptName = name.replaceAll('{modId}', newModId);
+        const oldContent = pkg.scripts[oldScriptName];
+        const newContent = oldContent.replaceAll(oldModId, newModId);
+
+        delete pkg.scripts[oldScriptName];
+        pkg.scripts[newScriptName] = newContent;
+    }
+
+    fs.writeFileSync(packagePath, JSON.stringify(pkg, null, 4) + '\n', 'utf8');
+}
+
 module.exports = {
     addProjectScripts,
     addModScripts,
     removeModScripts,
+    renameModScripts,
 };

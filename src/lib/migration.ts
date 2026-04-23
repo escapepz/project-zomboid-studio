@@ -1,5 +1,8 @@
 import { IProjectConfig, IModConfig } from './project';
-import { parseModInfoText } from './helper';
+import { join } from 'path';
+import { existsSync, readFileSync } from 'fs';
+import { homedir } from 'os';
+import { DEFAULT_TEMPLATES } from './constants';
 
 /**
  * Result of a migration check.
@@ -121,11 +124,17 @@ export const migration = {
      * Detects if config.json needs migration.
      */
     checkConfig: (config: any): MigrationResult => {
-        // config.json migration is usually just filling defaults,
-        // but we might want to materialize them if they are missing.
         const issues: string[] = [];
         if (config.useSymlinks === undefined)
             issues.push('missing "useSymlinks"');
+
+        if (!config.templates || Object.keys(config.templates).length === 0) {
+            issues.push('missing or empty "templates"');
+        }
+
+        if (!config.outdir) {
+            issues.push('missing "outdir"');
+        }
 
         if (issues.length > 0) {
             return {
@@ -141,7 +150,38 @@ export const migration = {
      */
     upgradeConfig: (config: any): any => {
         const upgraded = JSON.parse(JSON.stringify(config));
-        if (upgraded.useSymlinks === undefined) upgraded.useSymlinks = false;
+
+        if (upgraded.useSymlinks === undefined) {
+            upgraded.useSymlinks = true;
+        }
+
+        if (
+            !upgraded.templates ||
+            Object.keys(upgraded.templates).length === 0
+        ) {
+            upgraded.templates = { ...DEFAULT_TEMPLATES };
+        } else {
+            upgraded.templates = {
+                ...DEFAULT_TEMPLATES,
+                ...upgraded.templates,
+            };
+        }
+
+        if (!upgraded.outdir) {
+            const configDir = join(homedir(), '.pzstudio');
+            const backupPath = join(configDir, '.pzstudio.bak');
+            if (existsSync(backupPath)) {
+                try {
+                    upgraded.outdir = readFileSync(backupPath, 'utf-8').trim();
+                } catch {
+                    // Fall through
+                }
+            }
+            if (!upgraded.outdir) {
+                upgraded.outdir = join(homedir(), 'Zomboid', 'Workshop');
+            }
+        }
+
         return upgraded;
     },
 
@@ -178,6 +218,92 @@ export const migration = {
      * Parses mod.info content into a partial IModConfig.
      */
     parseModInfo: (content: string): Partial<IModConfig> & { id?: string } => {
-        return parseModInfoText(content);
+        // Simple parser to avoid dependency on helper.ts
+        const lines = content.split('\n');
+        const result: any = {
+            description: [],
+            poster: [],
+            require: [],
+            incompatible: [],
+            loadModAfter: [],
+            loadModBefore: [],
+            pack: [],
+            tiledef: [],
+        };
+
+        for (let line of lines) {
+            line = line.trim();
+            if (!line || line.startsWith('//') || line.startsWith('#'))
+                continue;
+
+            const eqIndex = line.indexOf('=');
+            if (eqIndex === -1) continue;
+
+            const key = line.substring(0, eqIndex).trim();
+            const value = line.substring(eqIndex + 1).trim();
+
+            switch (key) {
+                case 'id':
+                case 'name':
+                case 'author':
+                case 'modversion':
+                case 'icon':
+                case 'category':
+                case 'url':
+                case 'versionMin':
+                case 'versionMax':
+                    result[key] = value;
+                    break;
+                case 'description':
+                    result.description.push(value);
+                    break;
+                case 'pack':
+                    result.pack.push(value);
+                    break;
+                case 'tiledef':
+                    result.tiledef.push(value);
+                    break;
+                case 'poster':
+                    result.poster.push(value);
+                    break;
+                case 'require':
+                case 'incompatible':
+                case 'loadModAfter':
+                case 'loadModBefore':
+                    result[key].push(
+                        ...value.split(',').map((s: string) => s.trim()),
+                    );
+                    break;
+                default:
+                    result[key] = value;
+                    break;
+            }
+        }
+
+        // Clean up empty arrays
+        const arrays = [
+            'description',
+            'poster',
+            'require',
+            'incompatible',
+            'loadModAfter',
+            'loadModBefore',
+            'pack',
+            'tiledef',
+        ];
+        for (const arr of arrays) {
+            if (result[arr].length === 0) delete result[arr];
+            else if (
+                result[arr].length === 1 &&
+                (arr === 'description' ||
+                    arr === 'poster' ||
+                    arr === 'pack' ||
+                    arr === 'tiledef')
+            ) {
+                result[arr] = result[arr][0];
+            }
+        }
+
+        return result;
     },
 };

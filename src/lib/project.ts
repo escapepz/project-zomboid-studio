@@ -47,7 +47,7 @@ export interface IWorkshopConfig {
 
 export interface IModConfig {
     name: string;
-    description: string;
+    description: string | string[];
     author?: string;
     modversion?: string;
     poster?: string | string[];
@@ -56,8 +56,8 @@ export interface IModConfig {
     incompatible?: string | string[];
     loadModAfter?: string | string[];
     loadModBefore?: string | string[];
-    pack?: string;
-    tiledef?: string;
+    pack?: string | string[];
+    tiledef?: string | string[];
     category?: string;
     url?: string;
     versionMin?: string;
@@ -79,9 +79,17 @@ export interface IModConfig {
     };
 }
 
+export type TemplateCategory = 'project' | 'mod' | 'workshop' | 'language';
+
 export interface ITemplateConfig {
     url: string;
     ref?: string;
+}
+
+export interface GlobalConfig {
+    templates: Partial<Record<TemplateCategory, ITemplateConfig>>;
+    outdir?: string;
+    useSymlinks?: boolean;
 }
 
 export interface IProjectConfig {

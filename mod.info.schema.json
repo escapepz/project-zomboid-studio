@@ -93,11 +93,11 @@
             "description": "Texture pack files to load.",
             "oneOf": [
                 {
-                    "$ref": "#/$defs/packEntry"
+                    "type": "string"
                 },
                 {
                     "items": {
-                        "$ref": "#/$defs/packEntry"
+                        "type": "string"
                     },
                     "type": "array"
                 }
@@ -137,11 +137,11 @@
             "description": "Tile definition files to load.",
             "oneOf": [
                 {
-                    "$ref": "#/$defs/tiledefEntry"
+                    "type": "string"
                 },
                 {
                     "items": {
-                        "$ref": "#/$defs/tiledefEntry"
+                        "type": "string"
                     },
                     "type": "array"
                 }
@@ -163,36 +163,5 @@
     },
     "required": ["id"],
     "title": "mod.info",
-    "type": "object",
-    "$defs": {
-        "packEntry": {
-            "properties": {
-                "name": {
-                    "minLength": 1,
-                    "type": "string"
-                },
-                "type": {
-                    "enum": ["ui"],
-                    "type": "string"
-                }
-            },
-            "required": ["name"],
-            "type": "object"
-        },
-        "tiledefEntry": {
-            "properties": {
-                "fileNumber": {
-                    "maximum": 16382,
-                    "minimum": 100,
-                    "type": "integer"
-                },
-                "name": {
-                    "minLength": 1,
-                    "type": "string"
-                }
-            },
-            "required": ["name", "fileNumber"],
-            "type": "object"
-        }
-    }
+    "type": "object"
 }

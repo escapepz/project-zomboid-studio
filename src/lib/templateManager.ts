@@ -13,6 +13,14 @@ import {
     symlinkSync,
 } from 'fs';
 import { log, warn, verbose } from './logger';
+import type {
+    TemplateCategory,
+    GlobalConfig,
+    ITemplateConfig,
+} from './project';
+import { DEFAULT_TEMPLATES } from './constants';
+
+export type { TemplateCategory, GlobalConfig, ITemplateConfig };
 
 /**
  * Creates a filter for fs.cpSync derived from .pzstudioignore or hardcoded defaults.
@@ -133,38 +141,6 @@ export function createIgnoreFilter(
         return true;
     };
 }
-
-export type TemplateCategory = 'project' | 'mod' | 'workshop' | 'language';
-
-export interface TemplateConfig {
-    url: string;
-    ref?: string; // branch or tag
-}
-
-export interface GlobalConfig {
-    templates: Partial<Record<TemplateCategory, TemplateConfig>>;
-    outdir?: string;
-    useSymlinks?: boolean;
-}
-
-const DEFAULT_TEMPLATES: Record<TemplateCategory, TemplateConfig> = {
-    project: {
-        url: 'https://github.com/escapepz/pzstudio-template-project.git',
-        ref: '42.17.0',
-    },
-    mod: {
-        url: 'https://github.com/escapepz/pzstudio-template-mod.git',
-        ref: '42.17.0',
-    },
-    workshop: {
-        url: 'https://github.com/escapepz/pzstudio-template-workshop.git',
-        ref: 'default',
-    },
-    language: {
-        url: 'https://github.com/escapepz/pzstudio-template-language.git',
-        ref: 'default',
-    },
-};
 
 const OFFICIAL_ORG = 'escapepz';
 
@@ -396,7 +372,7 @@ export function readGlobalConfig(validate: boolean = true): GlobalConfig {
     // Default values for global config
     const defaultConfig: GlobalConfig = {
         templates: { ...DEFAULT_TEMPLATES },
-        useSymlinks: false,
+        useSymlinks: true,
         outdir: undefined,
     };
 
@@ -445,10 +421,13 @@ export function readGlobalConfig(validate: boolean = true): GlobalConfig {
         const mergedConfig = {
             ...defaultConfig,
             ...config,
-            templates: {
-                ...defaultConfig.templates,
-                ...(config.templates || {}),
-            },
+            templates:
+                !config.templates || Object.keys(config.templates).length === 0
+                    ? { ...defaultConfig.templates }
+                    : {
+                          ...defaultConfig.templates,
+                          ...config.templates,
+                      },
         };
 
         return mergedConfig;
@@ -464,7 +443,9 @@ export function migrateGlobalConfigIfNeeded(): void {
     const configPath = getConfigPath();
     if (!existsSync(configPath)) {
         try {
-            writeGlobalConfig({ templates: {} });
+            // Write initial config with all defaults materialized
+            const config = readGlobalConfig(false);
+            writeGlobalConfig(config);
         } catch (_e) {
             warn(
                 'Failed to create initial config.json, continuing with in-memory defaults',
@@ -477,16 +458,12 @@ export function migrateGlobalConfigIfNeeded(): void {
         const content = readFileSync(configPath, 'utf-8');
         const config = JSON.parse(content);
 
-        let needsMigration = false;
-        if (!config.templates) {
-            config.templates = {};
-            needsMigration = true;
-        }
-
-        if (needsMigration) {
-            log(`- Migrating config.json to include 'templates' key...`);
+        const migrationCheck = migration.checkConfig(config);
+        if (migrationCheck.needsMigration) {
+            log(`- Migrating config.json: ${migrationCheck.reason}`);
+            const upgraded = migration.upgradeConfig(config);
             try {
-                writeGlobalConfig(config);
+                writeGlobalConfig(upgraded);
             } catch (_e) {
                 warn(
                     'Failed to persist config migration, continuing with in-memory defaults',

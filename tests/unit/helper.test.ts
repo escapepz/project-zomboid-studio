@@ -28,7 +28,7 @@ vi.mock('../../src/lib/templateManager');
 describe('Helper Library', () => {
     const defaultGlobalConfig = {
         templates: {},
-        useSymlinks: false,
+        useSymlinks: true,
         outdir: undefined,
     };
 
@@ -248,9 +248,9 @@ describe('Helper Library', () => {
     });
 
     describe('resolveUseSymlinks', () => {
-        it('should return false by default', () => {
+        it('should return true by default', () => {
             vi.mocked(fs.existsSync).mockReturnValue(false);
-            expect(resolveUseSymlinks()).toBe(false);
+            expect(resolveUseSymlinks()).toBe(true);
         });
     });
 
@@ -408,7 +408,7 @@ describe('Helper Library', () => {
                     my_mod: {
                         name: 'M',
                         pack: 'myPack',
-                        tiledef: 'myTileDef',
+                        tiledef: 'myTileDef 123',
                         category: 'Gameplay',
                         url: 'https://example.com',
                         versionMax: '42.0',
@@ -417,10 +417,27 @@ describe('Helper Library', () => {
             } as any;
             const text = generateModInfoText('my_mod', config);
             expect(text).toContain('pack=myPack');
-            expect(text).toContain('tiledef=myTileDef');
+            expect(text).toContain('tiledef=myTileDef 123');
             expect(text).toContain('category=Gameplay');
             expect(text).toContain('url=https://example.com');
             expect(text).toContain('versionMax=42.0');
+        });
+
+        it('should handle multiple packs and tiledefs', () => {
+            const config = {
+                mods: {
+                    my_mod: {
+                        name: 'M',
+                        pack: ['pack1', 'pack2 ui'],
+                        tiledef: ['tile1 111', 'tile2 222'],
+                    },
+                },
+            } as any;
+            const text = generateModInfoText('my_mod', config);
+            expect(text).toContain('pack=pack1');
+            expect(text).toContain('pack=pack2 ui');
+            expect(text).toContain('tiledef=tile1 111');
+            expect(text).toContain('tiledef=tile2 222');
         });
 
         it('should output unknown forward-compatible fields', () => {
@@ -446,7 +463,7 @@ describe('Helper Library', () => {
             vi.mocked(fs.readFileSync).mockReturnValue('/some/outdir\n');
             vi.mocked(templateManager.readGlobalConfig).mockReturnValue({
                 templates: {},
-                useSymlinks: false,
+                useSymlinks: true,
                 outdir: undefined,
             } as any);
 
@@ -501,7 +518,7 @@ describe('Helper Library', () => {
         it('should fall back to ~/Zomboid/Workshop when no config provides outdir', () => {
             const result = getOutDir(undefined, {
                 templates: {},
-                useSymlinks: false,
+                useSymlinks: true,
                 outdir: undefined,
             } as any);
             expect(result.toLowerCase()).toContain('zomboid');
@@ -683,6 +700,53 @@ describe('Helper Library', () => {
             const result = parseModInfoText(content);
             expect(result.require).toEqual(['modA', 'modB']);
             expect(result.incompatible).toEqual(['modC']);
+        });
+
+        it('should parse pack and tiledef as strings (single) or arrays (multiple)', () => {
+            const content =
+                'id=test\npack=pack1\npack=pack2 ui\ntiledef=tile1 111';
+            const result = parseModInfoText(content);
+            expect(result.pack).toEqual(['pack1', 'pack2 ui']);
+            expect(result.tiledef).toBe('tile1 111');
+
+            const content2 =
+                'id=test\npack=pack1\ntiledef=tile1 111\ntiledef=tile2 222';
+            const result2 = parseModInfoText(content2);
+            expect(result2.pack).toBe('pack1');
+            expect(result2.tiledef).toEqual(['tile1 111', 'tile2 222']);
+        });
+
+        it('should handle description as a single string in generateModInfoText', () => {
+            const config = {
+                mods: {
+                    my_mod: {
+                        name: 'M',
+                        description: 'Single line description',
+                    },
+                },
+            } as any;
+            const text = generateModInfoText('my_mod', config);
+            expect(text).toContain('description=Single line description');
+        });
+
+        it('should handle description as an array in generateModInfoText', () => {
+            const config = {
+                mods: {
+                    my_mod: {
+                        name: 'M',
+                        description: ['Line 1', 'Line 2'],
+                    },
+                },
+            } as any;
+            const text = generateModInfoText('my_mod', config);
+            expect(text).toContain('description=Line 1');
+            expect(text).toContain('description=Line 2');
+        });
+
+        it('should parse multiple descriptions as an array', () => {
+            const content = 'id=test\ndescription=line1\ndescription=line2';
+            const result = parseModInfoText(content);
+            expect(result.description).toEqual(['line1', 'line2']);
         });
 
         it('should preserve unknown fields', () => {

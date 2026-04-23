@@ -152,6 +152,62 @@ describe('rename command e2e', () => {
         );
     });
 
+    it('should rename experimental mod scripts in package.json', async () => {
+        const oldModId = 'old_mod';
+        const newModId = 'new_mod';
+        workspace.write(
+            'project.json',
+            JSON.stringify({
+                workshop: { title: 'P', visibility: 'public', tags: [] },
+                mods: {
+                    [oldModId]: {
+                        name: 'Old Mod',
+                        description: 'Old Description',
+                    },
+                },
+                excludes: [],
+            }),
+        );
+        workspace.write(`${oldModId}/mod.info`, `id=${oldModId}\nname=Old Mod`);
+
+        // Pre-populate package.json with an experimental mod script
+        workspace.write(
+            'package.json',
+            JSON.stringify({
+                name: 'test',
+                scripts: {
+                    [`experimental:setup:nonsteam:${oldModId}`]: `mklink /J "C:\\ZomboidClient1\\mods\\${oldModId}" "%CD%\\${oldModId}"`,
+                },
+            }),
+        );
+
+        const result = await workspace.run('rename', [oldModId, newModId]);
+
+        try {
+            workspace.assertSuccess(result);
+
+            const pkg = workspace.readJson('package.json');
+            // Old script key should be removed
+            expect(
+                pkg.scripts[`experimental:setup:nonsteam:${oldModId}`],
+            ).toBeUndefined();
+            // New script key should exist with updated mod id
+            expect(
+                pkg.scripts[`experimental:setup:nonsteam:${newModId}`],
+            ).toBeDefined();
+            expect(
+                pkg.scripts[`experimental:setup:nonsteam:${newModId}`],
+            ).toContain(newModId);
+            expect(
+                pkg.scripts[`experimental:setup:nonsteam:${newModId}`],
+            ).not.toContain(oldModId);
+        } catch (e) {
+            console.log('STDOUT:', result.stdout.join('\n'));
+            console.log('STDERR:', result.stderr.join('\n'));
+            throw e;
+        }
+    });
+
     it('should fail when newModId argument is missing', async () => {
         workspace.write(
             'project.json',
