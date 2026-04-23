@@ -36,7 +36,7 @@ describe('clean command e2e', () => {
 
         try {
             workspace.assertSuccess(result);
-            workspace.assertStdout(result, 'Cleaning output directory');
+            workspace.assertStdout(result, 'Cleaning main output directory');
             workspace.assertStdout(result, 'Clean complete');
 
             // 3. Verify filesystem
@@ -48,7 +48,7 @@ describe('clean command e2e', () => {
         }
     });
 
-    it('should fail if output directory does not exist', async () => {
+    it('should fail if neither output directory exists', async () => {
         workspace.write(
             'project.json',
             JSON.stringify({
@@ -61,7 +61,60 @@ describe('clean command e2e', () => {
 
         const result = await workspace.run('clean');
         workspace.assertFailure(result);
-        workspace.assertStderr(result, 'does not exist');
+        workspace.assertStderr(result, 'No build output found to clean');
+    });
+
+    it('should clean both main and development output directories', async () => {
+        const title = 'My Project';
+        workspace.write(
+            'project.json',
+            JSON.stringify({
+                workshop: { title, visibility: 'public', tags: [] },
+                mods: {},
+                excludes: [],
+                outdir: 'out',
+            }),
+        );
+
+        const mainOutPath = path.join(workspace.dir, 'out', title);
+        const devOutPath = path.join(
+            workspace.dir,
+            'out',
+            `${title} - dev_branch`,
+        );
+
+        fs.mkdirSync(mainOutPath, { recursive: true });
+        fs.mkdirSync(devOutPath, { recursive: true });
+
+        const result = await workspace.run('clean');
+        workspace.assertSuccess(result);
+
+        expect(fs.existsSync(mainOutPath)).toBe(false);
+        expect(fs.existsSync(devOutPath)).toBe(false);
+    });
+
+    it('should succeed if only development output directory exists', async () => {
+        const title = 'My Project';
+        workspace.write(
+            'project.json',
+            JSON.stringify({
+                workshop: { title, visibility: 'public', tags: [] },
+                mods: {},
+                excludes: [],
+                outdir: 'out',
+            }),
+        );
+
+        const devOutPath = path.join(
+            workspace.dir,
+            'out',
+            `${title} - dev_branch`,
+        );
+        fs.mkdirSync(devOutPath, { recursive: true });
+
+        const result = await workspace.run('clean');
+        workspace.assertSuccess(result);
+        expect(fs.existsSync(devOutPath)).toBe(false);
     });
 
     it('should fail if not in a project directory', async () => {

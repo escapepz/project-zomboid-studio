@@ -331,6 +331,24 @@ export function getOutDir(project?: IProjectConfig, config?: GlobalConfig) {
 }
 
 /**
+ * Resolves the build output path for a given variant.
+ * @param config The project configuration
+ * @param variant The build variant ('main' or 'development')
+ * @returns {string} The absolute path to the build output
+ */
+export function resolveBuildOutputPath(
+    config: IProjectConfig,
+    variant: 'main' | 'development',
+): string {
+    const outDir = config.outdir!;
+    const title = config.workshop.title;
+    if (variant === 'development') {
+        return join(outDir, `${title} - dev_branch`);
+    }
+    return join(outDir, title);
+}
+
+/**
  * Generate the workshop text
  * @param config The project config
  * @param overrideVisibility Optional visibility override

@@ -7,6 +7,7 @@ import {
     generateWorkshopText,
     projectDir,
     resolveProjectConfig,
+    resolveBuildOutputPath,
 } from '../helper';
 import { info, log, warn, verbose } from '../logger';
 import { resolveTemplateDir, scaffoldProject } from '../templateManager';
@@ -160,17 +161,14 @@ export async function buildCmd() {
     // Build main workshop (Default or explicit --production)
     if (noFlags || isProduction) {
         log(`\nBuilding main workshop...`);
-        const mainOutPath = join(outDir, projectConfig.workshop.title);
+        const mainOutPath = resolveBuildOutputPath(projectConfig, 'main');
         await buildWorkshop(projectConfig, mainOutPath);
     }
 
     // Build dev_branch workshop (Only if --development is specified)
     if (isDevelopment) {
         log(`\nBuilding dev_branch workshop...`);
-        const devOutPath = join(
-            outDir,
-            `${projectConfig.workshop.title} - dev_branch`,
-        );
+        const devOutPath = resolveBuildOutputPath(projectConfig, 'development');
         await buildWorkshop(
             projectConfig,
             devOutPath,
