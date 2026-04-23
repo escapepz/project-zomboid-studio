@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { parseArgType, cmd, args, arg, processArgs } from '../../src/lib/args';
+import {
+    parseArgType,
+    cmd,
+    args,
+    arg,
+    processArgs,
+    splitArgs,
+} from '../../src/lib/args';
 
 describe('Args Library', () => {
     describe('parseArgType', () => {
@@ -16,6 +23,11 @@ describe('Args Library', () => {
 
         it('should parse strings', () => {
             expect(parseArgType('hello')).toBe('hello');
+        });
+
+        it('should stringify non-string, non-number truthy values', () => {
+            expect(parseArgType({})).toBe('[object Object]');
+            expect(parseArgType(['a'])).toBe('a');
         });
 
         it('should return undefined for falsy inputs', () => {
@@ -49,6 +61,50 @@ describe('Args Library', () => {
                 'my-project',
                 '--flag',
             ]);
+        });
+    });
+
+    describe('splitArgs', () => {
+        it('should separate a normal positional argument', () => {
+            const result = splitArgs(['my-project']);
+            expect(result.positionals).toEqual(['my-project']);
+            expect(result.flags).toEqual([]);
+        });
+
+        it('should separate a plain flag like --verbose', () => {
+            const result = splitArgs(['--verbose']);
+            expect(result.flags).toEqual(['--verbose']);
+            expect(result.positionals).toEqual([]);
+        });
+
+        it('should consume value for a value flag like --template foo', () => {
+            const result = splitArgs(['--template', 'lua']);
+            expect(result.flags).toEqual(['--template', 'lua']);
+            expect(result.positionals).toEqual([]);
+        });
+
+        it('should not consume the next token if it is another flag', () => {
+            const result = splitArgs(['--template', '--verbose']);
+            expect(result.flags).toEqual(['--template', '--verbose']);
+            expect(result.positionals).toEqual([]);
+        });
+
+        it('should handle mixed positionals and flags', () => {
+            const result = splitArgs([
+                'my-project',
+                '--verbose',
+                '--template',
+                'lua',
+                'extra',
+            ]);
+            expect(result.positionals).toEqual(['my-project', 'extra']);
+            expect(result.flags).toEqual(['--verbose', '--template', 'lua']);
+        });
+
+        it('should return empty arrays for empty input', () => {
+            const result = splitArgs([]);
+            expect(result.positionals).toEqual([]);
+            expect(result.flags).toEqual([]);
         });
     });
 });

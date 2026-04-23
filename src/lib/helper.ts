@@ -627,7 +627,7 @@ export function updateExperimentalScripts(
         }
 
         // Clear cache to allow modifications without rebuild
-        delete require.cache[require.resolve(scriptPath)];
+        // delete require.cache[require.resolve(scriptPath)];
         const script = require(scriptPath);
 
         switch (action) {

@@ -8,17 +8,35 @@ import {
     getOutDir,
     resolveUseSymlinks,
     atomicWriteJson,
+    migrateStoreDirIfNeeded,
+    updateExperimentalScripts,
+    setProjectDir,
+    workingDir,
+    applyProjectDefaults,
+    getStoreDir,
+    parseModInfoText,
 } from '../../src/lib/helper';
 import { IProjectConfig } from '../../src/lib/project';
 import fs from 'fs';
 import * as logger from '../../src/lib/logger';
+import * as templateManager from '../../src/lib/templateManager';
 
 vi.mock('fs');
 vi.mock('../../src/lib/logger');
+vi.mock('../../src/lib/templateManager');
 
 describe('Helper Library', () => {
+    const defaultGlobalConfig = {
+        templates: {},
+        useSymlinks: false,
+        outdir: undefined,
+    };
+
     beforeEach(() => {
         vi.restoreAllMocks();
+        vi.mocked(templateManager.readGlobalConfig).mockReturnValue({
+            ...defaultGlobalConfig,
+        } as any);
     });
 
     describe('formatTitleToId', () => {
@@ -107,6 +125,26 @@ describe('Helper Library', () => {
             expect(writtenContent.unknown).toBe('keep');
         });
 
+        it('should fall back to direct write if atomic move fails', () => {
+            const filePath = 'project.json';
+            const updated = { title: 'New' };
+
+            vi.mocked(fs.existsSync).mockReturnValue(false);
+            vi.mocked(fs.writeFileSync).mockImplementationOnce(() => {
+                throw new Error('disk error');
+            });
+
+            atomicWriteJson(filePath, updated);
+
+            // The catch fallback calls writeFileSync again with the file path directly
+            const fallbackCall = vi
+                .mocked(fs.writeFileSync)
+                .mock.calls.find(
+                    (c) => c[0] === filePath && !String(c[0]).includes('.tmp'),
+                );
+            expect(fallbackCall).toBeDefined();
+        });
+
         it('should overwrite if file is corrupt', () => {
             const filePath = 'project.json';
             const updated = { title: 'New' };
@@ -123,10 +161,89 @@ describe('Helper Library', () => {
         });
     });
 
-    describe('getOutDir', () => {
-        it('should return default workshop path if not configured', () => {
-            vi.mocked(fs.existsSync).mockReturnValue(false); // No config.json
-            expect(getOutDir().toLowerCase()).toContain('workshop');
+    describe('updateProjectConfig', () => {
+        it('should throw if the target path does not exist', () => {
+            vi.mocked(fs.existsSync).mockReturnValue(false);
+            expect(() =>
+                updateProjectConfig('nonexistent.json', {} as any),
+            ).toThrow('The given path does not exist!');
+        });
+    });
+
+    describe('setProjectDir', () => {
+        it('should set and clear the external project dir', () => {
+            setProjectDir('/custom/path');
+            // Reset so it doesn't leak into other tests
+            setProjectDir(undefined);
+        });
+    });
+
+    describe('workingDir', () => {
+        it('should return a path ending in lib when not running from dist', () => {
+            const dir = workingDir();
+            expect(dir).toMatch(/lib$/);
+        });
+    });
+
+    describe('applyProjectDefaults', () => {
+        it('should return falsy if config is falsy', () => {
+            expect(applyProjectDefaults(undefined)).toBeUndefined();
+            expect(applyProjectDefaults(null)).toBeNull();
+        });
+
+        it('should default workshop settings if missing', () => {
+            const config = { mods: {} } as any;
+            const result = applyProjectDefaults(config);
+            expect(result.workshop).toBeDefined();
+            expect(result.workshop).toEqual({});
+        });
+
+        it('should default build.modInfo to skip when missing', () => {
+            const config = {
+                workshop: {},
+                mods: {
+                    testmod: {
+                        name: 'Test',
+                        description: 'Desc',
+                    },
+                },
+            };
+            const result = applyProjectDefaults(config);
+            expect(result.mods.testmod.build!.modInfo).toBe('skip');
+        });
+
+        it('should default poster and icon when missing', () => {
+            const config = {
+                workshop: {},
+                mods: {
+                    testmod: {
+                        name: 'Test',
+                        description: 'Desc',
+                    },
+                },
+            };
+            const result = applyProjectDefaults(config);
+            expect(result.mods.testmod.poster).toBe('poster.png');
+            expect(result.mods.testmod.icon).toBe('icon.png');
+        });
+
+        it('should default excludes to empty array when missing', () => {
+            const config = { workshop: {}, mods: {} };
+            const result = applyProjectDefaults(config);
+            expect(result.excludes).toEqual([]);
+        });
+
+        it('should handle missing mods gracefully', () => {
+            const config = { workshop: {} };
+            const result = applyProjectDefaults(config);
+            expect(result.mods).toBeUndefined();
+        });
+    });
+
+    describe('getStoreDir', () => {
+        it('should return a path containing .pzstudio', () => {
+            const dir = getStoreDir();
+            expect(dir).toContain('.pzstudio');
         });
     });
 
@@ -134,27 +251,6 @@ describe('Helper Library', () => {
         it('should return false by default', () => {
             vi.mocked(fs.existsSync).mockReturnValue(false);
             expect(resolveUseSymlinks()).toBe(false);
-        });
-    });
-
-    describe('generateWorkshopText', () => {
-        const mockConfig: IProjectConfig = {
-            workshop: {
-                title: 'Test Project',
-                id: '123456789',
-                tags: ['Mod', 'Script'],
-                visibility: 'public',
-            },
-            mods: {},
-        } as any;
-
-        it('should generate correct workshop text', () => {
-            const text = generateWorkshopText(mockConfig);
-            expect(text).toContain('version=1');
-            expect(text).toContain('id=123456789');
-            expect(text).toContain('title=Test Project');
-            expect(text).toContain('tags=Mod;Script');
-            expect(text).toContain('visibility=public');
         });
     });
 
@@ -178,6 +274,421 @@ describe('Helper Library', () => {
             expect(text).toContain('id=my_mod');
             expect(text).toContain('name=My Mod');
             expect(text).toContain('description=A cool mod');
+        });
+
+        it('should return empty string if mod is missing', () => {
+            const text = generateModInfoText('nonexistent', mockConfig);
+            expect(text).toBe('');
+        });
+
+        it('should omit name if missing', () => {
+            const config = {
+                mods: {
+                    my_mod: {
+                        description: 'Desc',
+                    },
+                },
+            } as any;
+            const text = generateModInfoText('my_mod', config);
+            expect(text).toContain('id=my_mod');
+            expect(text).not.toContain('name=');
+        });
+
+        it('should handle poster as an array', () => {
+            const config = {
+                mods: {
+                    my_mod: {
+                        name: 'M',
+                        poster: ['poster1.png', 'poster2.png'],
+                    },
+                },
+            } as any;
+            const text = generateModInfoText('my_mod', config);
+            expect(text).toContain('poster=poster1.png');
+            expect(text).toContain('poster=poster2.png');
+        });
+
+        it('should handle require as a string', () => {
+            const config = {
+                mods: {
+                    my_mod: {
+                        name: 'M',
+                        require: 'singleMod',
+                    },
+                },
+            } as any;
+            const text = generateModInfoText('my_mod', config);
+            expect(text).toContain('require=singleMod');
+        });
+
+        it('should handle require as comma-separated array', () => {
+            const config = {
+                mods: {
+                    my_mod: {
+                        name: 'M',
+                        require: ['modA', 'modB'],
+                    },
+                },
+            } as any;
+            const text = generateModInfoText('my_mod', config);
+            expect(text).toContain('require=modA,modB');
+        });
+
+        it('should handle incompatible as a string', () => {
+            const config = {
+                mods: {
+                    my_mod: {
+                        name: 'M',
+                        incompatible: 'badMod',
+                    },
+                },
+            } as any;
+            const text = generateModInfoText('my_mod', config);
+            expect(text).toContain('incompatible=badMod');
+        });
+
+        it('should handle incompatible as comma-separated array', () => {
+            const config = {
+                mods: {
+                    my_mod: {
+                        name: 'M',
+                        incompatible: ['badMod1', 'badMod2'],
+                    },
+                },
+            } as any;
+            const text = generateModInfoText('my_mod', config);
+            expect(text).toContain('incompatible=badMod1,badMod2');
+        });
+
+        it('should handle loadModAfter as string', () => {
+            const config = {
+                mods: { my_mod: { name: 'M', loadModAfter: 'otherMod' } },
+            } as any;
+            const text = generateModInfoText('my_mod', config);
+            expect(text).toContain('loadModAfter=otherMod');
+        });
+
+        it('should handle loadModAfter as array', () => {
+            const config = {
+                mods: {
+                    my_mod: {
+                        name: 'M',
+                        loadModAfter: ['modA', 'modB'],
+                    },
+                },
+            } as any;
+            const text = generateModInfoText('my_mod', config);
+            expect(text).toContain('loadModAfter=modA,modB');
+        });
+
+        it('should handle loadModBefore as string', () => {
+            const config = {
+                mods: { my_mod: { name: 'M', loadModBefore: 'otherMod' } },
+            } as any;
+            const text = generateModInfoText('my_mod', config);
+            expect(text).toContain('loadModBefore=otherMod');
+        });
+
+        it('should handle loadModBefore as array', () => {
+            const config = {
+                mods: {
+                    my_mod: {
+                        name: 'M',
+                        loadModBefore: ['modA', 'modB'],
+                    },
+                },
+            } as any;
+            const text = generateModInfoText('my_mod', config);
+            expect(text).toContain('loadModBefore=modA,modB');
+        });
+
+        it('should handle pack, tiledef, category, url, versionMax', () => {
+            const config = {
+                mods: {
+                    my_mod: {
+                        name: 'M',
+                        pack: 'myPack',
+                        tiledef: 'myTileDef',
+                        category: 'Gameplay',
+                        url: 'https://example.com',
+                        versionMax: '42.0',
+                    },
+                },
+            } as any;
+            const text = generateModInfoText('my_mod', config);
+            expect(text).toContain('pack=myPack');
+            expect(text).toContain('tiledef=myTileDef');
+            expect(text).toContain('category=Gameplay');
+            expect(text).toContain('url=https://example.com');
+            expect(text).toContain('versionMax=42.0');
+        });
+
+        it('should output unknown forward-compatible fields', () => {
+            const config = {
+                mods: {
+                    my_mod: {
+                        name: 'M',
+                        customField: 'customValue',
+                    },
+                },
+            } as any;
+            const text = generateModInfoText('my_mod', config);
+            expect(text).toContain('customField=customValue');
+        });
+    });
+
+    describe('migrateStoreDirIfNeeded', () => {
+        it('should migrate legacy .pzstudio file to directory', () => {
+            vi.mocked(fs.existsSync).mockReturnValue(true);
+            vi.mocked(fs.statSync).mockReturnValue({
+                isFile: () => true,
+            } as any);
+            vi.mocked(fs.readFileSync).mockReturnValue('/some/outdir\n');
+            vi.mocked(templateManager.readGlobalConfig).mockReturnValue({
+                templates: {},
+                useSymlinks: false,
+                outdir: undefined,
+            } as any);
+
+            migrateStoreDirIfNeeded();
+
+            expect(fs.rmSync).toHaveBeenCalled();
+            expect(fs.mkdirSync).toHaveBeenCalled();
+            expect(fs.writeFileSync).toHaveBeenCalled();
+            expect(templateManager.writeGlobalConfig).toHaveBeenCalledWith(
+                expect.objectContaining({ outdir: '/some/outdir' }),
+            );
+            expect(logger.log).toHaveBeenCalledWith(
+                expect.stringContaining('Migrated'),
+            );
+        });
+
+        it('should warn on migration failure', () => {
+            vi.mocked(fs.existsSync).mockReturnValue(true);
+            vi.mocked(fs.statSync).mockReturnValue({
+                isFile: () => true,
+            } as any);
+            vi.mocked(fs.readFileSync).mockImplementation(() => {
+                throw new Error('read error');
+            });
+
+            migrateStoreDirIfNeeded();
+
+            expect(logger.warn).toHaveBeenCalledWith(
+                expect.stringContaining('Failed to migrate'),
+            );
+        });
+
+        it('should do nothing if .pzstudio is already a directory', () => {
+            vi.mocked(fs.existsSync).mockReturnValue(true);
+            vi.mocked(fs.statSync).mockReturnValue({
+                isFile: () => false,
+            } as any);
+
+            const rmBefore = vi.mocked(fs.rmSync).mock.calls.length;
+            migrateStoreDirIfNeeded();
+
+            expect(vi.mocked(fs.rmSync).mock.calls.length).toBe(rmBefore);
+        });
+    });
+
+    describe('getOutDir', () => {
+        it('should return default workshop path if not configured', () => {
+            vi.mocked(fs.existsSync).mockReturnValue(false); // No config.json
+            expect(getOutDir().toLowerCase()).toContain('workshop');
+        });
+
+        it('should fall back to ~/Zomboid/Workshop when no config provides outdir', () => {
+            const result = getOutDir(undefined, {
+                templates: {},
+                useSymlinks: false,
+                outdir: undefined,
+            } as any);
+            expect(result.toLowerCase()).toContain('zomboid');
+            expect(result.toLowerCase()).toContain('workshop');
+        });
+    });
+
+    describe('generateWorkshopText', () => {
+        const mockConfig: IProjectConfig = {
+            workshop: {
+                title: 'Test Project',
+                id: '123456789',
+                tags: ['Mod', 'Script'],
+                visibility: 'public',
+            },
+            mods: {},
+        } as any;
+
+        it('should generate correct workshop text', () => {
+            const text = generateWorkshopText(mockConfig);
+            expect(text).toContain('version=1');
+            expect(text).toContain('id=123456789');
+            expect(text).toContain('title=Test Project');
+            expect(text).toContain('tags=Mod;Script');
+            expect(text).toContain('visibility=public');
+        });
+
+        it('should handle missing title, tags, and visibility', () => {
+            const minimalConfig: IProjectConfig = {
+                workshop: {},
+                mods: {},
+            } as any;
+            const text = generateWorkshopText(minimalConfig);
+            expect(text).toContain('version=1');
+            expect(text).not.toContain('title=');
+            expect(text).not.toContain('tags=');
+            expect(text).not.toContain('visibility=');
+        });
+
+        it('should include description.txt lines when the file exists', () => {
+            vi.mocked(fs.existsSync).mockReturnValue(true);
+            vi.mocked(fs.readFileSync).mockReturnValue('Line one\nLine two');
+
+            const text = generateWorkshopText(mockConfig);
+            expect(text).toContain('description=Line one');
+            expect(text).toContain('description=Line two');
+        });
+    });
+
+    describe('updateExperimentalScripts', () => {
+        beforeEach(() => {
+            // Provide valid JSON so the internal functions don't throw when parsing package.json
+            vi.mocked(fs.readFileSync).mockReturnValue('{}');
+        });
+
+        it('should do nothing if script file does not exist', () => {
+            vi.mocked(fs.existsSync).mockReturnValue(false);
+            vi.mocked(logger.warn).mockClear();
+            updateExperimentalScripts('addProject', '/some/dir');
+            expect(logger.warn).not.toHaveBeenCalled();
+        });
+
+        it('should run addProject dispatch without error when script exists', () => {
+            vi.mocked(fs.existsSync).mockReturnValue(true);
+            vi.mocked(logger.warn).mockClear();
+
+            expect(() =>
+                updateExperimentalScripts('addProject', '/nonexistent/dir'),
+            ).not.toThrow();
+            // Should not warn (meaning no exceptions were caught)
+            expect(logger.warn).not.toHaveBeenCalled();
+        });
+
+        it('should run addMod dispatch without error when script exists', () => {
+            vi.mocked(fs.existsSync).mockReturnValue(true);
+            vi.mocked(logger.warn).mockClear();
+
+            expect(() =>
+                updateExperimentalScripts(
+                    'addMod',
+                    '/nonexistent/dir',
+                    'mymod',
+                ),
+            ).not.toThrow();
+            expect(logger.warn).not.toHaveBeenCalled();
+        });
+
+        it('should run removeMod dispatch without error when script exists', () => {
+            vi.mocked(fs.existsSync).mockReturnValue(true);
+            vi.mocked(logger.warn).mockClear();
+
+            expect(() =>
+                updateExperimentalScripts(
+                    'removeMod',
+                    '/nonexistent/dir',
+                    'mymod',
+                ),
+            ).not.toThrow();
+            expect(logger.warn).not.toHaveBeenCalled();
+        });
+
+        it('should use mocked script paths if running from dist', async () => {
+            vi.mocked(fs.existsSync).mockReturnValue(false);
+            vi.doMock('path', async (importOriginal) => {
+                const actual = await importOriginal<typeof import('path')>();
+                return {
+                    ...actual,
+                    basename: () => 'dist',
+                };
+            });
+            const { updateExperimentalScripts: updateScriptsMocked } =
+                await import('../../src/lib/helper');
+            expect(() =>
+                updateScriptsMocked('addProject', '/some/dir'),
+            ).not.toThrow();
+            vi.doUnmock('path');
+        });
+
+        it('should gracefully catch exceptions inside the experimental script block', () => {
+            vi.mocked(fs.existsSync).mockImplementation(() => {
+                throw new Error('intentional error for test');
+            });
+            updateExperimentalScripts('addProject', '/some/dir');
+            expect(logger.warn).toHaveBeenCalledWith(
+                expect.stringContaining('Failed to run experimental script'),
+            );
+        });
+
+        it('should handle missing dispatch functions in script', () => {
+            vi.mocked(fs.existsSync).mockReturnValue(true);
+
+            // To truly test missing functions without it actually invoking the real ones,
+            // we could stub it. But simply calling an unknown action covers the default switch branch.
+            expect(() =>
+                updateExperimentalScripts('unknownAction' as any, '/some/dir'),
+            ).not.toThrow();
+        });
+    });
+
+    describe('parseModInfoText', () => {
+        it('should parse basic fields correctly', () => {
+            const content = 'id=test\nname=Test Mod\nauthor=Antigravity';
+            const result = parseModInfoText(content);
+            expect(result.id).toBe('test');
+            expect(result.name).toBe('Test Mod');
+            expect(result.author).toBe('Antigravity');
+        });
+
+        it('should skip empty lines and comments', () => {
+            const content =
+                '\n# Comment\n// Another comment\nid=test\n   \nname=Test';
+            const result = parseModInfoText(content);
+            expect(result.id).toBe('test');
+            expect(result.name).toBe('Test');
+            expect(Object.keys(result)).toHaveLength(2);
+        });
+
+        it('should skip lines without equals sign', () => {
+            const content = 'id=test\nInvalidLine\nname=Test';
+            const result = parseModInfoText(content);
+            expect(result.id).toBe('test');
+            expect(result.name).toBe('Test');
+        });
+
+        it('should parse multiple posters as an array', () => {
+            const content = 'id=test\nposter=poster1.png\nposter=poster2.png';
+            const result = parseModInfoText(content);
+            expect(result.poster).toEqual(['poster1.png', 'poster2.png']);
+        });
+
+        it('should parse single poster as a string', () => {
+            const content = 'id=test\nposter=poster.png';
+            const result = parseModInfoText(content);
+            expect(result.poster).toBe('poster.png');
+        });
+
+        it('should parse comma-separated lists (require, incompatible, etc)', () => {
+            const content = 'id=test\nrequire=modA, modB\nincompatible=modC';
+            const result = parseModInfoText(content);
+            expect(result.require).toEqual(['modA', 'modB']);
+            expect(result.incompatible).toEqual(['modC']);
+        });
+
+        it('should preserve unknown fields', () => {
+            const content = 'id=test\ncustom=value';
+            const result = parseModInfoText(content);
+            expect(result.custom).toBe('value');
         });
     });
 });
