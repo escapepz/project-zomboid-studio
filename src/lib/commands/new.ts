@@ -7,7 +7,6 @@ import {
     projectDir,
     readProjectConfig,
     resolveProjectConfig,
-    resolveUseSymlinks,
     updateExperimentalScripts,
     updateProjectConfig,
 } from '../helper';
@@ -15,6 +14,7 @@ import { info, log, verbose } from '../logger';
 import { hasFlag } from '../cli';
 import {
     resolveTemplateDir,
+    readGlobalConfig,
     scaffoldProject,
     scaffoldTemplateFolder,
 } from '../templateManager';
@@ -49,7 +49,8 @@ export async function newCmd(projectTitle: string, modId?: string) {
         );
     }
 
-    const useSymlinks = hasFlag('symlinks') || resolveUseSymlinks();
+    const useSymlinks =
+        hasFlag('symlinks') || readGlobalConfig(false).useSymlinks;
 
     const templateProjectPath = resolveTemplateDir(
         'project',

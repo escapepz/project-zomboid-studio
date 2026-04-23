@@ -12,11 +12,7 @@
             "description": "The output directory for generated workshop files.",
             "type": "string"
         },
-        "useSymlinks": {
-            "default": false,
-            "description": "Whether to use symlinks (junctions on Windows) for folders.",
-            "type": "boolean"
-        },
+
         "workshop": {
             "description": "Workshop metadata for the project.",
             "properties": {

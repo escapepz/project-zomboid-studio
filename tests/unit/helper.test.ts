@@ -6,7 +6,6 @@ import {
     readProjectConfig,
     updateProjectConfig,
     getOutDir,
-    resolveUseSymlinks,
     atomicWriteJson,
     migrateStoreDirIfNeeded,
     updateExperimentalScripts,
@@ -269,13 +268,6 @@ describe('Helper Library', () => {
         it('should return a path containing .pzstudio', () => {
             const dir = getStoreDir();
             expect(dir).toContain('.pzstudio');
-        });
-    });
-
-    describe('resolveUseSymlinks', () => {
-        it('should return true by default', () => {
-            vi.mocked(fs.existsSync).mockReturnValue(false);
-            expect(resolveUseSymlinks()).toBe(true);
         });
     });
 

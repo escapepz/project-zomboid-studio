@@ -396,17 +396,6 @@ export function validateProject(config: any, context: ValidationContext): void {
             'Move this configuration to your global config.json at ~/.pzstudio/config.json',
         );
     }
-
-    if (
-        config.useSymlinks !== undefined &&
-        !guards.isBoolean(config.useSymlinks)
-    ) {
-        context.addError(
-            'useSymlinks',
-            'Field "useSymlinks" must be a boolean',
-            'Enable or disable symlinks for this project',
-        );
-    }
 }
 
 /**

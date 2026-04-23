@@ -19,25 +19,6 @@ import {
 } from './templateManager';
 
 /**
- * Resolves the useSymlinks configuration flag following the hierarchy:
- * project.json > config.json > default (false)
- * @param project Optional project config to use
- * @param config Optional global config to use
- * @returns {boolean} The resolved useSymlinks flag
- */
-export function resolveUseSymlinks(
-    project?: IProjectConfig,
-    config?: GlobalConfig,
-): boolean {
-    if (project && project.useSymlinks !== undefined) {
-        return project.useSymlinks;
-    }
-
-    const global = config ?? readGlobalConfig(false);
-    return global.useSymlinks;
-}
-
-/**
  * Resolves the full project configuration by merging workspace and global settings.
  * Workspace (project.json) settings always take precedence.
  * @returns {IProjectConfig | undefined} The resolved configuration, or undefined if no project.json exists.
@@ -51,7 +32,6 @@ export function resolveProjectConfig(): IProjectConfig | undefined {
     return {
         ...project,
         outdir: getOutDir(project, global),
-        useSymlinks: resolveUseSymlinks(project, global),
     };
 }
 
@@ -207,6 +187,14 @@ export function atomicWriteJson(
         } catch (_e) {
             // If existing is corrupt, we overwrite with updated
         }
+    }
+
+    // Strip useSymlinks from project.json if it exists (no longer supported in workspace)
+    if (
+        basename(filePath) === 'project.json' &&
+        finalContent.useSymlinks !== undefined
+    ) {
+        delete finalContent.useSymlinks;
     }
 
     const content = JSON.stringify(finalContent, null, 4);

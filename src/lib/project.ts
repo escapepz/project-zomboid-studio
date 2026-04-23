@@ -95,7 +95,6 @@ export interface GlobalConfig {
 export interface IProjectConfig {
     workshop: IWorkshopConfig;
     mods: { [modId: string]: IModConfig };
-    useSymlinks?: boolean;
     outdir?: string;
 
     excludes?: string[];

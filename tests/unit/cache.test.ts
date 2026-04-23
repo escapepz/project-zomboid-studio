@@ -11,7 +11,6 @@ vi.mock('../../src/lib/helper', () => ({
     readProjectConfig: vi.fn(),
     resolveProjectConfig: vi.fn(),
     formatTitleToId: vi.fn((t) => t?.toLowerCase()),
-    resolveUseSymlinks: vi.fn(() => false),
     updateProjectConfig: vi.fn(),
     updateExperimentalScripts: vi.fn(),
     getOutDir: vi.fn(() => 'D:/out'),
@@ -35,6 +34,10 @@ describe('Local Template Cache (US2)', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         vi.mocked(helper.projectDir).mockReturnValue('D:/project');
+        vi.mocked(templateManager.readGlobalConfig).mockReturnValue({
+            useSymlinks: true,
+            templates: {},
+        } as any);
     });
 
     it('should use local .template-mod if present in addCmd', async () => {

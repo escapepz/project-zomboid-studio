@@ -93,6 +93,8 @@ export const migration = {
             upgraded.excludes = [];
         }
 
+        delete upgraded.useSymlinks;
+
         return upgraded as IProjectConfig;
     },
 

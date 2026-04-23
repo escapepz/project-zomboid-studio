@@ -11,7 +11,11 @@ import {
 } from '../helper';
 import { log, verbose } from '../logger';
 import { hasFlag } from '../cli';
-import { resolveTemplateDir, scaffoldProject } from '../templateManager';
+import {
+    readGlobalConfig,
+    resolveTemplateDir,
+    scaffoldProject,
+} from '../templateManager';
 
 addHelp(
     'add',
@@ -45,7 +49,7 @@ export function addCmd(modName: string, modId?: string) {
     const isOffline = hasFlag('offline');
     const forceUpdate = hasFlag('force-update');
     const useSymlinks =
-        hasFlag('symlinks') || (projectConfig.useSymlinks ?? false);
+        hasFlag('symlinks') || readGlobalConfig(false).useSymlinks;
 
     // US2: Check for local .template-mod tier-0 guard
     const localTemplatePath = join(projectPath, '.template-mod');

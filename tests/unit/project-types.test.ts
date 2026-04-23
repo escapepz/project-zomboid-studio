@@ -24,7 +24,6 @@ describe('Project Types', () => {
                     },
                 },
             },
-            useSymlinks: true,
             excludes: ['mod-a'],
         };
         expect(config).toBeDefined();
