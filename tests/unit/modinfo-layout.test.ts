@@ -10,11 +10,11 @@ describe('modinfo layout resolution', () => {
         vi.restoreAllMocks();
     });
 
-    it('should identify valid branch folders containing lua', () => {
+    it('should identify valid branch folders containing media', () => {
         const modId = 'my_mod';
         vi.mocked(fs.existsSync).mockImplementation((p: any) => {
             const pStr = String(p);
-            if (pStr.includes('lua')) return true;
+            if (pStr.includes('media')) return true;
             if (pStr.endsWith(modId)) return true;
             return false;
         });
@@ -35,11 +35,11 @@ describe('modinfo layout resolution', () => {
         expect(targets[2]).toContain('other');
     });
 
-    it('should filter out folders without lua payloads', () => {
+    it('should filter out folders without media payloads', () => {
         const modId = 'my_mod';
         vi.mocked(fs.existsSync).mockImplementation((p: any) => {
             const pStr = String(p);
-            if (pStr.includes(path.join('common', 'lua'))) return true;
+            if (pStr.includes(path.join('common', 'media'))) return true;
             if (pStr.endsWith(modId)) return true;
             return false;
         });
@@ -58,12 +58,12 @@ describe('modinfo layout resolution', () => {
         const modId = 'my_mod';
         vi.mocked(fs.existsSync).mockImplementation((p: any) => {
             const pStr = String(p);
-            if (pStr.endsWith(path.join(modId, 'lua'))) return true; // root level lua? No, usually it's in a branch folder
+            if (pStr.endsWith(path.join(modId, 'media'))) return true;
             if (pStr.endsWith(modId)) return true;
             return false;
         });
 
-        vi.mocked(fs.readdirSync).mockReturnValue(['lua'] as any);
+        vi.mocked(fs.readdirSync).mockReturnValue(['media'] as any);
         vi.mocked(fs.statSync).mockImplementation((p: any) => {
             const pStr = String(p);
             return {
@@ -78,7 +78,7 @@ describe('modinfo layout resolution', () => {
         const modId = 'my_mod';
         vi.mocked(fs.existsSync).mockImplementation((p: any) => {
             const pStr = String(p);
-            if (pStr.includes(path.join('42.13.1', 'lua'))) return true;
+            if (pStr.includes(path.join('42.13.1', 'media'))) return true;
             if (pStr.endsWith(modId)) return true;
             return false;
         });

@@ -65,9 +65,5 @@
 
     // Optional project-local output directory.
     // If omitted, PZStudio falls back to the global config or the default workshop folder.
-    "outdir": "./out",
-
-    // Optional project-local symlink preference.
-    // When true, `pzstudio new` and some scaffold steps may use junctions on Windows.
-    "useSymlinks": false
+    "outdir": "./out"
 }

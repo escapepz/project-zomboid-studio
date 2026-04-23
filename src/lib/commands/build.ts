@@ -78,7 +78,7 @@ async function buildWorkshop(
 
         // Generate the mod.info
         const modInfoFlag = projectConfig.mods[modId].build?.modInfo;
-        const effectiveModInfoFlag = modInfoFlag ?? 'skip';
+        const effectiveModInfoFlag = modInfoFlag ?? 'auto-if-missing';
         const modInfoPath = join(outModsPath, 'mod.info');
 
         if (effectiveModInfoFlag === 'skip') {

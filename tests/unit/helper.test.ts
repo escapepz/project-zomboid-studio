@@ -123,8 +123,8 @@ describe('Helper Library', () => {
             expect(logger.warn).not.toHaveBeenCalledWith(
                 expect.stringContaining('[MIGRATION]'),
             );
-            // applyProjectDefaults silently defaults modInfo to 'skip'
-            expect(config!.mods.mod1.build!.modInfo).toBe('skip');
+            // applyProjectDefaults silently defaults modInfo to 'auto-if-missing'
+            expect(config!.mods.mod1.build!.modInfo).toBe('auto-if-missing');
         });
     });
 
@@ -222,7 +222,7 @@ describe('Helper Library', () => {
             expect(result.workshop).toEqual({});
         });
 
-        it('should default build.modInfo to skip when missing', () => {
+        it('should default build.modInfo to auto-if-missing when missing', () => {
             const config = {
                 workshop: {},
                 mods: {
@@ -233,7 +233,7 @@ describe('Helper Library', () => {
                 },
             };
             const result = applyProjectDefaults(config);
-            expect(result.mods.testmod.build!.modInfo).toBe('skip');
+            expect(result.mods.testmod.build!.modInfo).toBe('auto-if-missing');
         });
 
         it('should default poster and icon when missing', () => {

@@ -159,7 +159,7 @@ export function applyProjectDefaults(config: any): IProjectConfig {
             }
             if (!mod.build) mod.build = {};
             if (mod.build.modInfo === undefined) {
-                mod.build.modInfo = 'skip';
+                mod.build.modInfo = 'auto-if-missing';
             }
         }
     }
@@ -680,7 +680,7 @@ export function getModBranchFolders(modId: string): string[] {
 /**
  * Resolves the valid branch folders for a mod that should contain a mod.info file.
  * Following Build 42 rules:
- * 1. Only existing nested folders that contain a 'lua' directory.
+ * 1. Only existing nested folders that contain a 'media' directory.
  * 2. Root-level mod.info is NOT a target for Build 42 generation.
  * @param modId The mod id
  * @returns {string[]} An array of absolute paths to valid branch folders
@@ -688,8 +688,8 @@ export function getModBranchFolders(modId: string): string[] {
 export function resolveModInfoTargets(modId: string): string[] {
     const branchFolders = getModBranchFolders(modId);
     return branchFolders.filter((folder) => {
-        const luaPath = join(folder, 'lua');
-        return existsSync(luaPath) && statSync(luaPath).isDirectory();
+        const mediaPath = join(folder, 'media');
+        return existsSync(mediaPath) && statSync(mediaPath).isDirectory();
     });
 }
 

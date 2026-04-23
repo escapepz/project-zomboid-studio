@@ -51,10 +51,10 @@ describe('modinfo command e2e', () => {
             }),
         );
 
-        fs.mkdirSync(path.join(workspace.dir, modId1, 'common', 'lua'), {
+        fs.mkdirSync(path.join(workspace.dir, modId1, 'common', 'media'), {
             recursive: true,
         });
-        fs.mkdirSync(path.join(workspace.dir, modId2, '42', 'lua'), {
+        fs.mkdirSync(path.join(workspace.dir, modId2, '42', 'media'), {
             recursive: true,
         });
 
@@ -104,10 +104,10 @@ describe('modinfo command e2e', () => {
             }),
         );
 
-        fs.mkdirSync(path.join(workspace.dir, modId1, 'common', 'lua'), {
+        fs.mkdirSync(path.join(workspace.dir, modId1, 'common', 'media'), {
             recursive: true,
         });
-        fs.mkdirSync(path.join(workspace.dir, modId2, 'common', 'lua'), {
+        fs.mkdirSync(path.join(workspace.dir, modId2, 'common', 'media'), {
             recursive: true,
         });
 
@@ -154,10 +154,10 @@ describe('modinfo command e2e', () => {
             }),
         );
 
-        fs.mkdirSync(path.join(workspace.dir, modId1, 'common', 'lua'), {
+        fs.mkdirSync(path.join(workspace.dir, modId1, 'common', 'media'), {
             recursive: true,
         });
-        fs.mkdirSync(path.join(workspace.dir, modId2, 'common', 'lua'), {
+        fs.mkdirSync(path.join(workspace.dir, modId2, 'common', 'media'), {
             recursive: true,
         });
 
@@ -225,5 +225,152 @@ describe('modinfo command e2e', () => {
         const result = await workspace.run('modinfo', ['invalid']);
         workspace.assertFailure(result);
         workspace.assertStderr(result, 'Unknown modinfo action [invalid]');
+    });
+
+    it('should honor build.modInfo: "skip"', async () => {
+        const modId = 'skip_mod';
+
+        workspace.write(
+            'project.json',
+            JSON.stringify({
+                workshop: {
+                    title: 'Test Project',
+                    visibility: 'public',
+                    tags: [],
+                },
+                mods: {
+                    [modId]: {
+                        name: 'Skip Mod',
+                        description: 'Desc',
+                        build: { modInfo: 'skip' },
+                    },
+                },
+            }),
+        );
+
+        fs.mkdirSync(path.join(workspace.dir, modId, 'common', 'media'), {
+            recursive: true,
+        });
+
+        const result = await workspace.run('modinfo', ['generate']);
+        workspace.assertSuccess(result);
+
+        expect(
+            fs.existsSync(
+                path.join(workspace.dir, modId, 'common', 'mod.info'),
+            ),
+        ).toBe(false);
+    });
+
+    it('should honor build.modInfo: "auto-if-missing" (skip if exists)', async () => {
+        const modId = 'missing_mod';
+
+        workspace.write(
+            'project.json',
+            JSON.stringify({
+                workshop: {
+                    title: 'Test Project',
+                    visibility: 'public',
+                    tags: [],
+                },
+                mods: {
+                    [modId]: {
+                        name: 'Missing Mod',
+                        description: 'Desc',
+                        build: { modInfo: 'auto-if-missing' },
+                    },
+                },
+            }),
+        );
+
+        const modInfoDir = path.join(workspace.dir, modId, 'common');
+        fs.mkdirSync(path.join(modInfoDir, 'media'), { recursive: true });
+
+        const existingContent = 'VERSION=EXISTING';
+        fs.writeFileSync(path.join(modInfoDir, 'mod.info'), existingContent);
+
+        const result = await workspace.run('modinfo', ['generate']);
+        workspace.assertSuccess(result);
+
+        const currentContent = fs.readFileSync(
+            path.join(modInfoDir, 'mod.info'),
+            'utf8',
+        );
+        expect(currentContent).toBe(existingContent);
+    });
+
+    it('should honor build.modInfo: "auto" (overwrite if exists)', async () => {
+        const modId = 'auto_mod';
+
+        workspace.write(
+            'project.json',
+            JSON.stringify({
+                workshop: {
+                    title: 'Test Project',
+                    visibility: 'public',
+                    tags: [],
+                },
+                mods: {
+                    [modId]: {
+                        name: 'Auto Mod',
+                        description: 'Desc',
+                        build: { modInfo: 'auto' },
+                    },
+                },
+            }),
+        );
+
+        const modInfoDir = path.join(workspace.dir, modId, 'common');
+        fs.mkdirSync(path.join(modInfoDir, 'media'), { recursive: true });
+
+        const existingContent = 'VERSION=EXISTING';
+        fs.writeFileSync(path.join(modInfoDir, 'mod.info'), existingContent);
+
+        const result = await workspace.run('modinfo', ['generate']);
+        workspace.assertSuccess(result);
+
+        const currentContent = fs.readFileSync(
+            path.join(modInfoDir, 'mod.info'),
+            'utf8',
+        );
+        expect(currentContent).not.toBe(existingContent);
+        expect(currentContent).toContain('name=Auto Mod');
+    });
+
+    it('should default to "auto-if-missing" if omitted', async () => {
+        const modId = 'default_mod';
+
+        workspace.write(
+            'project.json',
+            JSON.stringify({
+                workshop: {
+                    title: 'Test Project',
+                    visibility: 'public',
+                    tags: [],
+                },
+                mods: {
+                    [modId]: {
+                        name: 'Default Mod',
+                        description: 'Desc',
+                        // build.modInfo omitted
+                    },
+                },
+            }),
+        );
+
+        const modInfoDir = path.join(workspace.dir, modId, 'common');
+        fs.mkdirSync(path.join(modInfoDir, 'media'), { recursive: true });
+
+        const existingContent = 'VERSION=EXISTING';
+        fs.writeFileSync(path.join(modInfoDir, 'mod.info'), existingContent);
+
+        const result = await workspace.run('modinfo', ['generate']);
+        workspace.assertSuccess(result);
+
+        const currentContent = fs.readFileSync(
+            path.join(modInfoDir, 'mod.info'),
+            'utf8',
+        );
+        expect(currentContent).toBe(existingContent);
     });
 });

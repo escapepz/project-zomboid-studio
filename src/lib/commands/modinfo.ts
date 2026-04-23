@@ -1,4 +1,4 @@
-import { writeFileSync } from 'fs';
+import { existsSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { expect } from '../expect';
 import { addHelp } from '../help';
@@ -59,7 +59,7 @@ async function generateForMod(modId: string, projectConfig: any) {
         throw new Error(`Mod [${modId}] not found in project.json`);
     }
 
-    const modInfoFlag = mod.build?.modInfo ?? 'skip';
+    const modInfoFlag = mod.build?.modInfo ?? 'auto-if-missing';
     if (modInfoFlag === 'skip') {
         verbose(`Mod '${modId}' is configured to skip mod.info generation.`);
         log(
@@ -81,6 +81,16 @@ async function generateForMod(modId: string, projectConfig: any) {
     verbose(`Found targets for '${modId}': ${targets.join(', ')}`);
     for (const targetDir of targets) {
         const modInfoPath = join(targetDir, 'mod.info');
+        if (modInfoFlag === 'auto-if-missing' && existsSync(modInfoPath)) {
+            verbose(
+                `Mod '${modId}' already has mod.info in '${targetDir}'. Skipping...`,
+            );
+            log(
+                `- Skipping '${modId}' mod.info in '${targetDir}' (already exists, build.modInfo: "auto-if-missing")...`,
+            );
+            continue;
+        }
+
         verbose(`Generating mod.info content for '${modId}'...`);
         log(`- Generating mod.info for '${modId}' in '${targetDir}'...`);
         const content = generateModInfoText(modId, projectConfig);

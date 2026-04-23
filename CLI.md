@@ -275,7 +275,7 @@ Per mod, the effective `build.modInfo` value is:
 - any other value
   - Generates `mod.info`.
 
-The build command currently treats an omitted `build.modInfo` as `skip`.
+The build command currently treats an omitted `build.modInfo` as `auto-if-missing`.
 
 ### Output
 
@@ -542,7 +542,7 @@ Typical project contents after `new`:
 
 ## Notes
 
-- `build` treats an omitted `build.modInfo` as `skip`.
+- `build` treats an omitted `build.modInfo` as `auto-if-missing`.
 - `new` can use local `.template-mod` and `.template-workshop` folders from the current working directory when they exist and are non-empty.
 - `add` uses a local `.template-mod` in the project root if present; otherwise it resolves a template and seeds the local folder.
 - `migrate` is safe to run repeatedly.

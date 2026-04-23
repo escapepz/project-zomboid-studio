@@ -65,15 +65,15 @@ export interface IModConfig {
 
     /**
      * Custom build flags for this mod.
-     * Omitting a flag uses the default (auto) behaviour.
+     * Omitting a flag uses the default (auto-if-missing) behaviour.
      */
     build?: {
         /**
          * Controls whether mod.info is auto-generated from project.json.
          *
-         * - "skip"   (default) — never generate; use whatever file exists in the mod folder
-         * - "auto"             — generate mod.info from project.json
-         * - "auto-if-missing"  — generate only if mod.info is not already present in the output
+         * - "auto-if-missing" (default) — generate only if mod.info is not already present in the source/output
+         * - "auto"                      — generate mod.info from project.json (overwrite existing)
+         * - "skip"                      — never generate; use whatever file exists in the mod folder
          */
         modInfo?: 'auto' | 'skip' | 'auto-if-missing';
     };
