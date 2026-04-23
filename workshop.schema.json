@@ -1,65 +1,59 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "title": "workshop.txt",
     "description": "Project Zomboid Steam Workshop item metadata. Parsed line-by-line as key=value from workshop.txt by SteamWorkshopItem.",
-    "type": "object",
-    "required": ["title", "description", "visibility"],
     "properties": {
-        "version": {
-            "description": "File format version. Always 1. Written by writeWorkshopTxt() but skipped on read.",
-            "type": "integer",
-            "const": 1,
-            "default": 1
-        },
-        "id": {
-            "description": "Steam Workshop published file ID. A numeric string representing an unsigned 64-bit integer (0 to 18446744073709551615). Validated via SteamUtils.isValidSteamID(). Null/absent until the item is first created on Steam.",
-            "type": "string",
-            "pattern": "^[0-9]+$"
-        },
-        "title": {
-            "description": "Workshop item title. Single-line, overwrites if repeated. Note: if title is \"Mod Template\", visibility is forced to private on submit.",
-            "type": "string",
-            "default": ""
-        },
         "description": {
+            "default": "",
             "description": "Workshop item description. Multi-line in workshop.txt — lines are concatenated with newline separator. On submit, the game appends \"Workshop ID: <id>\" and \"Mod ID: <modId>\" lines automatically.",
             "oneOf": [
                 {
                     "type": "string"
                 },
                 {
-                    "type": "array",
+                    "description": "Each element becomes a description= line, joined with newlines.",
                     "items": {
                         "type": "string"
                     },
-                    "description": "Each element becomes a description= line, joined with newlines."
+                    "type": "array"
                 }
-            ],
-            "default": ""
+            ]
+        },
+        "id": {
+            "description": "Steam Workshop published file ID. A numeric string representing an unsigned 64-bit integer (0 to 18446744073709551615). Validated via SteamUtils.isValidSteamID(). Null/absent until the item is first created on Steam.",
+            "pattern": "^[0-9]+$",
+            "type": "string"
         },
         "tags": {
+            "default": [],
             "description": "Workshop tags. Semicolon-separated in workshop.txt, additive on read (tags.addAll). Allowed values are loaded at runtime from media/WorkshopTags.txt via SteamWorkshopItem.getAllowedTags().",
-            "type": "array",
             "items": {
                 "$ref": "#/$defs/tags"
             },
-            "default": []
+            "type": "array"
+        },
+        "title": {
+            "default": "",
+            "description": "Workshop item title. Single-line, overwrites if repeated. Note: if title is \"Mod Template\", visibility is forced to private on submit.",
+            "type": "string"
+        },
+        "version": {
+            "const": 1,
+            "default": 1,
+            "description": "File format version. Always 1. Written by writeWorkshopTxt() but skipped on read.",
+            "type": "integer"
         },
         "visibility": {
-            "description": "Workshop item visibility. Maps to Steam API integers: public=0, friendsOnly=1, private=2, unlisted=3.",
             "$ref": "#/$defs/visibility",
-            "default": "public"
+            "default": "public",
+            "description": "Workshop item visibility. Maps to Steam API integers: public=0, friendsOnly=1, private=2, unlisted=3."
         }
     },
+    "required": ["title", "description", "visibility"],
+    "title": "workshop.txt",
+    "type": "object",
     "$defs": {
-        "visibility": {
-            "description": "Workshop item visibility.",
-            "type": "string",
-            "enum": ["public", "friendsOnly", "private", "unlisted"]
-        },
         "tags": {
             "description": "Workshop tags.",
-            "type": "string",
             "enum": [
                 "Build 40",
                 "Build 41",
@@ -92,7 +86,13 @@
                 "QoL",
                 "WIP",
                 "Weapons"
-            ]
+            ],
+            "type": "string"
+        },
+        "visibility": {
+            "description": "Workshop item visibility.",
+            "enum": ["public", "friendsOnly", "private", "unlisted"],
+            "type": "string"
         }
     }
 }

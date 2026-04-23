@@ -1,198 +1,198 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "title": "mod.info",
     "description": "Project Zomboid mod metadata file. Parsed line-by-line as key=value pairs.",
-    "type": "object",
-    "required": ["id"],
     "properties": {
-        "id": {
-            "type": "string",
-            "description": "Unique mod identifier. Must start at the beginning of the line. Required.",
-            "default": "undefined_id",
-            "minLength": 1
-        },
-        "name": {
-            "type": "string",
-            "description": "Display name of the mod.",
-            "default": "Unnamed Mod"
-        },
-        "description": {
-            "oneOf": [
-                {
-                    "type": "string"
-                },
-                {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                }
-            ],
-            "description": "Mod description. Multiple lines are concatenated into a single string.",
-            "default": ""
-        },
         "author": {
-            "type": "string",
-            "description": "Mod author name."
-        },
-        "modversion": {
-            "type": "string",
-            "description": "Version string for the mod."
-        },
-        "url": {
-            "type": "string",
-            "description": "URL for the mod.",
-            "format": "uri"
-        },
-        "icon": {
-            "type": "string",
-            "description": "Relative path to an icon image file."
-        },
-        "poster": {
-            "oneOf": [
-                {
-                    "type": "string"
-                },
-                {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                }
-            ],
-            "description": "Poster/thumbnail images. Single string or array of paths."
+            "description": "Mod author name.",
+            "type": "string"
         },
         "category": {
-            "type": "string",
-            "description": "Category string for the mod."
+            "description": "Category string for the mod.",
+            "type": "string"
         },
-        "require": {
+        "description": {
+            "default": "",
+            "description": "Mod description. Multiple lines are concatenated into a single string.",
             "oneOf": [
                 {
-                    "type": "string",
-                    "description": "Comma-separated mod IDs."
+                    "type": "string"
                 },
                 {
-                    "type": "array",
                     "items": {
-                        "type": "string",
-                        "minLength": 1
-                    }
+                        "type": "string"
+                    },
+                    "type": "array"
                 }
-            ],
-            "description": "Mod IDs this mod depends on."
+            ]
+        },
+        "icon": {
+            "description": "Relative path to an icon image file.",
+            "type": "string"
+        },
+        "id": {
+            "default": "undefined_id",
+            "description": "Unique mod identifier. Must start at the beginning of the line. Required.",
+            "minLength": 1,
+            "type": "string"
         },
         "incompatible": {
+            "description": "Mod IDs incompatible with this mod.",
             "oneOf": [
                 {
                     "type": "string"
                 },
                 {
-                    "type": "array",
                     "items": {
-                        "type": "string",
-                        "minLength": 1
-                    }
+                        "minLength": 1,
+                        "type": "string"
+                    },
+                    "type": "array"
                 }
-            ],
-            "description": "Mod IDs incompatible with this mod."
+            ]
         },
         "loadModAfter": {
+            "description": "Mod IDs this mod should load after.",
             "oneOf": [
                 {
                     "type": "string"
                 },
                 {
-                    "type": "array",
                     "items": {
-                        "type": "string",
-                        "minLength": 1
-                    }
+                        "minLength": 1,
+                        "type": "string"
+                    },
+                    "type": "array"
                 }
-            ],
-            "description": "Mod IDs this mod should load after."
+            ]
         },
         "loadModBefore": {
+            "description": "Mod IDs this mod should load before.",
             "oneOf": [
                 {
                     "type": "string"
                 },
                 {
-                    "type": "array",
                     "items": {
-                        "type": "string",
-                        "minLength": 1
-                    }
+                        "minLength": 1,
+                        "type": "string"
+                    },
+                    "type": "array"
                 }
-            ],
-            "description": "Mod IDs this mod should load before."
+            ]
         },
-        "versionMin": {
-            "type": "string",
-            "description": "Minimum game version required."
+        "modversion": {
+            "description": "Version string for the mod.",
+            "type": "string"
         },
-        "versionMax": {
-            "type": "string",
-            "description": "Maximum game version supported."
+        "name": {
+            "default": "Unnamed Mod",
+            "description": "Display name of the mod.",
+            "type": "string"
         },
         "pack": {
+            "description": "Texture pack files to load.",
             "oneOf": [
                 {
                     "$ref": "#/$defs/packEntry"
                 },
                 {
-                    "type": "array",
                     "items": {
                         "$ref": "#/$defs/packEntry"
-                    }
+                    },
+                    "type": "array"
                 }
-            ],
-            "description": "Texture pack files to load."
+            ]
+        },
+        "poster": {
+            "description": "Poster/thumbnail images. Single string or array of paths.",
+            "oneOf": [
+                {
+                    "type": "string"
+                },
+                {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                }
+            ]
+        },
+        "require": {
+            "description": "Mod IDs this mod depends on.",
+            "oneOf": [
+                {
+                    "description": "Comma-separated mod IDs.",
+                    "type": "string"
+                },
+                {
+                    "items": {
+                        "minLength": 1,
+                        "type": "string"
+                    },
+                    "type": "array"
+                }
+            ]
         },
         "tiledef": {
+            "description": "Tile definition files to load.",
             "oneOf": [
                 {
                     "$ref": "#/$defs/tiledefEntry"
                 },
                 {
-                    "type": "array",
                     "items": {
                         "$ref": "#/$defs/tiledefEntry"
-                    }
+                    },
+                    "type": "array"
                 }
-            ],
-            "description": "Tile definition files to load."
+            ]
+        },
+        "url": {
+            "description": "URL for the mod.",
+            "format": "uri",
+            "type": "string"
+        },
+        "versionMax": {
+            "description": "Maximum game version supported.",
+            "type": "string"
+        },
+        "versionMin": {
+            "description": "Minimum game version required.",
+            "type": "string"
         }
     },
+    "required": ["id"],
+    "title": "mod.info",
+    "type": "object",
     "$defs": {
         "packEntry": {
-            "type": "object",
-            "required": ["name"],
             "properties": {
                 "name": {
-                    "type": "string",
-                    "minLength": 1
+                    "minLength": 1,
+                    "type": "string"
                 },
                 "type": {
-                    "type": "string",
-                    "enum": ["ui"]
+                    "enum": ["ui"],
+                    "type": "string"
                 }
-            }
+            },
+            "required": ["name"],
+            "type": "object"
         },
         "tiledefEntry": {
-            "type": "object",
-            "required": ["name", "fileNumber"],
             "properties": {
-                "name": {
-                    "type": "string",
-                    "minLength": 1
-                },
                 "fileNumber": {
-                    "type": "integer",
+                    "maximum": 16382,
                     "minimum": 100,
-                    "maximum": 16382
+                    "type": "integer"
+                },
+                "name": {
+                    "minLength": 1,
+                    "type": "string"
                 }
-            }
+            },
+            "required": ["name", "fileNumber"],
+            "type": "object"
         }
     }
 }
