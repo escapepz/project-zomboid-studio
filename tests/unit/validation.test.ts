@@ -193,6 +193,62 @@ describe('Validation', () => {
             validateProject(config, context);
             expect(context.hasErrors()).toBe(false);
         });
+
+        it('should pass when build.modInfo is absent (omission is a valid default)', () => {
+            const config = {
+                workshop: {
+                    title: 'Test',
+                    visibility: 'public',
+                    tags: ['Building'],
+                },
+                mods: {
+                    mod1: { name: 'Mod 1', description: 'Desc' },
+                    mod2: { name: 'Mod 2', description: 'Desc', build: {} },
+                },
+            };
+            validateProject(config, context);
+            expect(context.hasErrors()).toBe(false);
+        });
+
+        it('should report error when build.modInfo is a non-string (e.g. number)', () => {
+            const config = {
+                workshop: { title: 'Test', visibility: 'public', tags: [] },
+                mods: {
+                    mod1: {
+                        name: 'Mod 1',
+                        description: 'Desc',
+                        build: { modInfo: 42 },
+                    },
+                },
+            };
+            validateProject(config, context);
+            expect(context.hasErrors()).toBe(true);
+            expect(
+                context
+                    .getErrors()
+                    .some((e) => e.location.includes('build.modInfo')),
+            ).toBe(true);
+        });
+
+        it('should report error when build.modInfo is an object', () => {
+            const config = {
+                workshop: { title: 'Test', visibility: 'public', tags: [] },
+                mods: {
+                    mod1: {
+                        name: 'Mod 1',
+                        description: 'Desc',
+                        build: { modInfo: { mode: 'auto' } },
+                    },
+                },
+            };
+            validateProject(config, context);
+            expect(context.hasErrors()).toBe(true);
+            expect(
+                context
+                    .getErrors()
+                    .some((e) => e.location.includes('build.modInfo')),
+            ).toBe(true);
+        });
     });
 
     describe('validateConfig', () => {

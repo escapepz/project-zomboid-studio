@@ -333,11 +333,11 @@ describe('build.modInfo default-warning (E2E)', () => {
         workspace.cleanup();
     });
 
-    it('should emit a [BREAKING CHANGE] warning when build.modInfo is omitted', async () => {
+    it('should NOT emit a migration warning when build.modInfo is omitted', async () => {
         const title = 'No ModInfo Config';
         const modId = 'no_modinfo_mod';
 
-        // Write project.json without build.modInfo to trigger the default-warning
+        // Write project.json without build.modInfo
         workspace.write(
             'project.json',
             JSON.stringify({
@@ -357,6 +357,10 @@ describe('build.modInfo default-warning (E2E)', () => {
         const result = await workspace.run('build');
         workspace.assertSuccess(result);
 
-        workspace.assertStderr(result, '[MIGRATION]');
+        // Should NOT contain the migration warning
+        const hasMigrationWarning = result.stderr.some((line) =>
+            line.includes('[MIGRATION]'),
+        );
+        expect(hasMigrationWarning).toBe(false);
     });
 });

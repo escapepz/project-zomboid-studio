@@ -394,7 +394,7 @@ export function readGlobalConfig(validate: boolean = true): GlobalConfig {
     }
     try {
         const content = readFileSync(configPath, 'utf-8');
-        let config = JSON.parse(content);
+        let config = content.trim() ? JSON.parse(content) : {};
 
         if (validate) {
             // Apply migration FIRST so we validate the modern shape

@@ -1,19 +1,11 @@
 import fs from 'fs';
 import path from 'path';
-import { vi } from 'vitest';
+import { getFakeHome, setFakeHome } from './fake-home';
 import { runCLI } from '../../src/lib/cli';
 import { setLogger, ILogger } from '../../src/lib/logger';
 import { createTempDir, deleteDir } from './test-fixtures';
 
 let currentFakeHome: string | undefined;
-
-vi.mock('os', async (importOriginal) => {
-    const original = await importOriginal<typeof import('os')>();
-    return {
-        ...original,
-        homedir: () => currentFakeHome || original.homedir(),
-    };
-});
 
 export interface E2EResult {
     stdout: string[];
@@ -84,8 +76,9 @@ export class E2ETestWorkspace {
             throw new Error(`Process exited with code ${code}`);
         });
 
-        // Set our fake home
-        currentFakeHome = this.fakeHome;
+        // Set our fake home via the global mock state
+        const previousHome = getFakeHome();
+        setFakeHome(this.fakeHome);
 
         // Mock process.argv for runCLI's internal calls to cmd() and args()
         const originalArgv = process.argv;
@@ -106,7 +99,7 @@ export class E2ETestWorkspace {
             process.chdir(this.originalCwd);
             process.argv = originalArgv;
             exitSpy.mockRestore();
-            currentFakeHome = undefined;
+            setFakeHome(previousHome);
             setLogger(undefined);
         }
 

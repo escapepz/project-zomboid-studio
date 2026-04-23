@@ -77,6 +77,8 @@ describe('add command e2e', () => {
             const config = workspace.readJson('project.json');
             expect(config.mods[newModId]).toBeDefined();
             expect(config.mods[newModId].name).toBe(newModTitle);
+            // Verify build.modInfo is NOT added (omission is the new default)
+            expect(config.mods[newModId].build?.modInfo).toBeUndefined();
         } catch (e) {
             console.log('STDOUT:', result.stdout.join('\n'));
             console.log('STDERR:', result.stderr.join('\n'));

@@ -16,6 +16,7 @@ import {
     getStoreDir,
     parseModInfoText,
 } from '../../src/lib/helper';
+import { migration } from '../../src/lib/migration';
 import { IProjectConfig } from '../../src/lib/project';
 import fs from 'fs';
 import * as logger from '../../src/lib/logger';
@@ -86,13 +87,14 @@ describe('Helper Library', () => {
             expect(exitSpy).toHaveBeenCalledWith(1);
         });
 
-        it('should warn and continue if legacy shape is detected', () => {
+        it('should warn and continue if a real legacy shape is detected', () => {
             vi.mocked(fs.existsSync).mockReturnValue(true);
             vi.mocked(fs.readFileSync).mockReturnValue(
                 JSON.stringify({
+                    // root-level "title" is a legacy field that triggers migration
+                    title: 'Old Title',
                     workshop: { title: 'Test', visibility: 'public', tags: [] },
-                    mods: { mod1: { name: 'Mod 1', description: 'Desc' } },
-                    // missing build.modInfo in mod1
+                    mods: {},
                 }),
             );
 
@@ -101,6 +103,29 @@ describe('Helper Library', () => {
             expect(logger.warn).toHaveBeenCalledWith(
                 expect.stringContaining('[MIGRATION]'),
             );
+        });
+
+        it('should NOT emit a migration warning when build.modInfo is omitted', () => {
+            vi.mocked(fs.existsSync).mockReturnValue(true);
+            vi.mocked(fs.readFileSync).mockReturnValue(
+                JSON.stringify({
+                    workshop: { title: 'Test', visibility: 'public', tags: [] },
+                    mods: { mod1: { name: 'Mod 1', description: 'Desc' } },
+                    // build.modInfo intentionally absent – this is the default
+                }),
+            );
+
+            // Clear warn history from previous tests in this describe block
+            // (vi.restoreAllMocks does not reset call records on vi.mock() module fns)
+            vi.mocked(logger.warn).mockClear();
+
+            const config = readProjectConfig();
+            expect(config).toBeDefined();
+            expect(logger.warn).not.toHaveBeenCalledWith(
+                expect.stringContaining('[MIGRATION]'),
+            );
+            // applyProjectDefaults silently defaults modInfo to 'skip'
+            expect(config!.mods.mod1.build!.modInfo).toBe('skip');
         });
     });
 
@@ -753,6 +778,59 @@ describe('Helper Library', () => {
             const content = 'id=test\ncustom=value';
             const result = parseModInfoText(content);
             expect(result.custom).toBe('value');
+        });
+    });
+
+    describe('migration.checkProject', () => {
+        it('should return needsMigration=false for a clean config', () => {
+            const result = migration.checkProject({
+                workshop: { title: 'Test', visibility: 'public', tags: [] },
+                mods: { mod1: { name: 'Mod 1', description: 'Desc' } },
+            });
+            expect(result.needsMigration).toBe(false);
+        });
+
+        it('should return needsMigration=false when build.modInfo is absent', () => {
+            // Omitting build.modInfo is the new default – not a migration trigger
+            const result = migration.checkProject({
+                workshop: { title: 'Test', visibility: 'public', tags: [] },
+                mods: {
+                    mod1: { name: 'Mod 1', description: 'Desc' },
+                    mod2: { name: 'Mod 2', description: 'Desc', build: {} },
+                },
+            });
+            expect(result.needsMigration).toBe(false);
+        });
+
+        it('should return needsMigration=true for legacy root fields', () => {
+            const withTitle = migration.checkProject({
+                title: 'Old',
+                workshop: {},
+                mods: {},
+            });
+            expect(withTitle.needsMigration).toBe(true);
+
+            const withAuthors = migration.checkProject({
+                authors: ['me'],
+                workshop: {},
+                mods: {},
+            });
+            expect(withAuthors.needsMigration).toBe(true);
+
+            const withId = migration.checkProject({
+                id: 123,
+                workshop: {},
+                mods: {},
+            });
+            expect(withId.needsMigration).toBe(true);
+        });
+
+        it('should return needsMigration=true when workshop.excludes is present', () => {
+            const result = migration.checkProject({
+                workshop: { excludes: ['someMod'] },
+                mods: {},
+            });
+            expect(result.needsMigration).toBe(true);
         });
     });
 });

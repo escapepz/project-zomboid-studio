@@ -33,20 +33,6 @@ export const migration = {
             issues.push('"workshop.excludes" has moved to root');
         }
 
-        // Legacy: missing build.modInfo in mods
-        if (config.mods) {
-            for (const modId in config.mods) {
-                const mod = config.mods[modId];
-                if (
-                    mod.build === undefined ||
-                    mod.build.modInfo === undefined
-                ) {
-                    issues.push(`mod "${modId}" missing "build.modInfo"`);
-                    break;
-                }
-            }
-        }
-
         // Legacy: IWorshopConfig vs IWorkshopConfig (typo in code but might exist in JSON if we strict-check)
         // Actually the typo is in the code's interface name, not necessarily the JSON key.
         // But data-model says "IWorshopConfig rename and WorkshopTags sync".
@@ -105,16 +91,6 @@ export const migration = {
 
         if (upgraded.excludes === undefined) {
             upgraded.excludes = [];
-        }
-
-        if (upgraded.mods) {
-            for (const modId in upgraded.mods) {
-                const mod = upgraded.mods[modId];
-                if (!mod.build) mod.build = {};
-                if (mod.build.modInfo === undefined) {
-                    mod.build.modInfo = 'skip'; // Default per specification
-                }
-            }
         }
 
         return upgraded as IProjectConfig;

@@ -74,13 +74,6 @@ async function buildWorkshop(
 
         // Generate the mod.info
         const modInfoFlag = projectConfig.mods[modId].build?.modInfo;
-        if (modInfoFlag === undefined) {
-            warn(
-                `[BREAKING CHANGE] The default 'modInfo' flag has changed from 'auto' to 'skip'. ` +
-                    `If you want to continue auto-generating mod.info for '${modId}', please set 'build.modInfo': 'auto' in your project.json.`,
-            );
-        }
-
         const effectiveModInfoFlag = modInfoFlag ?? 'skip';
         const modInfoPath = join(outModsPath, 'mod.info');
 

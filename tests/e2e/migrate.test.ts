@@ -61,8 +61,8 @@ describe('migrate command e2e', () => {
             expect(upgraded.workshop.excludes).toBeUndefined();
             expect(upgraded.excludes).toContain('temp');
 
-            // mods should have build.modInfo
-            expect(upgraded.mods.my_mod.build.modInfo).toBe('skip');
+            // mods should NOT have build.modInfo (omission is now the normal default)
+            expect(upgraded.mods.my_mod.build?.modInfo).toBeUndefined();
         } catch (e) {
             console.log('STDOUT:', result.stdout.join('\n'));
             console.log('STDERR:', result.stderr.join('\n'));
@@ -169,6 +169,26 @@ describe('migrate command e2e', () => {
                 line.includes('parse'),
         );
         expect(hasJsonError).toBe(true);
+    });
+
+    it('should treat an empty config.json as missing keys', async () => {
+        const configPath = path.join(
+            workspace.fakeHome,
+            '.pzstudio',
+            'config.json',
+        );
+        fs.mkdirSync(path.dirname(configPath), { recursive: true });
+        fs.writeFileSync(configPath, '', 'utf8');
+
+        const result = await workspace.run('migrate');
+
+        workspace.assertSuccess(result);
+        workspace.assertStdout(result, 'Migrating config.json');
+
+        const upgraded = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        expect(upgraded.useSymlinks).toBe(true);
+        expect(upgraded.templates).toBeDefined();
+        expect(upgraded.outdir).toBeDefined();
     });
 
     it('should fail cleanly when project.json is an empty file', async () => {

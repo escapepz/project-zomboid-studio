@@ -243,6 +243,15 @@ describe('templateManager - config and resolution', () => {
             expect(config.useSymlinks).toBe(true);
         });
 
+        it('should treat an empty config file as missing keys', () => {
+            vi.spyOn(fs, 'existsSync').mockReturnValue(true);
+            vi.spyOn(fs, 'readFileSync').mockReturnValue('');
+            const config = readGlobalConfig();
+            expect(config.templates).toBeDefined();
+            expect(config.useSymlinks).toBe(true);
+            expect(config.outdir).toBeDefined();
+        });
+
         it('should preserve existing user values', () => {
             vi.spyOn(fs, 'existsSync').mockReturnValue(true);
             vi.spyOn(fs, 'readFileSync').mockReturnValue(

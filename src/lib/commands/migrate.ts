@@ -20,10 +20,15 @@ addHelp(
 export async function migrateCmd() {
     log('\nChecking for legacy file shapes...\n');
 
+    const readConfigJsonOrEmpty = (filePath: string) => {
+        const content = readFileSync(filePath, 'utf8');
+        return content.trim() ? JSON.parse(content) : {};
+    };
+
     // 1. Migrate config.json
     const configPath = getConfigPath();
     const config = existsSync(configPath)
-        ? JSON.parse(readFileSync(configPath, 'utf8'))
+        ? readConfigJsonOrEmpty(configPath)
         : {};
     const configCheck = migration.checkConfig(config);
     if (configCheck.needsMigration) {
