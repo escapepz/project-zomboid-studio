@@ -120,6 +120,27 @@ describe('Validation', () => {
             validateProject(config, context);
             expect(context.hasErrors()).toBe(false);
         });
+        it('should report error for templates field in project.json', () => {
+            const config = {
+                workshop: { title: 'Test', visibility: 'public', tags: [] },
+                mods: {},
+                templates: {
+                    mod: { url: 'user/repo' },
+                },
+            };
+            validateProject(config, context);
+            expect(context.hasErrors()).toBe(true);
+            expect(
+                context
+                    .getErrors()
+                    .some((e) => e.location.includes('templates')),
+            ).toBe(true);
+            expect(
+                context
+                    .getErrors()
+                    .find((e) => e.location.includes('templates'))?.problem,
+            ).toContain('no longer supported');
+        });
     });
 
     describe('validateConfig', () => {

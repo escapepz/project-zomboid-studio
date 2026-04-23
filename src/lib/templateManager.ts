@@ -13,7 +13,6 @@ import {
     symlinkSync,
 } from 'fs';
 import { log, warn, verbose } from './logger';
-import { resolveProjectConfig } from './helper';
 
 /**
  * Creates a filter for fs.cpSync derived from .pzstudioignore or hardcoded defaults.
@@ -535,18 +534,8 @@ export function resolveTemplateDir(
     isOffline?: boolean,
     forceUpdate?: boolean,
 ): string {
-    let templateConfig: TemplateConfig | undefined;
-
-    // Try resolved project config first (which merges workspace + global)
-    const project = resolveProjectConfig();
-    if (project && project.templates && project.templates[category]) {
-        templateConfig = project.templates[category];
-    }
-
-    if (!templateConfig) {
-        // If not in a project, or resolved config didn't have it, try global config directly
-        templateConfig = readGlobalConfig(false).templates[category];
-    }
+    // Always use global config for templates
+    const templateConfig = readGlobalConfig(false).templates[category];
 
     if (!templateConfig) {
         throw new Error(

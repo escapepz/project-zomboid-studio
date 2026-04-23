@@ -215,6 +215,30 @@ export class E2ETestWorkspace {
             );
         }
     }
+
+    /**
+     * Asserts that stdout matches a specific regex.
+     */
+    public assertStdoutMatch(result: E2EResult, pattern: RegExp): void {
+        const found = result.stdout.some((line) => pattern.test(line));
+        if (!found) {
+            throw new Error(
+                `Expected stdout to match ${pattern} but it did not.\nStdout: ${result.stdout.join('\n')}`,
+            );
+        }
+    }
+
+    /**
+     * Asserts that stdout does NOT match a specific regex.
+     */
+    public assertStdoutNotMatch(result: E2EResult, pattern: RegExp): void {
+        const found = result.stdout.some((line) => pattern.test(line));
+        if (found) {
+            throw new Error(
+                `Expected stdout NOT to match ${pattern} but it did.\nStdout: ${result.stdout.join('\n')}`,
+            );
+        }
+    }
 }
 
 /**

@@ -52,10 +52,6 @@ export function resolveProjectConfig(): IProjectConfig | undefined {
         ...project,
         outdir: getOutDir(project, global),
         useSymlinks: resolveUseSymlinks(project, global),
-        templates: {
-            ...global.templates,
-            ...project.templates,
-        },
     };
 }
 

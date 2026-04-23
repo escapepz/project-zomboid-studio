@@ -17,25 +17,6 @@
             "description": "Whether to use symlinks (junctions on Windows) for folders.",
             "type": "boolean"
         },
-        "templates": {
-            "additionalProperties": false,
-            "description": "Workspace template overrides.",
-            "properties": {
-                "language": {
-                    "$ref": "#/$defs/templateConfig"
-                },
-                "mod": {
-                    "$ref": "#/$defs/templateConfig"
-                },
-                "project": {
-                    "$ref": "#/$defs/templateConfig"
-                },
-                "workshop": {
-                    "$ref": "#/$defs/templateConfig"
-                }
-            },
-            "type": "object"
-        },
         "workshop": {
             "description": "Workshop metadata for the project.",
             "properties": {
@@ -137,21 +118,6 @@
                 }
             },
             "required": ["name", "description"],
-            "type": "object"
-        },
-        "templateConfig": {
-            "additionalProperties": false,
-            "properties": {
-                "ref": {
-                    "description": "Optional branch, tag, or ref to use for the template.",
-                    "type": "string"
-                },
-                "url": {
-                    "description": "Repository URL or user/repo shorthand for the template.",
-                    "type": "string"
-                }
-            },
-            "required": ["url"],
             "type": "object"
         }
     }

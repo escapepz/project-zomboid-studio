@@ -137,4 +137,10 @@ describe('new — basic (E2E)', () => {
         workspace.assertFailure(result, 1);
         workspace.assertStderr(result, 'already exists');
     }, 60000);
+
+    it('should not list --template in help output', async () => {
+        const result = await workspace.run('new', ['--help']);
+        workspace.assertSuccess(result);
+        workspace.assertStdoutNotMatch(result, /--template/);
+    });
 });

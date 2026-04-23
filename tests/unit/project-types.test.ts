@@ -8,13 +8,10 @@ import {
 describe('Project Types', () => {
     it('should allow valid IProjectConfig object', () => {
         const config: IProjectConfig = {
-            title: 'My Project',
-            authors: ['Author 1', 'Author 2'],
             workshop: {
                 id: 12345,
                 visibility: 'public',
                 tags: ['Build 41', 'Farming'],
-                excludes: ['mod-a'],
             },
             mods: {
                 'mod-id': {
@@ -28,6 +25,7 @@ describe('Project Types', () => {
                 },
             },
             useSymlinks: true,
+            excludes: ['mod-a'],
         };
         expect(config).toBeDefined();
         expect(config.workshop.visibility).toBe('public');
@@ -35,9 +33,8 @@ describe('Project Types', () => {
 
     it('should allow minimal IProjectConfig object', () => {
         const config: IProjectConfig = {
-            title: 'Minimal',
-            authors: 'Single Author',
             workshop: {
+                title: 'Minimal',
                 visibility: 'private',
                 tags: [],
             },

@@ -369,38 +369,11 @@ export function validateProject(config: any, context: ValidationContext): void {
     }
 
     if (config.templates !== undefined) {
-        if (!guards.isObject(config.templates)) {
-            context.addError(
-                'templates',
-                'Field "templates" must be an object',
-                'Check your custom templates configuration',
-            );
-        } else {
-            for (const key in config.templates) {
-                const t = config.templates[key];
-                if (!guards.isObject(t)) {
-                    context.addError(
-                        formatFieldPath('templates', key),
-                        'Template must be an object',
-                        'Specify url and optional ref',
-                    );
-                } else if (!guards.isString(t.url)) {
-                    context.addError(
-                        formatFieldPath('templates', key, 'url'),
-                        'Field "url" must be a string',
-                        'Provide a repository URL or user/repo shorthand',
-                    );
-                }
-
-                if (t.ref !== undefined && !guards.isString(t.ref)) {
-                    context.addError(
-                        formatFieldPath('templates', key, 'ref'),
-                        'Field "ref" must be a string',
-                        'Provide a branch, tag, or commit reference',
-                    );
-                }
-            }
-        }
+        context.addError(
+            'templates',
+            'Field "templates" is no longer supported in project.json',
+            'Move this configuration to your global config.json at ~/.pzstudio/config.json',
+        );
     }
 
     if (

@@ -89,11 +89,6 @@ export interface IProjectConfig {
     mods: { [modId: string]: IModConfig };
     useSymlinks?: boolean;
     outdir?: string;
-    templates?: {
-        project?: ITemplateConfig;
-        mod?: ITemplateConfig;
-        workshop?: ITemplateConfig;
-        language?: ITemplateConfig;
-    };
+
     excludes?: string[];
 }

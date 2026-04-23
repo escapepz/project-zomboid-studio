@@ -150,4 +150,10 @@ describe('add — basic (E2E)', () => {
         workspace.assertSuccess(result);
         expect(workspace.exists('local_mod/marker.txt')).toBe(true);
     });
+
+    it('should not list --template in help output', async () => {
+        const result = await workspace.run('add', ['--help']);
+        workspace.assertSuccess(result);
+        workspace.assertStdoutNotMatch(result, /--template/);
+    });
 });

@@ -77,28 +77,28 @@ describe('Args Library', () => {
             expect(result.positionals).toEqual([]);
         });
 
-        it('should consume value for a value flag like --template foo', () => {
-            const result = splitArgs(['--template', 'lua']);
-            expect(result.flags).toEqual(['--template', 'lua']);
+        it('should treat --verbose as a plain flag and following word as positional', () => {
+            const result = splitArgs(['--verbose', 'lua']);
+            expect(result.flags).toEqual(['--verbose']);
+            expect(result.positionals).toEqual(['lua']);
+        });
+
+        it('should not consume the next token even if it is not a flag', () => {
+            const result = splitArgs(['--verbose', '--force-update']);
+            expect(result.flags).toEqual(['--verbose', '--force-update']);
             expect(result.positionals).toEqual([]);
         });
 
-        it('should not consume the next token if it is another flag', () => {
-            const result = splitArgs(['--template', '--verbose']);
-            expect(result.flags).toEqual(['--template', '--verbose']);
-            expect(result.positionals).toEqual([]);
-        });
-
-        it('should handle mixed positionals and flags', () => {
+        it('should handle mixed positionals and flags correctly', () => {
             const result = splitArgs([
                 'my-project',
                 '--verbose',
-                '--template',
+                '--force-update',
                 'lua',
                 'extra',
             ]);
-            expect(result.positionals).toEqual(['my-project', 'extra']);
-            expect(result.flags).toEqual(['--verbose', '--template', 'lua']);
+            expect(result.positionals).toEqual(['my-project', 'lua', 'extra']);
+            expect(result.flags).toEqual(['--verbose', '--force-update']);
         });
 
         it('should return empty arrays for empty input', () => {

@@ -11,11 +11,6 @@ export type ArgType =
  * @param arg The argument to parse
  * @returns The parsed argument
  */
-/**
- * Parses the type of the argument
- * @param arg The argument to parse
- * @returns The parsed argument
- */
 export function parseArgType(arg: any) {
     if (!arg) return undefined;
     if (!isNaN(arg) && !isNaN(parseFloat(arg))) return parseFloat(arg);
@@ -67,22 +62,10 @@ export function splitArgs(rawArgs: string[]) {
     const positionals: string[] = [];
     const flags: string[] = [];
 
-    // Flags that are known to take a value
-    const valueFlags = ['--template'];
-
     for (let i = 0; i < rawArgs.length; i++) {
         const arg = rawArgs[i];
         if (arg.startsWith('-')) {
             flags.push(arg);
-            // If it's a flag that takes a value, consume the next argument too
-            if (
-                valueFlags.includes(arg) &&
-                i + 1 < rawArgs.length &&
-                !rawArgs[i + 1].startsWith('-')
-            ) {
-                flags.push(rawArgs[i + 1]);
-                i++;
-            }
         } else {
             positionals.push(arg);
         }

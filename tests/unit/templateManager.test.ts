@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as templateManager from '../../src/lib/templateManager';
+import * as helper from '../../src/lib/helper';
 import {
     createIgnoreFilter,
     readGlobalConfig,
@@ -254,6 +255,30 @@ describe('templateManager - config and resolution', () => {
             expect(() => resolveTemplateDir('mod', true)).toThrow(
                 'No valid cached or legacy template found',
             );
+        });
+        it('should ignore project-level template overrides and use global config', () => {
+            const projectSpy = vi.spyOn(helper, 'resolveProjectConfig');
+
+            // Mock global config to return a specific URL
+            vi.mocked(fs.existsSync).mockReturnValue(true);
+            vi.mocked(fs.readFileSync).mockReturnValue(
+                JSON.stringify({
+                    templates: { mod: { url: 'global-url' } },
+                }) as any,
+            );
+            vi.mocked(fs.lstatSync).mockReturnValue({
+                isDirectory: () => true,
+            } as any);
+            vi.mocked(fs.readdirSync).mockReturnValue(['.git'] as any);
+
+            const path = resolveTemplateDir('mod', true);
+
+            // Verify project config was never even consulted
+            expect(projectSpy).not.toHaveBeenCalled();
+
+            // Verify global config URL was used
+            expect(path).toContain('global-url');
+            expect(path).not.toContain('project-url');
         });
     });
 });
