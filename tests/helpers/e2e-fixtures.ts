@@ -152,6 +152,18 @@ export class E2ETestWorkspace {
     }
 
     /**
+     * Writes a global config file to the fake home.
+     */
+    public writeGlobalConfig(config: any): void {
+        const configPath = path.join(this.fakeHome, '.pzstudio', 'config.json');
+        const dir = path.dirname(configPath);
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+        }
+        fs.writeFileSync(configPath, JSON.stringify(config, null, 4), 'utf8');
+    }
+
+    /**
      * Reads a JSON file from the workspace.
      */
     public readJson(relativePath: string): any {

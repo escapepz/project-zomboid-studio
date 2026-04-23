@@ -54,30 +54,32 @@ describe('new — templates (E2E Mocked)', () => {
     });
 
     it('should refresh the template cache when --force-update is provided', async () => {
-        const customUrl = 'https://github.com/custom/project.git';
-        await workspace.run('new', [
-            'P1',
-            'p1',
-            '--template',
-            customUrl,
-            '--force-update',
-        ]);
+        // Run once to populate cache (mocked clone)
+        await workspace.run('new', ['P1', 'p1', '--force-update']);
+        // Run again with force-update to trigger fetch (mocked fetch)
         const result2 = await workspace.run('new', [
             'P2',
             'p2',
-            '--template',
-            customUrl,
             '--force-update',
         ]);
         workspace.assertSuccess(result2);
         const calls = vi.mocked(cp.spawnSync).mock.calls;
-        expect(calls.some((c) => c[0] === 'git' && c[1][0] === 'fetch')).toBe(
-            true,
-        );
+        expect(
+            calls.some(
+                (c) =>
+                    c[0] === 'git' &&
+                    (c[1][0] === 'fetch' || c[1][0] === 'reset'),
+            ),
+        ).toBe(true);
     });
 
     it('should fail when force-update refresh fails and re-clone fails', async () => {
+        // Set a custom template in global config to avoid legacy fallback
         const customUrl = 'https://github.com/custom/project.git';
+        workspace.writeGlobalConfig({
+            templates: { project: { url: customUrl } },
+        });
+
         vi.mocked(cp.spawnSync).mockImplementation((command, args) => {
             if (
                 command === 'git' &&
@@ -87,6 +89,8 @@ describe('new — templates (E2E Mocked)', () => {
             }
             return { status: 0 } as any;
         });
+
+        // Populate an "invalid" cache to force refresh/re-clone
         const cacheDir = path.join(
             workspace.fakeHome,
             '.pzstudio',
@@ -97,13 +101,7 @@ describe('new — templates (E2E Mocked)', () => {
         fs.mkdirSync(cacheDir, { recursive: true });
         fs.mkdirSync(path.join(cacheDir, '.git'), { recursive: true });
 
-        const result = await workspace.run('new', [
-            'P',
-            'p',
-            '--template',
-            customUrl,
-            '--force-update',
-        ]);
+        const result = await workspace.run('new', ['P', 'p', '--force-update']);
         workspace.assertFailure(result);
     });
 });

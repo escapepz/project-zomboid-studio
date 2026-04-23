@@ -244,14 +244,15 @@ describe('templateManager - config and resolution', () => {
             } as any);
             vi.mocked(fs.readdirSync).mockReturnValue(['.git'] as any);
 
-            const path = resolveTemplateDir('mod', undefined, true);
+            const path = resolveTemplateDir('mod', true);
             expect(path).toContain('my-custom-url');
         });
 
         it('should throw if template cannot be resolved offline', () => {
             vi.spyOn(fs, 'existsSync').mockReturnValue(false);
-            expect(() => resolveTemplateDir('mod', 'user/repo', true)).toThrow(
-                'not found or invalid in cache',
+            vi.spyOn(fs, 'readdirSync').mockReturnValue([] as any); // To make isDirNonEmpty return false for legacy
+            expect(() => resolveTemplateDir('mod', true)).toThrow(
+                'No valid cached or legacy template found',
             );
         });
     });

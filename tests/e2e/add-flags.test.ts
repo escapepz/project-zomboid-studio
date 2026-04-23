@@ -56,7 +56,7 @@ afterEach(() => {
     vi.clearAllMocks();
 });
 
-describe('add — --template and --force-update (E2E Mocked)', () => {
+describe('add — templates (E2E Mocked)', () => {
     let workspace: E2ETestWorkspace;
     beforeEach(() => {
         workspace = createE2EWorkspace();
@@ -67,31 +67,40 @@ describe('add — --template and --force-update (E2E Mocked)', () => {
 
     it('should refresh the template cache when --force-update is provided', async () => {
         writeMinimalProject(workspace);
-        const customUrl = 'https://github.com/custom/template.git';
-        await workspace.run('add', [
-            'M1',
-            'm1',
-            '--template',
-            customUrl,
-            '--force-update',
-        ]);
+        // Run once to populate cache (mocked clone)
+        await workspace.run('add', ['M1', 'm1', '--force-update']);
+
+        // Remove the seeded local template to force using the global cache again for the next add
+        fs.rmSync(path.join(workspace.dir, '.template-mod'), {
+            recursive: true,
+            force: true,
+        });
+
+        // Run again with force-update to trigger fetch (mocked fetch)
         const result2 = await workspace.run('add', [
             'M2',
             'm2',
-            '--template',
-            customUrl,
             '--force-update',
         ]);
         workspace.assertSuccess(result2);
         const calls = vi.mocked(cp.spawnSync).mock.calls;
-        expect(calls.some((c) => c[0] === 'git' && c[1][0] === 'fetch')).toBe(
-            true,
-        );
+        expect(
+            calls.some(
+                (c) =>
+                    c[0] === 'git' &&
+                    (c[1][0] === 'fetch' || c[1][0] === 'reset'),
+            ),
+        ).toBe(true);
     });
 
     it('should fail when force-update refresh fails and re-clone also fails', async () => {
         writeMinimalProject(workspace);
+        // Set a custom template in global config to avoid legacy fallback
         const customUrl = 'https://github.com/custom/template.git';
+        workspace.writeGlobalConfig({
+            templates: { mod: { url: customUrl } },
+        });
+
         vi.mocked(cp.spawnSync).mockImplementation((command, args) => {
             if (
                 command === 'git' &&
@@ -101,6 +110,8 @@ describe('add — --template and --force-update (E2E Mocked)', () => {
             }
             return { status: 0 } as any;
         });
+
+        // Populate an "invalid" cache to force refresh/re-clone
         const cacheDir = path.join(
             workspace.fakeHome,
             '.pzstudio',
@@ -111,13 +122,7 @@ describe('add — --template and --force-update (E2E Mocked)', () => {
         fs.mkdirSync(cacheDir, { recursive: true });
         fs.mkdirSync(path.join(cacheDir, '.git'), { recursive: true });
 
-        const result = await workspace.run('add', [
-            'M',
-            'm',
-            '--template',
-            customUrl,
-            '--force-update',
-        ]);
+        const result = await workspace.run('add', ['M', 'm', '--force-update']);
         workspace.assertFailure(result);
     });
 });

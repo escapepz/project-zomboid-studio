@@ -524,33 +524,23 @@ export function validateTemplateManifest(
  * Resolves the template directory for a given category.
  *
  * Resolution chain:
- * 1. overrideUrl → resolve cache path, if exists and valid:
- *    - if forceUpdate: refresh, return
- *    - else: return cached
- *    - if missing/invalid or refresh fails: delete, clone, return
- * 2. Cached default exists and valid:
- *    - if forceUpdate: refresh, return
- *    - else: return cached
+ * 1. Resolved project config (which merges workspace + global)
+ * 2. Global config directly (~/.pzstudio/config.json)
  * 3. Cache missing or invalid: clone from config or hardcoded default → cache
  * 4. Clone fails → fall back to local .template-legacy
  * 5. Nothing found → throw actionable error
  */
 export function resolveTemplateDir(
     category: TemplateCategory,
-    overrideUrl?: string,
     isOffline?: boolean,
     forceUpdate?: boolean,
 ): string {
-    const override = overrideUrl ? parseTemplateUrl(overrideUrl) : undefined;
+    let templateConfig: TemplateConfig | undefined;
 
-    let templateConfig = override;
-
-    if (!templateConfig) {
-        // Try resolved project config first (which merges workspace + global)
-        const project = resolveProjectConfig();
-        if (project && project.templates && project.templates[category]) {
-            templateConfig = project.templates[category];
-        }
+    // Try resolved project config first (which merges workspace + global)
+    const project = resolveProjectConfig();
+    if (project && project.templates && project.templates[category]) {
+        templateConfig = project.templates[category];
     }
 
     if (!templateConfig) {
@@ -574,18 +564,14 @@ export function resolveTemplateDir(
         if (isCacheValid(cacheDir)) {
             return cacheDir;
         }
-        if (!overrideUrl) {
-            if (isDirNonEmpty(legacyDir)) {
-                warn(
-                    `Template not found in cache. Falling back to offline legacy template.`,
-                );
-                return legacyDir;
-            }
+        if (isDirNonEmpty(legacyDir)) {
+            warn(
+                `Template not found in cache. Falling back to offline legacy template.`,
+            );
+            return legacyDir;
         }
         throw new Error(
-            overrideUrl
-                ? `Template '${overrideUrl}' not found or invalid in cache. Run without --offline first.`
-                : `No valid cached or legacy template found for '${category}'.`,
+            `No valid cached or legacy template found for '${category}'.`,
         );
     }
 
@@ -624,7 +610,7 @@ export function resolveTemplateDir(
     }
 
     // Fallback to legacy for official templates only if clone/cache failed
-    if (!overrideUrl && isDirNonEmpty(legacyDir)) {
+    if (isOfficialTemplate(templateConfig.url) && isDirNonEmpty(legacyDir)) {
         warn(`Falling back to offline legacy template for '${category}'.`);
         return legacyDir;
     }

@@ -12,7 +12,7 @@ import {
     updateProjectConfig,
 } from '../helper';
 import { info, log, verbose } from '../logger';
-import { extractFlag, hasFlag } from '../cli';
+import { hasFlag } from '../cli';
 import {
     resolveTemplateDir,
     scaffoldProject,
@@ -28,7 +28,6 @@ addHelp(
     pzstudio new <projectTitle> <modId> - Create a new project with the given title and mod id.
     
     Flags:
-    --template <url> - Use a custom template URL for the mod template.
     --offline        - Bypass network updates and use local cache or legacy templates.
     --force-update   - Force refresh of cached templates from remote.
     --symlinks       - Use directory junctions for template folders (if supported).`,
@@ -39,7 +38,6 @@ export async function newCmd(projectTitle: string, modId?: string) {
     expect('param [projectTitle]', projectTitle, 'string');
     expect('param [modId]', modId, 'string|undefined');
 
-    const templateUrl = extractFlag('template');
     const isOffline = hasFlag('offline');
     const forceUpdate = hasFlag('force-update');
 
@@ -55,7 +53,6 @@ export async function newCmd(projectTitle: string, modId?: string) {
 
     const templateProjectPath = resolveTemplateDir(
         'project',
-        templateUrl,
         isOffline,
         forceUpdate,
     );
@@ -77,24 +74,17 @@ export async function newCmd(projectTitle: string, modId?: string) {
 
     let templateModPath: string;
     if (
-        !templateUrl &&
         existsSync(cwdTemplateModPath) &&
         readdirSync(cwdTemplateModPath).length > 0
     ) {
         templateModPath = cwdTemplateModPath;
         verbose(`Using local .template-mod from CWD`);
     } else {
-        templateModPath = resolveTemplateDir(
-            'mod',
-            templateUrl,
-            isOffline,
-            forceUpdate,
-        );
+        templateModPath = resolveTemplateDir('mod', isOffline, forceUpdate);
     }
 
     let templateWorkshopPath: string;
     if (
-        !templateUrl &&
         existsSync(cwdTemplateWorkshopPath) &&
         readdirSync(cwdTemplateWorkshopPath).length > 0
     ) {
@@ -103,7 +93,6 @@ export async function newCmd(projectTitle: string, modId?: string) {
     } else {
         templateWorkshopPath = resolveTemplateDir(
             'workshop',
-            undefined,
             isOffline,
             forceUpdate,
         );
@@ -111,7 +100,6 @@ export async function newCmd(projectTitle: string, modId?: string) {
 
     const templateLanguagePath = resolveTemplateDir(
         'language',
-        undefined,
         isOffline,
         forceUpdate,
     );

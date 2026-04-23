@@ -26,7 +26,7 @@ export async function updateCmd() {
     for (const category of categories) {
         try {
             log(`- Updating '${category}' templates...`);
-            resolveTemplateDir(category, undefined, false, true);
+            resolveTemplateDir(category, false, true);
             successCount++;
         } catch (e: any) {
             warn(`Failed to update ${category} template: ${e.message}`);

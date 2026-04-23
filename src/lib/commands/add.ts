@@ -10,7 +10,7 @@ import {
     updateProjectConfig,
 } from '../helper';
 import { log, verbose } from '../logger';
-import { extractFlag, hasFlag } from '../cli';
+import { hasFlag } from '../cli';
 import { resolveTemplateDir, scaffoldProject } from '../templateManager';
 
 addHelp(
@@ -22,7 +22,6 @@ addHelp(
         pzstudio add <modName> <modId> - Add a mod to your project.
     
     Flags:
-    --template <url> - Use a custom template URL for the mod template.
     --offline        - Bypass network updates and use local cache or legacy templates.
     --force-update   - Force refresh of cached templates from remote.
     --symlinks       - Use directory junctions for template folders (if supported).
@@ -43,7 +42,6 @@ export function addCmd(modName: string, modId?: string) {
         );
     }
 
-    const modTemplateUrl = extractFlag('template');
     const isOffline = hasFlag('offline');
     const forceUpdate = hasFlag('force-update');
     const useSymlinks =
@@ -55,7 +53,6 @@ export function addCmd(modName: string, modId?: string) {
     let usedLocalTemplate = false;
 
     if (
-        !modTemplateUrl &&
         existsSync(localTemplatePath) &&
         readdirSync(localTemplatePath).length > 0
     ) {
@@ -64,12 +61,7 @@ export function addCmd(modName: string, modId?: string) {
         verbose(`Using local .template-mod from project root`);
     } else {
         verbose(`Resolving remote/default mod template...`);
-        templateModPath = resolveTemplateDir(
-            'mod',
-            modTemplateUrl,
-            isOffline,
-            forceUpdate,
-        );
+        templateModPath = resolveTemplateDir('mod', isOffline, forceUpdate);
         verbose(`Mod template path: ${templateModPath}`);
     }
 
@@ -97,7 +89,7 @@ export function addCmd(modName: string, modId?: string) {
     );
 
     // Seed local cache if we resolved a remote template and no local one existed
-    if (!usedLocalTemplate && !modTemplateUrl) {
+    if (!usedLocalTemplate) {
         scaffoldProject(
             templateModPath,
             localTemplatePath,
