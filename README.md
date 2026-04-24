@@ -14,8 +14,7 @@ This is a CLI tool for creating and maintaining Lua mods for Project Zomboid wit
 - Installation instructions
 - Command reference
 - Setup requirements
-- VSCode extensions recommendations
-- Examples and more
+- Project Zomboid Legacy support (Build 41)
 
 ## Key Changes in This Branch
 
