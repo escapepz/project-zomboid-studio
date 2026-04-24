@@ -91,6 +91,38 @@ export function activate(context: vscode.ExtensionContext) {
         }),
     );
 
+    function resolveFlags(command: string): string[] {
+        const config = vscode.workspace.getConfiguration('pzstudio');
+        const flags: string[] = [];
+
+        if (config.get<boolean>('verbose')) {
+            flags.push('--verbose');
+        }
+
+        if (command === 'new' || command === 'add') {
+            if (config.get<boolean>('offline')) {
+                flags.push('--offline');
+            }
+            if (config.get<boolean>('forceUpdate')) {
+                flags.push('--force-update');
+            }
+            if (config.get<boolean>('useSymlinks')) {
+                flags.push('--symlinks');
+            }
+        }
+
+        if (command === 'build') {
+            const target = config.get<string>('build.target');
+            if (target === 'production') {
+                flags.push('--production');
+            } else if (target === 'development') {
+                flags.push('--development');
+            }
+        }
+
+        return flags;
+    }
+
     const executePZCommand = async (command: string, ...args: string[]) => {
         outputChannel.show();
 
@@ -103,10 +135,16 @@ export function activate(context: vscode.ExtensionContext) {
             setProjectDir(undefined);
         }
 
+        const flags = resolveFlags(command);
+        const savedArgv = process.argv;
+        process.argv = [...savedArgv, ...flags];
+
         try {
             await runCLI(command, args);
         } catch (e) {
             // Already handled by logger.error
+        } finally {
+            process.argv = savedArgv;
         }
     };
 
@@ -197,6 +235,22 @@ export function activate(context: vscode.ExtensionContext) {
 
             await executePZCommand('lang', language, modId);
         }),
+
+        vscode.commands.registerCommand(
+            'pzstudio.modinfoGenerate',
+            async () => {
+                const modId = await vscode.window.showInputBox({
+                    prompt: 'Enter Mod ID (Optional, leave blank for all mods)',
+                    placeHolder: 'my_mod',
+                });
+
+                await executePZCommand(
+                    'modinfo',
+                    'generate',
+                    ...(modId ? [modId] : []),
+                );
+            },
+        ),
     ];
 
     context.subscriptions.push(outputChannel, ...commands);

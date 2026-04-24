@@ -77,6 +77,40 @@
                     "description": "Whether to use symlinks instead of copying during build",
                     "scope": "resource",
                     "default": true
+                },
+                "pzstudio.verbose": {
+                    "type": "boolean",
+                    "description": "Enable verbose/diagnostic output for all commands (--verbose)",
+                    "scope": "resource",
+                    "default": false
+                },
+                "pzstudio.offline": {
+                    "type": "boolean",
+                    "description": "Skip remote template refresh and use cached/legacy data (--offline). Applies to New Project and Add Mod.",
+                    "scope": "resource",
+                    "default": false
+                },
+                "pzstudio.forceUpdate": {
+                    "type": "boolean",
+                    "description": "Force refresh of cached templates (--force-update). Applies to New Project and Add Mod.",
+                    "scope": "resource",
+                    "default": false
+                },
+                "pzstudio.build.target": {
+                    "type": "string",
+                    "enum": [
+                        "default",
+                        "production",
+                        "development"
+                    ],
+                    "enumDescriptions": [
+                        "Build the main workshop output (same as production)",
+                        "Build the main workshop output (--production)",
+                        "Build the dev_branch workshop output (--development)"
+                    ],
+                    "description": "Build target mode. Controls whether to build the main or dev_branch workshop output.",
+                    "scope": "resource",
+                    "default": "default"
                 }
             }
         },
@@ -116,6 +150,10 @@
             {
                 "command": "pzstudio.watch",
                 "title": "PZStudio: Watch"
+            },
+            {
+                "command": "pzstudio.modinfoGenerate",
+                "title": "PZStudio: ModInfo Generate"
             }
         ]
     },
