@@ -1,5 +1,13 @@
 import { join } from 'path';
-import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'fs';
+import {
+    cpSync,
+    existsSync,
+    mkdirSync,
+    readdirSync,
+    rmSync,
+    statSync,
+    writeFileSync,
+} from 'fs';
 import { addHelp } from '../help';
 import { processArgs } from '../args';
 import {
@@ -79,25 +87,49 @@ async function buildWorkshop(
         // Generate the mod.info
         const modInfoFlag = projectConfig.mods[modId].build?.modInfo;
         const effectiveModInfoFlag = modInfoFlag ?? 'auto-if-missing';
-        const modInfoPath = join(outModsPath, 'mod.info');
 
         if (effectiveModInfoFlag === 'skip') {
             log(
                 `- Skipping '${modId}' mod.info generation (build.modInfo: "skip")...`,
             );
-        } else if (
-            effectiveModInfoFlag === 'auto-if-missing' &&
-            existsSync(modInfoPath)
-        ) {
-            log(
-                `- Skipping '${modId}' mod.info generation (already exists, build.modInfo: "auto-if-missing")...`,
-            );
         } else {
-            log(`- Generating '${modId}' mod.info...`);
-            writeFileSync(
-                modInfoPath,
-                generateModInfoText(modId, projectConfig, prefixedModId),
-            );
+            // Resolve Build 42 branch folders in the output directory
+            const branchTargets = existsSync(outModsPath)
+                ? readdirSync(outModsPath)
+                      .map((child) => join(outModsPath, child))
+                      .filter(
+                          (childPath) =>
+                              statSync(childPath).isDirectory() &&
+                              existsSync(join(childPath, 'media')),
+                      )
+                : [];
+
+            // If branch folders with media/ exist, place mod.info in each; otherwise fall back to mod root
+            const modInfoTargets =
+                branchTargets.length > 0 ? branchTargets : [outModsPath];
+
+            for (const targetDir of modInfoTargets) {
+                const modInfoPath = join(targetDir, 'mod.info');
+
+                if (
+                    effectiveModInfoFlag === 'auto-if-missing' &&
+                    existsSync(modInfoPath)
+                ) {
+                    log(
+                        `- Skipping '${modId}' mod.info generation (already exists, build.modInfo: "auto-if-missing")...`,
+                    );
+                } else {
+                    log(`- Generating '${modId}' mod.info...`);
+                    writeFileSync(
+                        modInfoPath,
+                        generateModInfoText(
+                            modId,
+                            projectConfig,
+                            prefixedModId,
+                        ),
+                    );
+                }
+            }
         }
     }
 
