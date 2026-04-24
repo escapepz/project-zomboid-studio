@@ -19,9 +19,10 @@
             ]
         },
         "id": {
-            "description": "Steam Workshop published file ID. A numeric string representing an unsigned 64-bit integer (0 to 18446744073709551615). Validated via SteamUtils.isValidSteamID(). Null/absent until the item is first created on Steam.",
-            "pattern": "^[0-9]+$",
-            "type": "string"
+            "description": "Steam Workshop published file ID. A numeric string representing an unsigned 64-bit integer (0 to 18446744073709551615).",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 18446744073709551615
         },
         "tags": {
             "default": [],
