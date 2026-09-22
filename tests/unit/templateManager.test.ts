@@ -211,6 +211,7 @@ describe('templateManager - createIgnoreFilter', () => {
 describe('templateManager - config and resolution', () => {
     beforeEach(() => {
         vi.restoreAllMocks();
+        helper.setVsCodeSettings(undefined, undefined);
     });
 
     describe('readGlobalConfig', () => {
@@ -298,6 +299,42 @@ describe('templateManager - config and resolution', () => {
 
             const path = resolveTemplateDir('mod', true);
             expect(path).toContain('my-custom-url');
+        });
+
+        it('should merge a partial VS Code override with global templates', () => {
+            helper.setVsCodeSettings(undefined, {
+                templates: { project: { url: 'vscode-project-url' } },
+            });
+            vi.mocked(fs.existsSync).mockReturnValue(true);
+            vi.mocked(fs.readFileSync).mockReturnValue(
+                JSON.stringify({
+                    templates: { mod: { url: 'global-mod-url' } },
+                }) as any,
+            );
+            vi.mocked(fs.lstatSync).mockReturnValue({
+                isDirectory: () => true,
+            } as any);
+            vi.mocked(fs.readdirSync).mockReturnValue(['.git'] as any);
+
+            expect(resolveTemplateDir('mod', true)).toContain('global-mod-url');
+        });
+
+        it('should prefer a VS Code template override for the same category', () => {
+            helper.setVsCodeSettings(undefined, {
+                templates: { mod: { url: 'vscode-mod-url' } },
+            });
+            vi.mocked(fs.existsSync).mockReturnValue(true);
+            vi.mocked(fs.readFileSync).mockReturnValue(
+                JSON.stringify({
+                    templates: { mod: { url: 'global-mod-url' } },
+                }) as any,
+            );
+            vi.mocked(fs.lstatSync).mockReturnValue({
+                isDirectory: () => true,
+            } as any);
+            vi.mocked(fs.readdirSync).mockReturnValue(['.git'] as any);
+
+            expect(resolveTemplateDir('mod', true)).toContain('vscode-mod-url');
         });
 
         it('should throw if template cannot be resolved offline', () => {

@@ -19,7 +19,7 @@ import type {
     ITemplateConfig,
 } from './project';
 import { DEFAULT_TEMPLATES } from './constants';
-import { getVsCodeSettings } from './helper';
+import { getResolvedTemplates } from './helper';
 
 export type { TemplateCategory, GlobalConfig, ITemplateConfig };
 
@@ -513,8 +513,7 @@ export function resolveTemplateDir(
     forceUpdate?: boolean,
 ): string {
     const globalConfig = readGlobalConfig(false);
-    const vscodeSettings = getVsCodeSettings();
-    const templates = vscodeSettings?.templates ?? globalConfig.templates;
+    const templates = getResolvedTemplates(globalConfig);
     const templateConfig = templates?.[category];
 
     if (!templateConfig) {

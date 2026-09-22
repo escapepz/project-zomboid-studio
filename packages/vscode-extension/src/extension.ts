@@ -7,6 +7,8 @@ import {
     ILogger,
 } from 'pzstudio-cli/api';
 
+let isExecutingCommand = false;
+
 function getTimestamp() {
     const now = new Date();
     const year = now.getFullYear();
@@ -127,10 +129,21 @@ export function activate(context: vscode.ExtensionContext) {
         command: string,
         args: string[] = [],
         extraFlags: string[] = [],
+        commandProjectDir?: string,
     ) => {
+        if (isExecutingCommand) {
+            vscode.window.showWarningMessage(
+                'PZStudio: Another command is already running.',
+            );
+            return;
+        }
+
+        isExecutingCommand = true;
         outputChannel.show();
 
-        if (
+        if (commandProjectDir) {
+            setProjectDir(commandProjectDir);
+        } else if (
             vscode.workspace.workspaceFolders &&
             vscode.workspace.workspaceFolders.length > 0
         ) {
@@ -151,8 +164,80 @@ export function activate(context: vscode.ExtensionContext) {
             // Already handled by logger.error
         } finally {
             process.argv = savedArgv;
+            isExecutingCommand = false;
         }
     };
+
+    async function promptForProjectDetails(): Promise<
+        { title: string; modId: string } | undefined
+    > {
+        const title = await vscode.window.showInputBox({
+            prompt: 'Enter Project Title',
+            placeHolder: 'My Awesome Mod',
+        });
+        if (!title) return undefined;
+
+        const modId = await vscode.window.showInputBox({
+            prompt: 'Enter Mod ID (Optional, leave blank for auto-generated)',
+            placeHolder: 'my_awesome_mod',
+        });
+
+        return { title, modId: modId || '' };
+    }
+
+    async function createProject(destination: string) {
+        const project = await promptForProjectDetails();
+        if (!project) return;
+
+        await executePZCommand(
+            'new',
+            [project.title, project.modId],
+            ['--path', destination],
+            destination,
+        );
+    }
+
+    async function pickNewProjectDestination(): Promise<string | undefined> {
+        const defaultLocation = vscode.workspace
+            .getConfiguration('pzstudio')
+            .inspect<string>('newProject.defaultLocation')?.globalValue;
+        const picked = await vscode.window.showOpenDialog({
+            canSelectFiles: false,
+            canSelectFolders: true,
+            canSelectMany: false,
+            openLabel: 'Select Destination Folder',
+            title: 'Create project in...',
+            defaultUri: defaultLocation
+                ? vscode.Uri.file(defaultLocation)
+                : undefined,
+        });
+
+        if (picked && picked.length > 0) return picked[0].fsPath;
+        return defaultLocation || undefined;
+    }
+
+    async function getWorkspaceProjectDestination(): Promise<
+        string | undefined
+    > {
+        const folders = vscode.workspace.workspaceFolders;
+        if (!folders || folders.length === 0) {
+            vscode.window.showErrorMessage(
+                'PZStudio: Open a workspace folder before creating a project here.',
+            );
+            return undefined;
+        }
+        if (folders.length === 1) return folders[0].uri.fsPath;
+
+        const selected = await vscode.window.showQuickPick(
+            folders.map((folder) => ({
+                label: folder.name,
+                description: folder.uri.fsPath,
+                folder,
+            })),
+            { placeHolder: 'Select the workspace folder for the new project' },
+        );
+        return selected?.folder.uri.fsPath;
+    }
 
     const commands = [
         vscode.commands.registerCommand('pzstudio.build', () =>
@@ -169,49 +254,7 @@ export function activate(context: vscode.ExtensionContext) {
         ),
 
         vscode.commands.registerCommand('pzstudio.new', async () => {
-            const projectTitle = await vscode.window.showInputBox({
-                prompt: 'Enter Project Title',
-                placeHolder: 'My Awesome Mod',
-            });
-            if (!projectTitle) return;
-
-            const modId = await vscode.window.showInputBox({
-                prompt: 'Enter Mod ID (Optional, leave blank for auto-generated)',
-                placeHolder: 'my_awesome_mod',
-            });
-
-            // Issue #43: let the user pick where the project is created,
-            // instead of always using the current workspace folder.
-            const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri;
-            const lastUsed = context.workspaceState.get<string>(
-                'pzstudio.lastNewProjectDestination',
-            );
-            const defaultUri =
-                workspaceFolder ??
-                (lastUsed ? vscode.Uri.file(lastUsed) : undefined);
-
-            const picked = await vscode.window.showOpenDialog({
-                canSelectFiles: false,
-                canSelectFolders: true,
-                canSelectMany: false,
-                openLabel: 'Select Destination Folder',
-                title: `Create project '${projectTitle}' in...`,
-                defaultUri,
-            });
-
-            // A selection wins; cancelling falls back to the default
-            // (workspace folder or last used destination)
-            let destination: string | undefined;
-            if (picked && picked.length > 0) {
-                destination = picked[0].fsPath;
-                context.workspaceState.update(
-                    'pzstudio.lastNewProjectDestination',
-                    destination,
-                );
-            } else if (defaultUri) {
-                destination = defaultUri.fsPath;
-            }
-
+            const destination = await pickNewProjectDestination();
             if (!destination) {
                 vscode.window.showWarningMessage(
                     'PZStudio: No destination folder selected, project creation cancelled.',
@@ -219,11 +262,14 @@ export function activate(context: vscode.ExtensionContext) {
                 return;
             }
 
-            await executePZCommand(
-                'new',
-                [projectTitle, modId || ''],
-                ['--path', destination],
-            );
+            await createProject(destination);
+        }),
+
+        vscode.commands.registerCommand('pzstudio.newHere', async () => {
+            const destination = await getWorkspaceProjectDestination();
+            if (!destination) return;
+
+            await createProject(destination);
         }),
 
         vscode.commands.registerCommand('pzstudio.add', async () => {
@@ -305,6 +351,7 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 export function deactivate() {
+    isExecutingCommand = false;
     setLogger(undefined);
     setProjectDir(undefined);
     setVsCodeSettings(undefined, undefined);
