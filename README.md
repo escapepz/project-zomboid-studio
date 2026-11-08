@@ -1,5 +1,15 @@
 # Project Zomboid Studio
 
+> ⚠️ **This extension has moved to `pzstudio42`.** https://github.com/escapepz/pzstudio
+>
+> The PZ Studio VS Code extension now lives at its new marketplace listing:
+> **[PZ Studio (pzstudio42)](https://marketplace.visualstudio.com/items?itemName=escapepz.pzstudio42)**.
+> Version **0.42200.1** is published to **both** the old listing
+> ([escapepz.pzstudio](https://marketplace.visualstudio.com/items?itemName=escapepz.pzstudio))
+> and the new one, so this notice can point you to the new home.
+> **Install from the new listing** — after 0.42200.1 the old listing stops
+> receiving updates and this notice is removed.
+
 [![Version](https://img.shields.io/badge/version-2.242170.0-blue.svg)](https://github.com/escapepz/project-zomboid-studio)
 [![Project Zomboid](https://img.shields.io/badge/Project%20Zomboid-42.17.0-orange.svg)](https://projectzomboid.com/)
 [![CodeQL](https://github.com/escapepz/project-zomboid-studio/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/escapepz/project-zomboid-studio/actions/workflows/github-code-scanning/codeql)
